@@ -24,6 +24,7 @@ import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.XMLReader;
 
 /**
+ * Set of utilities related to XML.
  *
  * @author Philippe Charles
  */
@@ -34,9 +35,9 @@ public class Xml {
     public static class StAX {
 
         /**
-         * Prevent XXE vulnerability by disabling features.
+         * Prevents XXE vulnerability by disabling features.
          *
-         * @param factory
+         * @param factory non-null factory
          * @see
          * https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLInputFactory_.28a_StAX_parser.29
          */
@@ -55,9 +56,9 @@ public class Xml {
     public static class SAX {
 
         /**
-         * Prevent XXE vulnerability by disabling features.
+         * Prevents XXE vulnerability by disabling features.
          *
-         * @param reader
+         * @param reader non-null reader
          * @see
          * https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLReader
          */

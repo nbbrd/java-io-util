@@ -17,16 +17,20 @@
 package ioutil;
 
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.stream.StreamSupport;
@@ -34,6 +38,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 /**
+ * Set of utilities related to IO.
  *
  * @author Philippe Charles
  */
@@ -503,12 +508,12 @@ public class IO {
     }
 
     @FunctionalInterface
-    public interface Parser<T, R> {
+    public interface Loader<T, R> {
 
-        R parseWithIO(@Nonnull T source) throws IOException;
+        R load(@Nonnull T source) throws IOException;
 
         @Nonnull
-        static <S, R, VALUE> Parser<S, VALUE> valueOf(
+        static <S, R, VALUE> Loader<S, VALUE> valueOf(
                 @Nonnull Function<? super S, ? extends R> opener,
                 @Nonnull Function<? super R, ? extends VALUE> reader,
                 @Nonnull Consumer<? super R> closer) {
@@ -524,7 +529,7 @@ public class IO {
         }
 
         @Nonnull
-        static <S, R, FLOW extends AutoCloseable> Parser<S, FLOW> flowOf(
+        static <S, R, FLOW extends AutoCloseable> Loader<S, FLOW> flowOf(
                 @Nonnull Function<? super S, ? extends R> opener,
                 @Nonnull Function<? super R, ? extends FLOW> reader,
                 @Nonnull Consumer<? super R> closer) {
@@ -555,7 +560,7 @@ public class IO {
 
         @Nonnull
         public <T extends Closeable, R> java.util.stream.Stream<R> open(@Nonnull Supplier<T> source, @Nonnull Function<? super T, java.util.stream.Stream<R>> streamer) throws IOException {
-            return asParser(streamer).parseWithIO(source);
+            return asParser(streamer).load(source);
         }
 
         @Nonnull
@@ -563,8 +568,8 @@ public class IO {
             return StreamSupport.stream(Spliterators.spliteratorUnknownSize(asIterator(generator), Spliterator.ORDERED | Spliterator.NONNULL), false);
         }
 
-        private <C extends Closeable, R> Parser<Supplier<C>, java.util.stream.Stream<R>> asParser(Function<? super C, java.util.stream.Stream<R>> streamer) {
-            return Parser.flowOf(
+        private <C extends Closeable, R> Loader<Supplier<C>, java.util.stream.Stream<R>> asParser(Function<? super C, java.util.stream.Stream<R>> streamer) {
+            return Loader.flowOf(
                     source -> source.getWithIO(),
                     resource -> streamer.applyWithIO(resource).onClose(Runnable.unchecked(resource::close)),
                     Closeable::close
@@ -603,6 +608,46 @@ public class IO {
                 }
             };
         }
+    }
+
+    /**
+     * Returns a {@link File} object representing this path. Where this {@code
+     * Path} is associated with the default provider, then this method is
+     * equivalent to returning a {@code File} object constructed with the
+     * {@code String} representation of this path.
+     *
+     * <p>
+     * If this path was created by invoking the {@code File} {@link
+     * File#toPath toPath} method then there is no guarantee that the {@code
+     * File} object returned by this method is {@link #equals equal} to the
+     * original {@code File}.
+     *
+     * @param path
+     * @return an optional {@code File} object representing this path if
+     * associated with the default provider
+     */
+    @Nonnull
+    public Optional<File> getFile(@Nonnull Path path) {
+        try {
+            return Optional.of(path.toFile());
+        } catch (UnsupportedOperationException ex) {
+            return Optional.empty();
+        }
+    }
+
+    @Nonnull
+    public Optional<InputStream> getResourceAsStream(@Nonnull Class<?> type, @Nonnull String name) {
+        return Optional.ofNullable(type.getResourceAsStream(name));
+    }
+
+    @Nonnull
+    public IOException ensureClosed(@Nonnull IOException exception, @Nonnull Closeable closeable) {
+        try {
+            closeable.close();
+        } catch (IOException suppressed) {
+            exception.addSuppressed(suppressed);
+        }
+        return Objects.requireNonNull(exception);
     }
 
     @Target({ElementType.METHOD})

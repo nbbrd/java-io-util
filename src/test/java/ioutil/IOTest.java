@@ -16,9 +16,16 @@
  */
 package ioutil;
 
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
 import java.io.Closeable;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -27,13 +34,18 @@ import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.*;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 /**
  *
  * @author Philippe Charles
  */
 public class IOTest {
+
+    @Rule
+    public final TemporaryFolder temp = new TemporaryFolder();
 
     //<editor-fold defaultstate="collapsed" desc="Stream">
     private static <R> IO.Function<Closeable, Stream<R>> streamerOf(R... values) {
@@ -461,6 +473,7 @@ public class IOTest {
     }
     //</editor-fold>
 
+    //<editor-fold defaultstate="collapsed" desc="Loader">
     @lombok.AllArgsConstructor
     private static final class X implements Closeable {
 
@@ -484,61 +497,61 @@ public class IOTest {
     }
 
     @Test
-    public void testParserValueOf() throws IOException {
+    public void testLoaderValueOf() throws IOException {
         IO.Function<Object, X> openError = IO.Function.throwing(OpenError::new);
         IO.Function<X, Object> readError = IO.Function.throwing(ReadError::new);
         IO.Consumer<X> closeError = IO.Consumer.throwing(CloseError::new);
 
         assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Parser<List<String>, Object> p = IO.Parser.valueOf(X::open, X::read, X::close);
-            assertThatCode(() -> p.parseWithIO((List<String>) c)).doesNotThrowAnyException();
+            IO.Loader<List<String>, Object> p = IO.Loader.valueOf(X::open, X::read, X::close);
+            assertThatCode(() -> p.load((List<String>) c)).doesNotThrowAnyException();
             assertThat(c).containsExactly("open", "read", "close");
         });
 
         assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Parser<List<String>, Object> p = IO.Parser.valueOf(openError, X::read, X::close);
-            assertThatThrownBy(() -> p.parseWithIO((List<String>) c)).isInstanceOf(OpenError.class);
+            IO.Loader<List<String>, Object> p = IO.Loader.valueOf(openError, X::read, X::close);
+            assertThatThrownBy(() -> p.load((List<String>) c)).isInstanceOf(OpenError.class);
             assertThat(c).isEmpty();
         });
 
         assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Parser<List<String>, Object> p = IO.Parser.valueOf(X::open, readError, X::close);
-            assertThatThrownBy(() -> p.parseWithIO((List<String>) c)).isInstanceOf(ReadError.class);
+            IO.Loader<List<String>, Object> p = IO.Loader.valueOf(X::open, readError, X::close);
+            assertThatThrownBy(() -> p.load((List<String>) c)).isInstanceOf(ReadError.class);
             assertThat(c).containsExactly("open", "close");
         });
 
         assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Parser<List<String>, Object> p = IO.Parser.valueOf(X::open, X::read, closeError);
-            assertThatThrownBy(() -> p.parseWithIO((List<String>) c)).isInstanceOf(CloseError.class);
+            IO.Loader<List<String>, Object> p = IO.Loader.valueOf(X::open, X::read, closeError);
+            assertThatThrownBy(() -> p.load((List<String>) c)).isInstanceOf(CloseError.class);
             assertThat(c).containsExactly("open", "read");
         });
 
         assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Parser<List<String>, Object> p = IO.Parser.valueOf(X::open, readError, closeError);
-            assertThatThrownBy(() -> p.parseWithIO((List<String>) c)).isInstanceOf(ReadError.class).hasSuppressedException(new CloseError());
+            IO.Loader<List<String>, Object> p = IO.Loader.valueOf(X::open, readError, closeError);
+            assertThatThrownBy(() -> p.load((List<String>) c)).isInstanceOf(ReadError.class).hasSuppressedException(new CloseError());
             assertThat(c).containsExactly("open");
         });
     }
 
     @Test
-    public void testParserFlowOf() throws IOException {
+    public void testLoaderFlowOf() throws IOException {
         IO.Function<Object, X> openError = IO.Function.throwing(OpenError::new);
         IO.Function<X, Closeable> readError = IO.Function.throwing(ReadError::new);
         IO.Consumer<X> closeError = IO.Consumer.throwing(CloseError::new);
 
         assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Parser<List<String>, Closeable> p = IO.Parser.flowOf(X::open, X::read, X::close);
+            IO.Loader<List<String>, Closeable> p = IO.Loader.flowOf(X::open, X::read, X::close);
             assertThatCode(() -> {
-                try (AutoCloseable auto = p.parseWithIO((List<String>) c)) {
+                try (AutoCloseable auto = p.load((List<String>) c)) {
                 }
             }).doesNotThrowAnyException();
             assertThat(c).containsExactly("open", "read", "close");
         });
 
         assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Parser<List<String>, Closeable> p = IO.Parser.flowOf(X::open, X::read, X::close);
+            IO.Loader<List<String>, Closeable> p = IO.Loader.flowOf(X::open, X::read, X::close);
             assertThatThrownBy(() -> {
-                try (AutoCloseable auto = p.parseWithIO((List<String>) c)) {
+                try (AutoCloseable auto = p.load((List<String>) c)) {
                     throw new Error1();
                 }
             }).isInstanceOf(Error1.class);
@@ -546,40 +559,78 @@ public class IOTest {
         });
 
         assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Parser<List<String>, Closeable> p = IO.Parser.valueOf(openError, X::read, X::close);
+            IO.Loader<List<String>, Closeable> p = IO.Loader.valueOf(openError, X::read, X::close);
             assertThatThrownBy(() -> {
-                try (AutoCloseable auto = p.parseWithIO((List<String>) c)) {
+                try (AutoCloseable auto = p.load((List<String>) c)) {
                 }
             }).isInstanceOf(OpenError.class);
             assertThat(c).isEmpty();
         });
 
         assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Parser<List<String>, Closeable> p = IO.Parser.valueOf(X::open, readError, X::close);
+            IO.Loader<List<String>, Closeable> p = IO.Loader.valueOf(X::open, readError, X::close);
             assertThatThrownBy(() -> {
-                try (AutoCloseable auto = p.parseWithIO((List<String>) c)) {
+                try (AutoCloseable auto = p.load((List<String>) c)) {
                 }
             }).isInstanceOf(ReadError.class);
             assertThat(c).containsExactly("open", "close");
         });
 
         assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Parser<List<String>, Closeable> p = IO.Parser.valueOf(X::open, X::read, closeError);
+            IO.Loader<List<String>, Closeable> p = IO.Loader.valueOf(X::open, X::read, closeError);
             assertThatThrownBy(() -> {
-                try (AutoCloseable auto = p.parseWithIO((List<String>) c)) {
+                try (AutoCloseable auto = p.load((List<String>) c)) {
                 }
             }).isInstanceOf(CloseError.class);
             assertThat(c).containsExactly("open", "read");
         });
 
         assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Parser<List<String>, Closeable> p = IO.Parser.valueOf(X::open, readError, closeError);
+            IO.Loader<List<String>, Closeable> p = IO.Loader.valueOf(X::open, readError, closeError);
             assertThatThrownBy(() -> {
-                try (AutoCloseable auto = p.parseWithIO((List<String>) c)) {
+                try (AutoCloseable auto = p.load((List<String>) c)) {
                 }
             }).isInstanceOf(ReadError.class).hasSuppressedException(new CloseError());
             assertThat(c).containsExactly("open");
         });
+    }
+    //</editor-fold>
+
+    @Test
+    @SuppressWarnings("null")
+    public void testGetFile() throws IOException {
+        assertThatNullPointerException().isThrownBy(() -> IO.getFile(null));
+
+        File ok = temp.newFile();
+        assertThat(IO.getFile(ok.toPath())).contains(ok);
+
+        try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
+            Path ko = fs.getPath("/").resolve("hello");
+            Files.createFile(ko);
+            assertThat(IO.getFile(ko)).isEmpty();
+        }
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testGetResourceAsStream() throws IOException {
+        assertThatNullPointerException().isThrownBy(() -> IO.getResourceAsStream(null, ""));
+        assertThatNullPointerException().isThrownBy(() -> IO.getResourceAsStream(IOTest.class, null));
+
+        assertThat(IO.getResourceAsStream(IOTest.class, "hello")).isEmpty();
+        try (InputStream stream = IO.getResourceAsStream(IOTest.class, "test.zip").get()) {
+            assertThat(stream).isNotNull();
+        }
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testEnsureClosed() throws IOException {
+        assertThatNullPointerException().isThrownBy(() -> IO.ensureClosed(null, IO.Runnable.noOp().asCloseable()));
+        assertThatNullPointerException().isThrownBy(() -> IO.ensureClosed(new IOException(), null));
+
+        assertThat(IO.ensureClosed(new IOException(), IO.Runnable.noOp().asCloseable())).hasNoSuppressedExceptions();
+        assertThat(IO.ensureClosed(new IOException(), onError1.asCloseable())).hasSuppressedException(new Error1());
     }
 
     private static final class OpenError extends IOException {

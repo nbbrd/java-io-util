@@ -16,8 +16,10 @@
  */
 package ioutil;
 
+import javax.xml.stream.XMLInputFactory;
 import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
+import org.xml.sax.helpers.XMLReaderFactory;
 
 /**
  *
@@ -29,11 +31,13 @@ public class XmlTest {
     @SuppressWarnings("null")
     public void testXmlStAXPreventXXE() {
         assertThatNullPointerException().isThrownBy(() -> Xml.StAX.preventXXE(null));
+        assertThatCode(() -> Xml.StAX.preventXXE(XMLInputFactory.newFactory())).doesNotThrowAnyException();
     }
 
     @Test
     @SuppressWarnings("null")
     public void testXmlSAXPreventXXE() {
         assertThatNullPointerException().isThrownBy(() -> Xml.SAX.preventXXE(null));
+        assertThatCode(() -> Xml.SAX.preventXXE(XMLReaderFactory.createXMLReader())).doesNotThrowAnyException();
     }
 }
