@@ -51,9 +51,9 @@ public class ZipTest {
     @Test
     @SuppressWarnings("null")
     public void testZipLoaderOf() throws IOException {
-        assertThatNullPointerException().isThrownBy(() -> Zip.Loader.of(null));
+        assertThatNullPointerException().isThrownBy(() -> Zip.loaderOf(null));
 
-        try (Zip.Loader loader = Zip.Loader.of(FILE)) {
+        try (IO.ResourceLoader<String> loader = Zip.loaderOf(FILE)) {
             assertThatNullPointerException().isThrownBy(() -> loader.load(null));
             assertThatIOException().isThrownBy(() -> loader.load("xyz"));
             try (InputStream stream = loader.load("hello.txt")) {
@@ -65,7 +65,7 @@ public class ZipTest {
         }
 
         assertThatIllegalStateException().isThrownBy(() -> {
-            Zip.Loader loader = Zip.Loader.of(FILE);
+            IO.ResourceLoader<String> loader = Zip.loaderOf(FILE);
             loader.close();
             loader.load("hello.txt");
         });
@@ -74,11 +74,11 @@ public class ZipTest {
     @Test
     @SuppressWarnings("null")
     public void testZipLoaderCopyOf() throws IOException {
-        assertThatNullPointerException().isThrownBy(() -> Zip.Loader.copyOf(null, IO.Predicate.of(true)));
-        assertThatNullPointerException().isThrownBy(() -> Zip.Loader.copyOf(ZipTest.class.getResourceAsStream(""), null));
+        assertThatNullPointerException().isThrownBy(() -> Zip.loaderCopyOf(null, IO.Predicate.of(true)));
+        assertThatNullPointerException().isThrownBy(() -> Zip.loaderCopyOf(ZipTest.class.getResourceAsStream(""), null));
 
         try (InputStream file = IO.getResourceAsStream(ZipTest.class, "test.zip").get()) {
-            try (Zip.Loader loader = Zip.Loader.copyOf(file, IO.Predicate.of(true))) {
+            try (IO.ResourceLoader<String> loader = Zip.loaderCopyOf(file, IO.Predicate.of(true))) {
                 assertThatNullPointerException().isThrownBy(() -> loader.load(null));
                 assertThatIOException().isThrownBy(() -> loader.load("xyz"));
                 try (InputStream stream = loader.load("hello.txt")) {
@@ -91,7 +91,7 @@ public class ZipTest {
         }
 
         try (InputStream file = IO.getResourceAsStream(ZipTest.class, "test.zip").get()) {
-            try (Zip.Loader loader = Zip.Loader.copyOf(file, o -> o.getName().startsWith("folder1"))) {
+            try (IO.ResourceLoader<String> loader = Zip.loaderCopyOf(file, o -> o.getName().startsWith("folder1"))) {
                 assertThatNullPointerException().isThrownBy(() -> loader.load(null));
                 assertThatIOException().isThrownBy(() -> loader.load("xyz"));
                 assertThatIOException().isThrownBy(() -> loader.load("hello.txt"));
@@ -103,7 +103,7 @@ public class ZipTest {
 
         try (InputStream file = IO.getResourceAsStream(ZipTest.class, "test.zip").get()) {
             assertThatIllegalStateException().isThrownBy(() -> {
-                Zip.Loader loader = Zip.Loader.copyOf(file, IO.Predicate.of(true));
+                IO.ResourceLoader<String> loader = Zip.loaderCopyOf(file, IO.Predicate.of(true));
                 loader.close();
                 loader.load("hello.txt");
             });

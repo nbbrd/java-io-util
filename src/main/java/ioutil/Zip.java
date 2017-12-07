@@ -18,7 +18,6 @@ package ioutil;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,70 +39,30 @@ import javax.annotation.Nonnull;
 public class Zip {
 
     /**
-     * Represents a zip resource whose content can be loaded.
+     * Creates a new loader from a zip file.
+     *
+     * @param file non-null zip file
+     * @return a non-null loader
+     * @throws IOException
      */
-    public interface Loader extends IO.Loader<String, InputStream>, Closeable {
-
-        /**
-         * Creates a new loader from a zip file.
-         *
-         * @param file non-null zip file
-         * @return a non-null loader
-         * @throws IOException
-         */
-        @Nonnull
-        static Loader of(@Nonnull File file) throws IOException {
-            return new ZipFileLoader(new ZipFile(file));
-        }
-
-        /**
-         * Creates a new loader by copying the content of a zip file.
-         *
-         * @param inputStream non-null content of zip file
-         * @param filter non-null filter to avoid copying everything
-         * @return a non-null loader
-         * @throws IOException
-         */
-        @Nonnull
-        static Loader copyOf(@Nonnull InputStream inputStream, @Nonnull IO.Predicate<? super ZipEntry> filter) throws IOException {
-            return new BytesLoader(readAll(inputStream, filter));
-        }
+    @Nonnull
+    public IO.ResourceLoader<String> loaderOf(@Nonnull File file) throws IOException {
+        ZipFile data = new ZipFile(file);
+        return IO.ResourceLoader.of(o -> getInputStream(data, o), data);
     }
 
-    @lombok.AllArgsConstructor
-    private static final class ZipFileLoader implements Loader {
-
-        private final ZipFile file;
-
-        @Override
-        public InputStream load(String source) throws IOException {
-            return getInputStream(file, source);
-        }
-
-        @Override
-        public void close() throws IOException {
-            file.close();
-        }
-    }
-
-    @lombok.RequiredArgsConstructor
-    private static final class BytesLoader implements Loader {
-
-        private final Map<String, byte[]> data;
-        private boolean closed = false;
-
-        @Override
-        public InputStream load(String source) throws IOException {
-            if (closed) {
-                throw new IllegalStateException();
-            }
-            return getInputStream(data, source);
-        }
-
-        @Override
-        public void close() throws IOException {
-            closed = true;
-        }
+    /**
+     * Creates a new loader by copying the content of a zip file.
+     *
+     * @param inputStream non-null content of zip file
+     * @param filter non-null filter to avoid copying everything
+     * @return a non-null loader
+     * @throws IOException
+     */
+    @Nonnull
+    public IO.ResourceLoader<String> loaderCopyOf(@Nonnull InputStream inputStream, @Nonnull IO.Predicate<? super ZipEntry> filter) throws IOException {
+        Map<String, byte[]> data = copyOf(inputStream, filter);
+        return IO.ResourceLoader.of(o -> getInputStream(data, o));
     }
 
     private InputStream getInputStream(ZipFile zipFile, String name) throws IOException {
@@ -115,7 +74,6 @@ public class Zip {
     }
 
     private InputStream getInputStream(Map<String, byte[]> data, String name) throws IOException {
-        Objects.requireNonNull(name);
         byte[] result = data.get(name);
         if (result == null) {
             throw new IOException("Missing entry '" + name + "'");
@@ -123,7 +81,7 @@ public class Zip {
         return new ByteArrayInputStream(result);
     }
 
-    private Map<String, byte[]> readAll(InputStream stream, IO.Predicate<? super ZipEntry> filter) throws IOException {
+    private Map<String, byte[]> copyOf(InputStream stream, IO.Predicate<? super ZipEntry> filter) throws IOException {
         Map<String, byte[]> result = new HashMap<>();
         try (ZipInputStream zis = new ZipInputStream(stream)) {
             Zip.forEach(zis, filter, (k, v) -> result.put(k.getName(), v));

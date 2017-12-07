@@ -20,6 +20,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UncheckedIOException;
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
@@ -507,52 +508,52 @@ public class IO {
         }
     }
 
-    @FunctionalInterface
-    public interface Loader<T, R> {
-
-        R load(@Nonnull T source) throws IOException;
+    public interface ResourceLoader<K> extends Closeable {
 
         @Nonnull
-        static <S, R, VALUE> Loader<S, VALUE> valueOf(
-                @Nonnull Function<? super S, ? extends R> opener,
-                @Nonnull Function<? super R, ? extends VALUE> reader,
-                @Nonnull Consumer<? super R> closer) {
-            Objects.requireNonNull(opener);
-            Objects.requireNonNull(reader);
-            Objects.requireNonNull(closer);
-            return source -> {
-                R resource = opener.applyWithIO(source);
-                try (Closeable c = () -> closer.acceptWithIO(resource)) {
-                    return reader.applyWithIO(resource);
-                }
-            };
+        InputStream load(@Nonnull K key) throws IOException, IllegalStateException;
+
+        @Nonnull
+        static <K> ResourceLoader<K> of(@Nonnull Function<? super K, ? extends InputStream> loader) {
+            return of(loader, Runnable.noOp().asCloseable());
         }
 
         @Nonnull
-        static <S, R, FLOW extends AutoCloseable> Loader<S, FLOW> flowOf(
-                @Nonnull Function<? super S, ? extends R> opener,
-                @Nonnull Function<? super R, ? extends FLOW> reader,
-                @Nonnull Consumer<? super R> closer) {
-            Objects.requireNonNull(opener);
-            Objects.requireNonNull(reader);
+        static <K> ResourceLoader<K> of(@Nonnull Function<? super K, ? extends InputStream> loader, @Nonnull Closeable closer) {
+            Objects.requireNonNull(loader);
             Objects.requireNonNull(closer);
-            return source -> {
-                R resource = opener.applyWithIO(source);
-                try {
-                    return reader.applyWithIO(resource);
-                } catch (Error | RuntimeException | IOException e) {
-                    try {
-                        closer.acceptWithIO(resource);
-                    } catch (IOException ex) {
-                        try {
-                            e.addSuppressed(ex);
-                        } catch (Throwable ignore) {
-                        }
+            return new ResourceLoader<K>() {
+                boolean closed = false;
+
+                @Override
+                public InputStream load(K key) throws IOException {
+                    Objects.requireNonNull(key);
+                    if (closed) {
+                        throw new IllegalStateException("Closed");
                     }
-                    throw e;
+                    InputStream result = loader.applyWithIO(key);
+                    if (result == null) {
+                        throw new IOException("Null stream");
+                    }
+                    return result;
+                }
+
+                @Override
+                public void close() throws IOException {
+                    closed = true;
+                    closer.close();
                 }
             };
         }
+    }
+
+    public interface ResourceStorer<K> extends Closeable {
+
+        void store(@Nonnull K key, @Nonnull OutputStream output) throws IOException, IllegalStateException;
+    }
+
+    public interface Resource<K> extends ResourceLoader<K>, ResourceStorer<K> {
+
     }
 
     @lombok.experimental.UtilityClass
@@ -560,7 +561,7 @@ public class IO {
 
         @Nonnull
         public <T extends Closeable, R> java.util.stream.Stream<R> open(@Nonnull Supplier<T> source, @Nonnull Function<? super T, java.util.stream.Stream<R>> streamer) throws IOException {
-            return asParser(streamer).load(source);
+            return asParser(streamer).applyWithIO(source);
         }
 
         @Nonnull
@@ -568,8 +569,8 @@ public class IO {
             return StreamSupport.stream(Spliterators.spliteratorUnknownSize(asIterator(generator), Spliterator.ORDERED | Spliterator.NONNULL), false);
         }
 
-        private <C extends Closeable, R> Loader<Supplier<C>, java.util.stream.Stream<R>> asParser(Function<? super C, java.util.stream.Stream<R>> streamer) {
-            return Loader.flowOf(
+        private <C extends Closeable, R> Function<Supplier<C>, java.util.stream.Stream<R>> asParser(Function<? super C, java.util.stream.Stream<R>> streamer) {
+            return flowOf(
                     source -> source.getWithIO(),
                     resource -> streamer.applyWithIO(resource).onClose(Runnable.unchecked(resource::close)),
                     Closeable::close
@@ -648,6 +649,48 @@ public class IO {
             exception.addSuppressed(suppressed);
         }
         return Objects.requireNonNull(exception);
+    }
+
+    @Nonnull
+    static <S, R, VALUE> Function<S, VALUE> valueOf(
+            @Nonnull Function<? super S, ? extends R> opener,
+            @Nonnull Function<? super R, ? extends VALUE> reader,
+            @Nonnull Consumer<? super R> closer) {
+        Objects.requireNonNull(opener);
+        Objects.requireNonNull(reader);
+        Objects.requireNonNull(closer);
+        return source -> {
+            R resource = opener.applyWithIO(source);
+            try (Closeable c = () -> closer.acceptWithIO(resource)) {
+                return reader.applyWithIO(resource);
+            }
+        };
+    }
+
+    @Nonnull
+    static <S, R, FLOW extends AutoCloseable> Function<S, FLOW> flowOf(
+            @Nonnull Function<? super S, ? extends R> opener,
+            @Nonnull Function<? super R, ? extends FLOW> reader,
+            @Nonnull Consumer<? super R> closer) {
+        Objects.requireNonNull(opener);
+        Objects.requireNonNull(reader);
+        Objects.requireNonNull(closer);
+        return source -> {
+            R resource = opener.applyWithIO(source);
+            try {
+                return reader.applyWithIO(resource);
+            } catch (Error | RuntimeException | IOException e) {
+                try {
+                    closer.acceptWithIO(resource);
+                } catch (IOException ex) {
+                    try {
+                        e.addSuppressed(ex);
+                    } catch (Throwable ignore) {
+                    }
+                }
+                throw e;
+            }
+        };
     }
 
     @Target({ElementType.METHOD})
