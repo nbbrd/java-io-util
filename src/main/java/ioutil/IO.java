@@ -642,13 +642,17 @@ public class IO {
     }
 
     @Nonnull
-    public IOException ensureClosed(@Nonnull IOException exception, @Nonnull Closeable closeable) {
+    @SuppressWarnings("ThrowableResultIgnored")
+    public <X extends Throwable> void ensureClosed(@Nonnull X exception, @Nonnull Closeable closeable) {
+        Objects.requireNonNull(exception);
         try {
             closeable.close();
         } catch (IOException suppressed) {
-            exception.addSuppressed(suppressed);
+            try {
+                exception.addSuppressed(suppressed);
+            } catch (Throwable ignore) {
+            }
         }
-        return Objects.requireNonNull(exception);
     }
 
     @Nonnull
@@ -680,14 +684,7 @@ public class IO {
             try {
                 return reader.applyWithIO(resource);
             } catch (Error | RuntimeException | IOException e) {
-                try {
-                    closer.acceptWithIO(resource);
-                } catch (IOException ex) {
-                    try {
-                        e.addSuppressed(ex);
-                    } catch (Throwable ignore) {
-                    }
-                }
+                ensureClosed(e, () -> closer.acceptWithIO(resource));
                 throw e;
             }
         };

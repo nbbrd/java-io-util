@@ -627,8 +627,14 @@ public class IOTest {
         assertThatNullPointerException().isThrownBy(() -> IO.ensureClosed(null, IO.Runnable.noOp().asCloseable()));
         assertThatNullPointerException().isThrownBy(() -> IO.ensureClosed(new IOException(), null));
 
-        assertThat(IO.ensureClosed(new IOException(), IO.Runnable.noOp().asCloseable())).hasNoSuppressedExceptions();
-        assertThat(IO.ensureClosed(new IOException(), onError1.asCloseable())).hasSuppressedException(new Error1());
+        assertThat(new IOException()).satisfies(o -> {
+            IO.ensureClosed(o, IO.Runnable.noOp().asCloseable());
+            assertThat(o).hasNoSuppressedExceptions();
+        });
+        assertThat(new IOException()).satisfies(o -> {
+            IO.ensureClosed(o, onError1.asCloseable());
+            assertThat(o).hasSuppressedException(new Error1());
+        });
     }
 
     private static final class OpenError extends IOException {

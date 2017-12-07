@@ -16,12 +16,16 @@
  */
 package ioutil;
 
-import java.util.logging.Level;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
+import java.io.StringReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Optional;
 import javax.annotation.Nonnull;
-import javax.xml.stream.XMLInputFactory;
-import org.xml.sax.SAXNotRecognizedException;
-import org.xml.sax.SAXNotSupportedException;
-import org.xml.sax.XMLReader;
 
 /**
  * Set of utilities related to XML.
@@ -31,50 +35,51 @@ import org.xml.sax.XMLReader;
 @lombok.experimental.UtilityClass
 public class Xml {
 
-    @lombok.experimental.UtilityClass
-    public static class StAX {
+    public interface Parser<T> {
 
-        /**
-         * Prevents XXE vulnerability by disabling features.
-         *
-         * @param factory non-null factory
-         * @see
-         * https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLInputFactory_.28a_StAX_parser.29
-         */
-        public void preventXXE(@Nonnull XMLInputFactory factory) {
-            if (factory.isPropertySupported(XMLInputFactory.SUPPORT_DTD)) {
-                factory.setProperty(XMLInputFactory.SUPPORT_DTD, false);
-            }
-            if (factory.isPropertySupported(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES)) {
-                factory.setProperty(XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+        @Nonnull
+        default T parseChars(@Nonnull CharSequence source) throws IOException {
+            return parseReader(() -> new StringReader(source.toString()));
+        }
+
+        @Nonnull
+        default T parseFile(@Nonnull File source) throws IOException {
+            return parseStream(() -> new FileInputStream(source));
+        }
+
+        @Nonnull
+        default T parsePath(@Nonnull Path source) throws IOException {
+            Optional<File> file = IO.getFile(source);
+            return file.isPresent()
+                    ? parseFile(file.get())
+                    : parseReader(() -> Files.newBufferedReader(source));
+        }
+
+        @Nonnull
+        default T parseReader(@Nonnull IO.Supplier<? extends Reader> source) throws IOException {
+            try (Reader resource = source.getWithIO()) {
+                return parseReader(resource);
             }
         }
+
+        @Nonnull
+        default T parseStream(@Nonnull IO.Supplier<? extends InputStream> source) throws IOException {
+            try (InputStream resource = source.getWithIO()) {
+                return parseStream(resource);
+            }
+        }
+
+        @Nonnull
+        T parseReader(@Nonnull Reader resource) throws IOException;
+
+        @Nonnull
+        T parseStream(@Nonnull InputStream resource) throws IOException;
     }
 
-    @lombok.experimental.UtilityClass
-    @lombok.extern.java.Log
-    public static class SAX {
+    public static final class WrappedException extends IOException {
 
-        /**
-         * Prevents XXE vulnerability by disabling features.
-         *
-         * @param reader non-null reader
-         * @see
-         * https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLReader
-         */
-        public void preventXXE(@Nonnull XMLReader reader) {
-            setFeatureQuietly(reader, "http://apache.org/xml/features/disallow-doctype-decl", true);
-            setFeatureQuietly(reader, "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            setFeatureQuietly(reader, "http://xml.org/sax/features/external-general-entities", false);
-            setFeatureQuietly(reader, "http://xml.org/sax/features/external-parameter-entities", false);
-        }
-
-        private void setFeatureQuietly(XMLReader reader, String feature, boolean value) {
-            try {
-                reader.setFeature(feature, value);
-            } catch (SAXNotRecognizedException | SAXNotSupportedException ex) {
-                log.log(Level.FINE, ex, () -> String.format("Failed to set feature '%s' to '%s'", feature, value));
-            }
+        public WrappedException(Exception ex) {
+            super(ex);
         }
     }
 }
