@@ -19,6 +19,7 @@ package ioutil;
 import ioutil.XmlTest.Person;
 import java.io.IOException;
 import java.util.List;
+import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLInputFactory;
@@ -40,11 +41,12 @@ public class JaxbTest {
     @Test
     @SuppressWarnings("null")
     public void testCreateUnmarshaller() throws Exception {
-        assertThatNullPointerException().isThrownBy(() -> Jaxb.createUnmarshaller(null));
-
+        assertThatNullPointerException().isThrownBy(() -> Jaxb.createUnmarshaller((Class<?>) null));
         assertThatThrownBy(() -> Jaxb.createUnmarshaller(Runnable.class))
                 .isInstanceOf(Xml.WrappedException.class)
                 .hasCauseInstanceOf(JAXBException.class);
+
+        assertThatNullPointerException().isThrownBy(() -> Jaxb.createUnmarshaller((JAXBContext) null));
     }
 
     @Test
@@ -56,9 +58,11 @@ public class JaxbTest {
     @Test
     @SuppressWarnings("null")
     public void testParserOf() throws Exception {
-        assertThatNullPointerException().isThrownBy(() -> Jaxb.Parser.of(null));
-
+        assertThatNullPointerException().isThrownBy(() -> Jaxb.Parser.of((Class<?>) null));
         XmlTest.testParser(Jaxb.Parser.of(Person.class));
+
+        assertThatNullPointerException().isThrownBy(() -> Jaxb.Parser.of((JAXBContext) null));
+        XmlTest.testParser(Jaxb.Parser.of(JAXBContext.newInstance(Person.class)));
     }
 
     @Test

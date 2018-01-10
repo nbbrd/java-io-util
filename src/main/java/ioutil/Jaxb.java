@@ -47,6 +47,16 @@ public class Jaxb {
         }
     }
 
+    @Nonnull
+    public Unmarshaller createUnmarshaller(@Nonnull JAXBContext context) throws IOException {
+        Objects.requireNonNull(context);
+        try {
+            return context.createUnmarshaller();
+        } catch (JAXBException ex) {
+            throw new Xml.WrappedException(ex);
+        }
+    }
+
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class Parser<T> implements Xml.Parser<T> {
 
@@ -54,6 +64,12 @@ public class Jaxb {
         public static <T> Parser<T> of(@Nonnull Class<T> type) throws IOException {
             Objects.requireNonNull(type);
             return Parser.<T>builder().factory(() -> createUnmarshaller(type)).build();
+        }
+
+        @Nonnull
+        public static <T> Parser<T> of(@Nonnull JAXBContext context) throws IOException {
+            Objects.requireNonNull(context);
+            return Parser.<T>builder().factory(() -> createUnmarshaller(context)).build();
         }
 
         @lombok.NonNull
