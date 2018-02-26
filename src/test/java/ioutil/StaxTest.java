@@ -16,7 +16,7 @@
  */
 package ioutil;
 
-import test.ResourceCounter;
+import _test.ResourceCounter;
 import ioutil.XmlTest.Person;
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,10 +33,10 @@ import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
 import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
-import test.Forwarding.ForwardingXMLEventReader;
-import test.Forwarding.ForwardingXMLInputFactory;
-import test.Forwarding.ForwardingXMLInputFactory.OnEvent;
-import test.Meta;
+import _test.Forwarding.ForwardingXMLEventReader;
+import _test.Forwarding.ForwardingXMLInputFactory;
+import _test.Forwarding.ForwardingXMLInputFactory.OnEvent;
+import _test.Meta;
 
 /**
  *

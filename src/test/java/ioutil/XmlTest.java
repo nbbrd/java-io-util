@@ -16,7 +16,7 @@
  */
 package ioutil;
 
-import test.ResourceCounter;
+import _test.ResourceCounter;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit.WireMockRule;
@@ -38,8 +38,8 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlRootElement;
 import static org.assertj.core.api.Assertions.*;
-import test.Forwarding;
-import test.Meta;
+import _test.Forwarding;
+import _test.Meta;
 
 /**
  *

@@ -26,11 +26,11 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
-import test.Forwarding.ForwardingUnmarshaller;
-import test.Forwarding.ForwardingUnmarshaller.OnUnmarshal;
-import test.Forwarding.ForwardingXMLInputFactory;
-import test.Forwarding.ForwardingXMLInputFactory.OnEvent;
-import test.Meta;
+import _test.Forwarding.ForwardingUnmarshaller;
+import _test.Forwarding.ForwardingUnmarshaller.OnUnmarshal;
+import _test.Forwarding.ForwardingXMLInputFactory;
+import _test.Forwarding.ForwardingXMLInputFactory.OnEvent;
+import _test.Meta;
 
 /**
  *

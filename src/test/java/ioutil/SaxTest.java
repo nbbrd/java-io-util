@@ -27,9 +27,9 @@ import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 import org.xml.sax.helpers.XMLReaderFactory;
-import test.Forwarding.ForwardingXMLReader;
-import test.Forwarding.ForwardingXMLReader.OnParse;
-import test.Meta;
+import _test.Forwarding.ForwardingXMLReader;
+import _test.Forwarding.ForwardingXMLReader.OnParse;
+import _test.Meta;
 
 /**
  *

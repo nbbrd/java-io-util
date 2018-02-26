@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package test;
+package _test;
 
 /**
  *
@@ -22,12 +22,11 @@ package test;
  */
 public final class ResourceCounter {
 
-private    int count = 0;
+    private int count = 0;
 
     public int getCount() {
         return count;
     }
-
 
     public void reset() {
         count = 0;
