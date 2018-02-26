@@ -625,16 +625,60 @@ public class IOTest {
     @SuppressWarnings("null")
     public void testEnsureClosed() throws IOException {
         assertThatNullPointerException().isThrownBy(() -> IO.ensureClosed(null, IO.Runnable.noOp().asCloseable()));
-        assertThatNullPointerException().isThrownBy(() -> IO.ensureClosed(new IOException(), null));
 
         assertThat(new IOException()).satisfies(o -> {
             IO.ensureClosed(o, IO.Runnable.noOp().asCloseable());
             assertThat(o).hasNoSuppressedExceptions();
         });
+
+        assertThat(new IOException()).satisfies(o -> {
+            IO.ensureClosed(o, null);
+            assertThat(o).hasNoSuppressedExceptions();
+        });
+
         assertThat(new IOException()).satisfies(o -> {
             IO.ensureClosed(o, onError1.asCloseable());
             assertThat(o).hasSuppressedException(new Error1());
         });
+    }
+
+    @Test
+    public void testCloseBoth() throws IOException {
+        Closeable error1 = IO.Runnable.throwing(Error1::new).asCloseable();
+        Closeable error2 = IO.Runnable.throwing(Error2::new).asCloseable();
+        Closeable noOp = IO.Runnable.noOp().asCloseable();
+
+        assertThatThrownBy(() -> IO.closeBoth(error1, error2))
+                .isInstanceOf(Error1.class)
+                .hasSuppressedException(new Error2());
+
+        assertThatThrownBy(() -> IO.closeBoth(error1, noOp))
+                .isInstanceOf(Error1.class)
+                .hasNoSuppressedExceptions();
+
+        assertThatThrownBy(() -> IO.closeBoth(error1, null))
+                .isInstanceOf(Error1.class)
+                .hasNoSuppressedExceptions();
+
+        assertThatThrownBy(() -> IO.closeBoth(noOp, error2))
+                .isInstanceOf(Error2.class)
+                .hasNoSuppressedExceptions();
+
+        assertThatCode(() -> IO.closeBoth(noOp, noOp))
+                .doesNotThrowAnyException();
+
+        assertThatCode(() -> IO.closeBoth(noOp, null))
+                .doesNotThrowAnyException();
+
+        assertThatThrownBy(() -> IO.closeBoth(null, error2))
+                .isInstanceOf(Error2.class)
+                .hasNoSuppressedExceptions();
+
+        assertThatCode(() -> IO.closeBoth(null, noOp))
+                .doesNotThrowAnyException();
+
+        assertThatCode(() -> IO.closeBoth(null, null))
+                .doesNotThrowAnyException();
     }
 
     private static final class OpenError extends IOException {

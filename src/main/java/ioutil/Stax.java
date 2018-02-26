@@ -99,13 +99,13 @@ public class Stax {
 
         @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {
-            Reader resource = source.getWithIO();
+            Reader resource = Objects.requireNonNull(source.getWithIO());
             return parse(o -> o.createXMLStreamReader(resource), resource);
         }
 
         @Override
         public T parseStream(IO.Supplier<? extends InputStream> source) throws IOException {
-            InputStream resource = source.getWithIO();
+            InputStream resource = Objects.requireNonNull(source.getWithIO());
             return parse(o -> o.createXMLStreamReader(resource), resource);
         }
 
@@ -194,13 +194,13 @@ public class Stax {
 
         @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {
-            Reader resource = source.getWithIO();
+            Reader resource = Objects.requireNonNull(source.getWithIO());
             return parse(o -> o.createXMLEventReader(resource), resource);
         }
 
         @Override
         public T parseStream(IO.Supplier<? extends InputStream> source) throws IOException {
-            InputStream resource = source.getWithIO();
+            InputStream resource = Objects.requireNonNull(source.getWithIO());
             return parse(o -> o.createXMLEventReader(resource), resource);
         }
 

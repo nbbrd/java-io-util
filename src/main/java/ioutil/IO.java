@@ -643,15 +643,31 @@ public class IO {
 
     @Nonnull
     @SuppressWarnings("ThrowableResultIgnored")
-    public <X extends Throwable> void ensureClosed(@Nonnull X exception, @Nonnull Closeable closeable) {
+    public void ensureClosed(@Nonnull Throwable exception, @Nullable Closeable closeable) {
         Objects.requireNonNull(exception);
-        try {
-            closeable.close();
-        } catch (IOException suppressed) {
+        if (closeable != null) {
             try {
-                exception.addSuppressed(suppressed);
-            } catch (Throwable ignore) {
+                closeable.close();
+            } catch (IOException suppressed) {
+                try {
+                    exception.addSuppressed(suppressed);
+                } catch (Throwable ignore) {
+                }
             }
+        }
+    }
+
+    public void closeBoth(@Nullable Closeable first, @Nullable Closeable second) throws IOException {
+        if (first != null) {
+            try {
+                first.close();
+            } catch (IOException ex) {
+                ensureClosed(ex, second);
+                throw ex;
+            }
+        }
+        if (second != null) {
+            second.close();
         }
     }
 
