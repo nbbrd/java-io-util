@@ -16,6 +16,7 @@
  */
 package ioutil;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -23,6 +24,7 @@ import java.util.Objects;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
@@ -104,6 +106,12 @@ public class Sax {
         private final boolean preventXXE;
 
         @Override
+        public T parseFile(File source) throws IOException {
+            Objects.requireNonNull(source);
+            return parse(newInputSource(source));
+        }
+
+        @Override
         public T parseReader(Reader resource) throws IOException {
             Objects.requireNonNull(resource);
             return parse(new InputSource(resource));
@@ -128,6 +136,18 @@ public class Sax {
                 throw new Xml.WrappedException(ex);
             }
             return after.getWithIO();
+        }
+
+        /**
+         * Creates a new InputSource from a file.
+         *
+         * @param file
+         * @return
+         * @see SAXParser#parse(java.io.File,
+         * org.xml.sax.helpers.DefaultHandler)
+         */
+        private InputSource newInputSource(File file) {
+            return new InputSource(file.toURI().toASCIIString());
         }
     }
 
