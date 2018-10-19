@@ -26,10 +26,10 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
-import org.xml.sax.helpers.XMLReaderFactory;
 import _test.Forwarding.ForwardingXMLReader;
 import _test.Forwarding.ForwardingXMLReader.OnParse;
 import _test.Meta;
+import javax.xml.parsers.SAXParserFactory;
 
 /**
  *
@@ -41,7 +41,7 @@ public class SaxTest {
     @SuppressWarnings("null")
     public void testPreventXXE() {
         assertThatNullPointerException().isThrownBy(() -> Sax.preventXXE(null));
-        assertThatCode(() -> Sax.preventXXE(XMLReaderFactory.createXMLReader())).doesNotThrowAnyException();
+        assertThatCode(() -> Sax.preventXXE(SAXParserFactory.newInstance().newSAXParser().getXMLReader())).doesNotThrowAnyException();
     }
 
     @Test

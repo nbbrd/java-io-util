@@ -22,13 +22,14 @@ import java.io.Reader;
 import java.util.Objects;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.XMLReaderFactory;
 
 /**
  *
@@ -55,10 +56,18 @@ public class Sax {
     @Nonnull
     public static XMLReader createReader() throws IOException {
         try {
-            return XMLReaderFactory.createXMLReader();
-        } catch (SAXException ex) {
+            return FACTORY.newSAXParser().getXMLReader();
+        } catch (SAXException | ParserConfigurationException ex) {
             throw new Xml.WrappedException(ex);
         }
+    }
+
+    private final static SAXParserFactory FACTORY = initFactory();
+
+    private static SAXParserFactory initFactory() {
+        SAXParserFactory result = SAXParserFactory.newInstance();
+        result.setNamespaceAware(true);
+        return result;
     }
 
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
