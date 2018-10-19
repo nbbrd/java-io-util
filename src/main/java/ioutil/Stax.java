@@ -87,15 +87,22 @@ public class Stax {
             return StreamParser.<T>builder().handler(handler.asFlow()).build();
         }
 
+        public static class Builder<T> {
+
+            Builder() {
+                this.handler = null;
+                this.factory = XMLInputFactory::newFactory;
+                this.preventXXE = true;
+            }
+        }
+
         @lombok.NonNull
         private final FlowHandler<XMLStreamReader, T> handler;
 
         @lombok.NonNull
-        @lombok.Builder.Default
-        private final IO.Supplier<? extends XMLInputFactory> factory = XMLInputFactory::newFactory;
+        private final IO.Supplier<? extends XMLInputFactory> factory;
 
-        @lombok.Builder.Default
-        private boolean preventXXE = true;
+        private final boolean preventXXE;
 
         @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {
@@ -182,15 +189,22 @@ public class Stax {
             return EventParser.<T>builder().handler(handler.asFlow()).build();
         }
 
+        public static class Builder<T> {
+
+            Builder() {
+                this.handler = null;
+                this.factory = XMLInputFactory::newFactory;
+                this.preventXXE = true;
+            }
+        }
+
         @lombok.NonNull
         private final FlowHandler<XMLEventReader, T> handler;
 
         @lombok.NonNull
-        @lombok.Builder.Default
-        private final IO.Supplier<? extends XMLInputFactory> factory = XMLInputFactory::newFactory;
+        private final IO.Supplier<? extends XMLInputFactory> factory;
 
-        @lombok.Builder.Default
-        private boolean preventXXE = true;
+        private final boolean preventXXE;
 
         @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {

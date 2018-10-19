@@ -72,15 +72,22 @@ public class Jaxb {
             return Parser.<T>builder().factory(() -> createUnmarshaller(context)).build();
         }
 
+        public static class Builder<T> {
+
+            Builder() {
+                this.factory = null;
+                this.preventXXE = true;
+                this.xxeFactory = Parser::getStaxFactory;
+            }
+        }
+
         @lombok.NonNull
         private final IO.Supplier<? extends Unmarshaller> factory;
 
-        @lombok.Builder.Default
-        private boolean preventXXE = true;
+        private final boolean preventXXE;
 
         @lombok.NonNull
-        @lombok.Builder.Default
-        private final IO.Supplier<? extends XMLInputFactory> xxeFactory = Parser::getStaxFactory;
+        private final IO.Supplier<? extends XMLInputFactory> xxeFactory;
 
         @Override
         public T parseFile(File source) throws IOException {

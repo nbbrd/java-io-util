@@ -24,7 +24,7 @@ import java.util.List;
  * @author Philippe Charles
  * @param <T>
  */
-@lombok.AllArgsConstructor(staticName = "of")
+@lombok.AllArgsConstructor
 public class Meta<T> {
 
     @lombok.Getter
@@ -58,7 +58,7 @@ public class Meta<T> {
         }
 
         public Builder<T> of(String name, boolean invalid, T target) {
-            result.add(Meta.of(name, invalid, target));
+            result.add(new Meta(name, invalid, target));
             return this;
         }
 

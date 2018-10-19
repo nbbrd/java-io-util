@@ -69,22 +69,30 @@ public class Sax {
             return Parser.<T>builder().handler(handler).after(after).build();
         }
 
+        public static class Builder<T> {
+
+            Builder() {
+                this.factory = Sax::createReader;
+                this.handler = null;
+                this.before = IO.Runnable.noOp();
+                this.after = null;
+                this.preventXXE = true;
+            }
+        }
+
         @lombok.NonNull
-        @lombok.Builder.Default
-        private final IO.Supplier<? extends XMLReader> factory = Sax::createReader;
+        private final IO.Supplier<? extends XMLReader> factory;
 
         @lombok.NonNull
         private final ContentHandler handler;
 
         @lombok.NonNull
-        @lombok.Builder.Default
-        private final IO.Runnable before = IO.Runnable.noOp();
+        private final IO.Runnable before;
 
         @lombok.NonNull
         private final IO.Supplier<? extends T> after;
 
-        @lombok.Builder.Default
-        private boolean preventXXE = true;
+        private final boolean preventXXE;
 
         @Override
         public T parseReader(Reader resource) throws IOException {
