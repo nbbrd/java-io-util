@@ -501,33 +501,33 @@ public class IOTest {
         IO.Function<X, Object> readError = IO.Function.throwing(ReadError::new);
         IO.Consumer<X> closeError = IO.Consumer.throwing(CloseError::new);
 
-        assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Function<List<String>, Object> p = IO.valueOf(X::open, X::read, X::close);
-            assertThatCode(() -> p.applyWithIO((List<String>) c)).doesNotThrowAnyException();
+        assertThat(IO.valueOf(X::open, X::read, X::close)).satisfies(p -> {
+            List<String> c = new ArrayList<>();
+            assertThatCode(() -> p.applyWithIO(c)).doesNotThrowAnyException();
             assertThat(c).containsExactly("open", "read", "close");
         });
 
-        assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Function<List<String>, Object> p = IO.valueOf(openError, X::read, X::close);
-            assertThatThrownBy(() -> p.applyWithIO((List<String>) c)).isInstanceOf(OpenError.class);
+        assertThat(IO.valueOf(openError, X::read, X::close)).satisfies(p -> {
+            List<String> c = new ArrayList<>();
+            assertThatThrownBy(() -> p.applyWithIO(c)).isInstanceOf(OpenError.class);
             assertThat(c).isEmpty();
         });
 
-        assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Function<List<String>, Object> p = IO.valueOf(X::open, readError, X::close);
-            assertThatThrownBy(() -> p.applyWithIO((List<String>) c)).isInstanceOf(ReadError.class);
+        assertThat(IO.valueOf(X::open, readError, X::close)).satisfies(p -> {
+            List<String> c = new ArrayList<>();
+            assertThatThrownBy(() -> p.applyWithIO(c)).isInstanceOf(ReadError.class);
             assertThat(c).containsExactly("open", "close");
         });
 
-        assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Function<List<String>, Object> p = IO.valueOf(X::open, X::read, closeError);
-            assertThatThrownBy(() -> p.applyWithIO((List<String>) c)).isInstanceOf(CloseError.class);
+        assertThat(IO.valueOf(X::open, X::read, closeError)).satisfies(p -> {
+            List<String> c = new ArrayList<>();
+            assertThatThrownBy(() -> p.applyWithIO(c)).isInstanceOf(CloseError.class);
             assertThat(c).containsExactly("open", "read");
         });
 
-        assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Function<List<String>, Object> p = IO.valueOf(X::open, readError, closeError);
-            assertThatThrownBy(() -> p.applyWithIO((List<String>) c)).isInstanceOf(ReadError.class).hasSuppressedException(new CloseError());
+        assertThat(IO.valueOf(X::open, readError, closeError)).satisfies(p -> {
+            List<String> c = new ArrayList<>();
+            assertThatThrownBy(() -> p.applyWithIO(c)).isInstanceOf(ReadError.class).hasSuppressedException(new CloseError());
             assertThat(c).containsExactly("open");
         });
     }
@@ -538,56 +538,56 @@ public class IOTest {
         IO.Function<X, Closeable> readError = IO.Function.throwing(ReadError::new);
         IO.Consumer<X> closeError = IO.Consumer.throwing(CloseError::new);
 
-        assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Function<List<String>, Closeable> p = IO.flowOf(X::open, X::read, X::close);
+        assertThat(IO.flowOf(X::open, X::read, X::close)).satisfies(p -> {
+            List<String> c = new ArrayList<>();
             assertThatCode(() -> {
-                try (AutoCloseable auto = p.applyWithIO((List<String>) c)) {
+                try (AutoCloseable auto = p.applyWithIO(c)) {
                 }
             }).doesNotThrowAnyException();
             assertThat(c).containsExactly("open", "read", "close");
         });
 
-        assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Function<List<String>, Closeable> p = IO.flowOf(X::open, X::read, X::close);
+        assertThat(IO.flowOf(X::open, X::read, X::close)).satisfies(p -> {
+            List<String> c = new ArrayList<>();
             assertThatThrownBy(() -> {
-                try (AutoCloseable auto = p.applyWithIO((List<String>) c)) {
+                try (AutoCloseable auto = p.applyWithIO(c)) {
                     throw new Error1();
                 }
             }).isInstanceOf(Error1.class);
             assertThat(c).containsExactly("open", "read", "close");
         });
 
-        assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Function<List<String>, Closeable> p = IO.valueOf(openError, X::read, X::close);
+        assertThat(IO.valueOf(openError, X::read, X::close)).satisfies(p -> {
+            List<String> c = new ArrayList<>();
             assertThatThrownBy(() -> {
-                try (AutoCloseable auto = p.applyWithIO((List<String>) c)) {
+                try (AutoCloseable auto = p.applyWithIO(c)) {
                 }
             }).isInstanceOf(OpenError.class);
             assertThat(c).isEmpty();
         });
 
-        assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Function<List<String>, Closeable> p = IO.valueOf(X::open, readError, X::close);
+        assertThat(IO.valueOf(X::open, readError, X::close)).satisfies(p -> {
+            List<String> c = new ArrayList<>();
             assertThatThrownBy(() -> {
-                try (AutoCloseable auto = p.applyWithIO((List<String>) c)) {
+                try (AutoCloseable auto = p.applyWithIO(c)) {
                 }
             }).isInstanceOf(ReadError.class);
             assertThat(c).containsExactly("open", "close");
         });
 
-        assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Function<List<String>, Closeable> p = IO.valueOf(X::open, X::read, closeError);
+        assertThat(IO.valueOf(X::open, X::read, closeError)).satisfies(p -> {
+            List<String> c = new ArrayList<>();
             assertThatThrownBy(() -> {
-                try (AutoCloseable auto = p.applyWithIO((List<String>) c)) {
+                try (AutoCloseable auto = p.applyWithIO(c)) {
                 }
             }).isInstanceOf(CloseError.class);
             assertThat(c).containsExactly("open", "read");
         });
 
-        assertThat(new ArrayList<String>()).satisfies(c -> {
-            IO.Function<List<String>, Closeable> p = IO.valueOf(X::open, readError, closeError);
+        assertThat(IO.valueOf(X::open, readError, closeError)).satisfies(p -> {
+            List<String> c = new ArrayList<>();
             assertThatThrownBy(() -> {
-                try (AutoCloseable auto = p.applyWithIO((List<String>) c)) {
+                try (AutoCloseable auto = p.applyWithIO(c)) {
                 }
             }).isInstanceOf(ReadError.class).hasSuppressedException(new CloseError());
             assertThat(c).containsExactly("open");
