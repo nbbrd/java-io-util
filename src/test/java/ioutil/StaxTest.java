@@ -121,7 +121,7 @@ public class StaxTest {
                             .build();
 
                     inputFactory.reset();
-                    XmlTest.testParserResources(p, handler.isInvalid() || factory.isInvalid());
+                    XmlTest.testParserResources(p, Meta.lookupExpectedException(handler, factory));
                     assertThat(inputFactory.counter.getCount()).isLessThanOrEqualTo(0);
                 }
             }
@@ -157,7 +157,7 @@ public class StaxTest {
                             .build();
 
                     inputFactory.reset();
-                    XmlTest.testParserResources(p, handler.isInvalid() || factory.isInvalid());
+                    XmlTest.testParserResources(p, Meta.lookupExpectedException(handler, factory));
                     assertThat(inputFactory.counter.getCount()).isLessThanOrEqualTo(0);
                 }
             }

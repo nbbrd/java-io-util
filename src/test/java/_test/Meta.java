@@ -18,6 +18,8 @@ package _test;
 
 import com.google.common.collect.ImmutableList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 /**
  *
@@ -31,7 +33,7 @@ public class Meta<T> {
     private final String name;
 
     @lombok.Getter
-    private final boolean invalid;
+    private final Class<? extends Throwable> expectedException;
 
     @lombok.Getter
     private final T target;
@@ -48,6 +50,17 @@ public class Meta<T> {
     public static final class Builder<T> {
 
         private final ImmutableList.Builder<Meta<T>> result = ImmutableList.builder();
+        private String group = "";
+
+        private Builder<T> addItem(String name, T target, Class<? extends Throwable> expectedException) {
+            result.add(new Meta<>(group + (group.isEmpty() ? "" : "/") + name, expectedException, target));
+            return this;
+        }
+
+        public Builder<T> group(String group) {
+            this.group = group;
+            return this;
+        }
 
         public Builder<T> valid(String name, T target) {
             return of(name, false, target);
@@ -57,13 +70,65 @@ public class Meta<T> {
             return of(name, true, target);
         }
 
+        public Builder<T> invalid(String name, T target, Class<? extends Throwable> expectedException) {
+            return addItem(name, target, expectedException);
+        }
+
         public Builder<T> of(String name, boolean invalid, T target) {
-            result.add(new Meta(name, invalid, target));
-            return this;
+            return addItem(name, target, invalid ? Throwable.class : null);
+        }
+
+        public CodeStep<T> code() {
+            return new CodeStep<>(this);
+        }
+
+        public ExceptionStep<T> exception(Class<? extends Throwable> ex) {
+            return new ExceptionStep<>(ex, this);
         }
 
         public List<Meta<T>> build() {
             return result.build();
         }
+    }
+
+    @lombok.RequiredArgsConstructor
+    public static final class CodeStep<T> {
+
+        private final Builder<T> builder;
+        private String name = "";
+
+        public CodeStep<T> as(String name) {
+            this.name = name;
+            return this;
+        }
+        
+        public Builder<T> xxx() {
+            return builder;
+        }
+
+        public Builder<T> doesNotRaiseExceptionWhen(T target) {
+            return builder.valid(name, target);
+        }
+    }
+
+    @lombok.RequiredArgsConstructor
+    public static final class ExceptionStep<T> {
+
+        private final Class<? extends Throwable> ex;
+        private final Builder<T> builder;
+        private String name = "";
+
+        public ExceptionStep<T> as(String name) {
+            this.name = name;
+            return this;
+        }
+
+        public Builder<T> isThrownBy(T target) {
+            return builder.invalid(name, target, ex);
+        }
+    }
+
+    public static Class<? extends Throwable> lookupExpectedException(Meta... list) {
+        return Stream.of(list).map(Meta::getExpectedException).filter(Objects::nonNull).findFirst().orElse(null);
     }
 }

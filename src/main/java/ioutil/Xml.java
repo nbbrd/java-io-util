@@ -18,6 +18,7 @@ package ioutil;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -57,14 +58,14 @@ public class Xml {
 
         @Nonnull
         default T parseReader(@Nonnull IO.Supplier<? extends Reader> source) throws IOException {
-            try (Reader resource = source.getWithIO()) {
+            try (Reader resource = open(source)) {
                 return parseReader(resource);
             }
         }
 
         @Nonnull
         default T parseStream(@Nonnull IO.Supplier<? extends InputStream> source) throws IOException {
-            try (InputStream resource = source.getWithIO()) {
+            try (InputStream resource = open(source)) {
                 return parseStream(resource);
             }
         }
@@ -80,6 +81,23 @@ public class Xml {
 
         public WrappedException(Exception ex) {
             super(ex);
+        }
+    }
+
+    static <T> T open(IO.Supplier<T> source) throws IOException {
+        T result = source.getWithIO();
+        if (result == null) {
+            throw new IOException("Null resource");
+        }
+        return result;
+    }
+
+    static void checkFile(File source) throws FileNotFoundException {
+        if (!source.exists()) {
+            throw new FileNotFoundException(source.getPath());
+        }
+        if (!source.isFile()) {
+            throw new FileNotFoundException(source.getPath() + " (acccess denied)");
         }
     }
 }

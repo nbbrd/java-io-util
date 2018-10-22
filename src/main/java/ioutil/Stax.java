@@ -17,6 +17,7 @@
 package ioutil;
 
 import java.io.Closeable;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -106,13 +107,13 @@ public class Stax {
 
         @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {
-            Reader resource = Objects.requireNonNull(source.getWithIO());
+            Reader resource = Xml.open(source);
             return parse(o -> o.createXMLStreamReader(resource), resource);
         }
 
         @Override
         public T parseStream(IO.Supplier<? extends InputStream> source) throws IOException {
-            InputStream resource = Objects.requireNonNull(source.getWithIO());
+            InputStream resource = Xml.open(source);
             return parse(o -> o.createXMLStreamReader(resource), resource);
         }
 
@@ -134,7 +135,7 @@ public class Stax {
                 return handler.parse(input, onClose);
             } catch (XMLStreamException ex) {
                 IO.ensureClosed(ex, onClose);
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             } catch (Error | RuntimeException | IOException ex) {
                 IO.ensureClosed(ex, onClose);
                 throw ex;
@@ -147,7 +148,7 @@ public class Stax {
                 return parse(input, () -> closeBoth(input, onClose));
             } catch (XMLStreamException ex) {
                 IO.ensureClosed(ex, onClose);
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             } catch (Error | RuntimeException | IOException ex) {
                 IO.ensureClosed(ex, onClose);
                 throw ex;
@@ -167,7 +168,7 @@ public class Stax {
                 input.close();
             } catch (XMLStreamException ex) {
                 IO.ensureClosed(ex, onClose);
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             } catch (Error | RuntimeException ex) {
                 IO.ensureClosed(ex, onClose);
                 throw ex;
@@ -208,13 +209,13 @@ public class Stax {
 
         @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {
-            Reader resource = Objects.requireNonNull(source.getWithIO());
+            Reader resource = Xml.open(source);
             return parse(o -> o.createXMLEventReader(resource), resource);
         }
 
         @Override
         public T parseStream(IO.Supplier<? extends InputStream> source) throws IOException {
-            InputStream resource = Objects.requireNonNull(source.getWithIO());
+            InputStream resource = Xml.open(source);
             return parse(o -> o.createXMLEventReader(resource), resource);
         }
 
@@ -236,7 +237,7 @@ public class Stax {
                 return parse(input, () -> closeBoth(input, onClose));
             } catch (XMLStreamException ex) {
                 IO.ensureClosed(ex, onClose);
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             } catch (Error | RuntimeException | IOException ex) {
                 IO.ensureClosed(ex, onClose);
                 throw ex;
@@ -248,7 +249,7 @@ public class Stax {
                 return handler.parse(input, onClose);
             } catch (XMLStreamException ex) {
                 IO.ensureClosed(ex, onClose);
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             } catch (Error | RuntimeException | IOException ex) {
                 IO.ensureClosed(ex, onClose);
                 throw ex;
@@ -268,7 +269,7 @@ public class Stax {
                 input.close();
             } catch (XMLStreamException ex) {
                 IO.ensureClosed(ex, onClose);
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             } catch (Error | RuntimeException ex) {
                 IO.ensureClosed(ex, onClose);
                 throw ex;
@@ -288,5 +289,20 @@ public class Stax {
                 && ((Boolean) factory.getProperty(feature)) != value) {
             factory.setProperty(feature, value);
         }
+    }
+
+    IOException toIOException(XMLStreamException ex) {
+        if (isEOF(ex)) {
+            return new EOFException(getFile(ex));
+        }
+        return new Xml.WrappedException(ex);
+    }
+
+    private boolean isEOF(XMLStreamException ex) {
+        return ex.getLocation() != null && ex.getLocation().getLineNumber() == 1 && ex.getLocation().getColumnNumber() == 1;
+    }
+
+    private String getFile(XMLStreamException ex) {
+        return ex.getLocation().getSystemId();
     }
 }

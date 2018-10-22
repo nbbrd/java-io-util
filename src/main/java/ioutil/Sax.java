@@ -16,6 +16,7 @@
  */
 package ioutil;
 
+import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,6 +35,7 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -63,8 +65,10 @@ public class Sax {
     public static XMLReader createReader() throws IOException {
         try {
             return DEFAULT_FACTORY.newSAXParser().getXMLReader();
-        } catch (SAXException | ParserConfigurationException ex) {
+        } catch (ParserConfigurationException ex) {
             throw new Xml.WrappedException(ex);
+        } catch (SAXException ex) {
+            throw toIOException(ex);
         }
     }
 
@@ -132,7 +136,7 @@ public class Sax {
 
         @Override
         public T parseFile(File source) throws IOException {
-            Objects.requireNonNull(source);
+            Xml.checkFile(source);
             return parse(newInputSource(source));
         }
 
@@ -161,7 +165,7 @@ public class Sax {
             try {
                 engine.parse(input);
             } catch (SAXException ex) {
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             }
             return after.getWithIO();
         }
@@ -194,5 +198,27 @@ public class Sax {
         } catch (SAXNotRecognizedException | SAXNotSupportedException ex) {
             log.log(Level.FINE, ex, () -> String.format("Failed to set feature '%s' to '%s'", feature, value));
         }
+    }
+
+    IOException toIOException(SAXException ex) {
+        if (ex instanceof SAXParseException) {
+            return toIOException((SAXParseException) ex);
+        }
+        return new Xml.WrappedException(ex);
+    }
+
+    private IOException toIOException(SAXParseException ex) {
+        if (isEOF(ex)) {
+            return new EOFException(getFile(ex));
+        }
+        return new Xml.WrappedException(ex);
+    }
+
+    private boolean isEOF(SAXParseException ex) {
+        return ex.getLineNumber() == 1 && ex.getColumnNumber() == 1;
+    }
+
+    private String getFile(SAXParseException ex) {
+        return ex.getSystemId();
     }
 }

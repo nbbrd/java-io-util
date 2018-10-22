@@ -29,6 +29,7 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import org.xml.sax.SAXParseException;
 
 /**
  *
@@ -43,7 +44,7 @@ public class Jaxb {
         try {
             return JAXBContext.newInstance(type).createUnmarshaller();
         } catch (JAXBException ex) {
-            throw new Xml.WrappedException(ex);
+            throw toIOException(ex);
         }
     }
 
@@ -53,7 +54,7 @@ public class Jaxb {
         try {
             return context.createUnmarshaller();
         } catch (JAXBException ex) {
-            throw new Xml.WrappedException(ex);
+            throw toIOException(ex);
         }
     }
 
@@ -126,10 +127,11 @@ public class Jaxb {
         }
 
         private static <T> T parseFile(Unmarshaller engine, File source) throws IOException {
+            Xml.checkFile(source);
             try {
                 return (T) engine.unmarshal(source);
             } catch (JAXBException ex) {
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             }
         }
 
@@ -137,7 +139,7 @@ public class Jaxb {
             try {
                 return (T) engine.unmarshal(resource);
             } catch (JAXBException ex) {
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             }
         }
 
@@ -145,7 +147,7 @@ public class Jaxb {
             try {
                 return (T) engine.unmarshal(resource);
             } catch (JAXBException ex) {
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             }
         }
 
@@ -157,8 +159,10 @@ public class Jaxb {
                 } finally {
                     reader.close();
                 }
-            } catch (XMLStreamException | JAXBException ex) {
-                throw new Xml.WrappedException(ex);
+            } catch (XMLStreamException ex) {
+                throw Stax.toIOException(ex);
+            } catch (JAXBException ex) {
+                throw toIOException(ex);
             }
         }
 
@@ -170,8 +174,10 @@ public class Jaxb {
                 } finally {
                     reader.close();
                 }
-            } catch (XMLStreamException | JAXBException ex) {
-                throw new Xml.WrappedException(ex);
+            } catch (XMLStreamException ex) {
+                throw Stax.toIOException(ex);
+            } catch (JAXBException ex) {
+                throw toIOException(ex);
             }
         }
 
@@ -183,9 +189,27 @@ public class Jaxb {
                 } finally {
                     reader.close();
                 }
-            } catch (XMLStreamException | JAXBException ex) {
-                throw new Xml.WrappedException(ex);
+            } catch (XMLStreamException ex) {
+                throw Stax.toIOException(ex);
+            } catch (JAXBException ex) {
+                throw toIOException(ex);
             }
         }
+    }
+
+    private IOException toIOException(JAXBException ex) {
+        if (hasLinkedException(ex)) {
+            if (ex.getCause() instanceof XMLStreamException) {
+                return Stax.toIOException((XMLStreamException) ex.getCause());
+            }
+            if (ex.getCause() instanceof SAXParseException) {
+                return Sax.toIOException((SAXParseException) ex.getCause());
+            }
+        }
+        return new Xml.WrappedException(ex);
+    }
+
+    private boolean hasLinkedException(JAXBException ex) {
+        return ex.getCause() != null && ex.getMessage() == null;
     }
 }

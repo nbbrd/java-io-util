@@ -114,7 +114,7 @@ public class JaxbTest {
                             .xxeFactory(xxeFactory.getTarget())
                             .build();
 
-                    XmlTest.testParserResources(p, factory.isInvalid() || xxeFactory.isInvalid());
+                    XmlTest.testParserResources(p, Meta.lookupExpectedException(factory, xxeFactory));
                 }
             }
         }

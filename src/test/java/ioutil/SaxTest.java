@@ -110,11 +110,7 @@ public class SaxTest {
                                     .after(after.getTarget())
                                     .build();
 
-                            XmlTest.testParserResources(p,
-                                    factory.isInvalid()
-                                    || handler.isInvalid()
-                                    || before.isInvalid()
-                                    || after.isInvalid());
+                            XmlTest.testParserResources(p, Meta.lookupExpectedException(factory, handler, before, after));
                         }
                     }
                 }
