@@ -201,7 +201,13 @@ public class Stax {
             Builder() {
                 this.handler = null;
                 this.factory = XMLInputFactory::newFactory;
-                this.preventXXE = true;
+                this.ignoreXXE = false;
+            }
+
+            @Deprecated
+            public Builder<T> preventXXE(boolean preventXXE) {
+                this.ignoreXXE = !preventXXE;
+                return this;
             }
         }
 
@@ -211,7 +217,7 @@ public class Stax {
         @lombok.NonNull
         private final IO.Supplier<? extends XMLInputFactory> factory;
 
-        private final boolean preventXXE;
+        private final boolean ignoreXXE;
 
         @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {
@@ -264,7 +270,7 @@ public class Stax {
 
         private XMLInputFactory getEngine() throws IOException {
             XMLInputFactory result = factory.getWithIO();
-            if (preventXXE) {
+            if (!ignoreXXE) {
                 preventXXE(result);
             }
             return result;

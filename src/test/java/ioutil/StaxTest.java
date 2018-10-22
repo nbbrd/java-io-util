@@ -57,7 +57,7 @@ public class StaxTest {
         XmlTest.testXXE(stream, stream.toBuilder().ignoreXXE(true).build());
 
         Stax.EventParser<Person> event = Stax.EventParser.valueOf(StaxTest::parsePerson);
-        XmlTest.testXXE(event, event.toBuilder().preventXXE(false).build());
+        XmlTest.testXXE(event, event.toBuilder().ignoreXXE(true).build());
     }
 
     @Test
@@ -153,7 +153,7 @@ public class StaxTest {
                     Xml.Parser<Person> p = Stax.EventParser.<Person>builder()
                             .handler(handler.getTarget())
                             .factory(factory.getTarget())
-                            .preventXXE(xxe)
+                            .ignoreXXE(!xxe)
                             .build();
 
                     inputFactory.reset();
