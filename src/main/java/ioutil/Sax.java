@@ -27,11 +27,15 @@ import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.ContentHandler;
+import org.xml.sax.DTDHandler;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
 import org.xml.sax.XMLReader;
+import org.xml.sax.helpers.DefaultHandler;
 
 /**
  *
@@ -58,18 +62,10 @@ public class Sax {
     @Nonnull
     public static XMLReader createReader() throws IOException {
         try {
-            return FACTORY.newSAXParser().getXMLReader();
+            return DEFAULT_FACTORY.newSAXParser().getXMLReader();
         } catch (SAXException | ParserConfigurationException ex) {
             throw new Xml.WrappedException(ex);
         }
-    }
-
-    private final static SAXParserFactory FACTORY = initFactory();
-
-    private static SAXParserFactory initFactory() {
-        SAXParserFactory result = SAXParserFactory.newInstance();
-        result.setNamespaceAware(true);
-        return result;
     }
 
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
@@ -77,17 +73,37 @@ public class Sax {
 
         @Nonnull
         public static <T> Parser<T> of(@Nonnull ContentHandler handler, @Nonnull IO.Supplier<? extends T> after) {
-            return Parser.<T>builder().handler(handler).after(after).build();
+            Parser.Builder<T> result = Parser.<T>builder().contentHandler(handler);
+            if (handler instanceof DTDHandler) {
+                result.dtdHandler((DTDHandler) handler);
+            }
+            if (handler instanceof EntityResolver) {
+                result.entityResolver((EntityResolver) handler);
+            }
+            if (handler instanceof ErrorHandler) {
+                result.errorHandler((ErrorHandler) handler);
+            }
+            return result.after(after).build();
         }
 
         public static class Builder<T> {
 
             Builder() {
                 this.factory = Sax::createReader;
-                this.handler = null;
+                this.contentHandler = null;
+                this.dtdHandler = DEFAULT_HANDLER;
+                this.entityResolver = DEFAULT_HANDLER;
+                this.errorHandler = DEFAULT_HANDLER;
                 this.before = IO.Runnable.noOp();
                 this.after = null;
                 this.preventXXE = true;
+            }
+
+            @Deprecated
+            @Nonnull
+            public Builder<T> handler(@Nonnull ContentHandler handler) {
+                this.contentHandler = Objects.requireNonNull(handler);
+                return this;
             }
         }
 
@@ -95,7 +111,16 @@ public class Sax {
         private final IO.Supplier<? extends XMLReader> factory;
 
         @lombok.NonNull
-        private final ContentHandler handler;
+        private final ContentHandler contentHandler;
+
+        @lombok.NonNull
+        private final DTDHandler dtdHandler;
+
+        @lombok.NonNull
+        private final EntityResolver entityResolver;
+
+        @lombok.NonNull
+        private final ErrorHandler errorHandler;
 
         @lombok.NonNull
         private final IO.Runnable before;
@@ -128,7 +153,10 @@ public class Sax {
             if (preventXXE) {
                 preventXXE(engine);
             }
-            engine.setContentHandler(handler);
+            engine.setContentHandler(contentHandler);
+            engine.setDTDHandler(dtdHandler);
+            engine.setEntityResolver(entityResolver);
+            engine.setErrorHandler(errorHandler);
             before.runWithIO();
             try {
                 engine.parse(input);
@@ -149,6 +177,15 @@ public class Sax {
         private InputSource newInputSource(File file) {
             return new InputSource(file.toURI().toASCIIString());
         }
+    }
+
+    private final static SAXParserFactory DEFAULT_FACTORY = initFactory();
+    private final static DefaultHandler DEFAULT_HANDLER = new DefaultHandler();
+
+    private static SAXParserFactory initFactory() {
+        SAXParserFactory result = SAXParserFactory.newInstance();
+        result.setNamespaceAware(true);
+        return result;
     }
 
     private void setFeatureQuietly(XMLReader reader, String feature, boolean value) {

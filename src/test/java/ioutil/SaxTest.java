@@ -62,7 +62,7 @@ public class SaxTest {
     @Test
     public void testParserBuilder() throws Exception {
         Xml.Parser<Person> p = Sax.Parser.<Person>builder()
-                .handler(PersonHandler.INSTANCE)
+                .contentHandler(PersonHandler.INSTANCE)
                 .before(PersonHandler.INSTANCE::clear)
                 .after(PersonHandler.INSTANCE::build)
                 .build();
@@ -105,7 +105,7 @@ public class SaxTest {
                             Sax.Parser<Person> p = Sax.Parser.<Person>builder()
                                     .preventXXE(xxe)
                                     .factory(factory.getTarget())
-                                    .handler(handler.getTarget())
+                                    .contentHandler(handler.getTarget())
                                     .before(before.getTarget())
                                     .after(after.getTarget())
                                     .build();
