@@ -52,7 +52,7 @@ public class JaxbTest {
     @Test
     public void testXXE() throws Exception {
         Jaxb.Parser<Person> p = Jaxb.Parser.of(Person.class);
-        XmlTest.testXXE(p, p.toBuilder().preventXXE(false).build());
+        XmlTest.testXXE(p, p.toBuilder().ignoreXXE(true).build());
     }
 
     @Test
@@ -110,7 +110,7 @@ public class JaxbTest {
 
                     Xml.Parser<Person> p = Jaxb.Parser.<Person>builder()
                             .factory(factory.getTarget())
-                            .preventXXE(xxe)
+                            .ignoreXXE(!xxe)
                             .xxeFactory(xxeFactory.getTarget())
                             .build();
 

@@ -100,13 +100,19 @@ public class Sax {
                 this.errorHandler = DEFAULT_HANDLER;
                 this.before = IO.Runnable.noOp();
                 this.after = null;
-                this.preventXXE = true;
+                this.ignoreXXE = false;
             }
 
             @Deprecated
             @Nonnull
             public Builder<T> handler(@Nonnull ContentHandler handler) {
                 this.contentHandler = Objects.requireNonNull(handler);
+                return this;
+            }
+
+            @Deprecated
+            public Builder<T> preventXXE(boolean preventXXE) {
+                this.ignoreXXE = !preventXXE;
                 return this;
             }
         }
@@ -132,7 +138,7 @@ public class Sax {
         @lombok.NonNull
         private final IO.Supplier<? extends T> after;
 
-        private final boolean preventXXE;
+        private final boolean ignoreXXE;
 
         @Override
         public T parseFile(File source) throws IOException {
@@ -154,7 +160,7 @@ public class Sax {
 
         private T parse(InputSource input) throws IOException {
             XMLReader engine = factory.getWithIO();
-            if (preventXXE) {
+            if (!ignoreXXE) {
                 preventXXE(engine);
             }
             engine.setContentHandler(contentHandler);

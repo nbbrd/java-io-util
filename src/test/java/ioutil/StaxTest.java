@@ -54,7 +54,7 @@ public class StaxTest {
     @Test
     public void testXXE() throws IOException {
         Stax.StreamParser<Person> stream = Stax.StreamParser.valueOf(StaxTest::parsePerson);
-        XmlTest.testXXE(stream, stream.toBuilder().preventXXE(false).build());
+        XmlTest.testXXE(stream, stream.toBuilder().ignoreXXE(true).build());
 
         Stax.EventParser<Person> event = Stax.EventParser.valueOf(StaxTest::parsePerson);
         XmlTest.testXXE(event, event.toBuilder().preventXXE(false).build());
@@ -73,13 +73,13 @@ public class StaxTest {
     public void testStreamBuilder() throws IOException {
         XmlTest.testParser(Stax.StreamParser.<Person>builder()
                 .handler(Stax.FlowHandler.of(StaxTest::parsePerson))
-                .preventXXE(false)
+                .ignoreXXE(true)
                 .factory(XMLInputFactory::newFactory)
                 .build());
 
         XmlTest.testParser(Stax.StreamParser.<Person>builder()
                 .handler(Stax.FlowHandler.of(StaxTest::parsePerson))
-                .preventXXE(true)
+                .ignoreXXE(false)
                 .factory(XMLInputFactory::newFactory)
                 .build());
     }
@@ -117,7 +117,7 @@ public class StaxTest {
                     Xml.Parser<Person> p = Stax.StreamParser.<Person>builder()
                             .handler(handler.getTarget())
                             .factory(factory.getTarget())
-                            .preventXXE(xxe)
+                            .ignoreXXE(!xxe)
                             .build();
 
                     inputFactory.reset();

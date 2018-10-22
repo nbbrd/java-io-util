@@ -47,7 +47,7 @@ public class SaxTest {
     @Test
     public void testXXE() throws IOException {
         Sax.Parser<Person> p = Sax.Parser.of(PersonHandler.INSTANCE, PersonHandler.INSTANCE::build);
-        XmlTest.testXXE(p, p.toBuilder().preventXXE(false).build());
+        XmlTest.testXXE(p, p.toBuilder().ignoreXXE(true).build());
     }
 
     @Test
@@ -103,7 +103,7 @@ public class SaxTest {
                         for (Meta<IO.Supplier<Person>> after : afters) {
 
                             Sax.Parser<Person> p = Sax.Parser.<Person>builder()
-                                    .preventXXE(xxe)
+                                    .ignoreXXE(!xxe)
                                     .factory(factory.getTarget())
                                     .contentHandler(handler.getTarget())
                                     .before(before.getTarget())

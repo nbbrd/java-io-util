@@ -77,15 +77,21 @@ public class Jaxb {
 
             Builder() {
                 this.factory = null;
-                this.preventXXE = true;
+                this.ignoreXXE = false;
                 this.xxeFactory = Parser::getStaxFactory;
+            }
+
+            @Deprecated
+            public Builder<T> preventXXE(boolean preventXXE) {
+                this.ignoreXXE = !preventXXE;
+                return this;
             }
         }
 
         @lombok.NonNull
         private final IO.Supplier<? extends Unmarshaller> factory;
 
-        private final boolean preventXXE;
+        private final boolean ignoreXXE;
 
         @lombok.NonNull
         private final IO.Supplier<? extends XMLInputFactory> xxeFactory;
@@ -95,7 +101,7 @@ public class Jaxb {
             Objects.requireNonNull(source);
             Unmarshaller engine = factory.getWithIO();
 
-            return preventXXE
+            return !ignoreXXE
                     ? parseFileXXE(engine, source, xxeFactory.getWithIO())
                     : parseFile(engine, source);
         }
@@ -105,7 +111,7 @@ public class Jaxb {
             Objects.requireNonNull(resource);
             Unmarshaller engine = factory.getWithIO();
 
-            return preventXXE
+            return !ignoreXXE
                     ? parseReaderXXE(engine, resource, xxeFactory.getWithIO())
                     : parseReader(engine, resource);
         }
@@ -115,7 +121,7 @@ public class Jaxb {
             Objects.requireNonNull(resource);
             Unmarshaller engine = factory.getWithIO();
 
-            return preventXXE
+            return !ignoreXXE
                     ? parseStreamXXE(engine, resource, xxeFactory.getWithIO())
                     : parseStream(engine, resource);
         }
