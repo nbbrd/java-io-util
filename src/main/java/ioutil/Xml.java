@@ -103,4 +103,8 @@ public class Xml {
             throw new AccessDeniedException(source.getPath());
         }
     }
+
+    static String getSystemId(File file) {
+        return file.toURI().toASCIIString();
+    }
 }

@@ -26,8 +26,8 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
-import _test.Forwarding.ForwardingXMLReader;
-import _test.Forwarding.ForwardingXMLReader.OnParse;
+import _test.ForwardingXMLReader;
+import _test.SaxListener;
 import _test.Meta;
 import javax.xml.parsers.SAXParserFactory;
 
@@ -71,14 +71,12 @@ public class SaxTest {
 
     @Test
     public void testParserResources() throws IOException {
-        XMLReader reader = Sax.createReader();
-
         List<Meta<IO.Supplier<XMLReader>>> factories = Meta.<IO.Supplier<XMLReader>>builder()
-                .valid("Ok", IO.Supplier.of(reader))
+                .valid("Ok", Sax::createReader)
                 .invalid("Null", IO.Supplier.of(null))
                 .invalid("Throwing", IO.Supplier.throwing(IOError::new))
-                .invalid("Checked", forwarding(reader, OnParse.checked(SaxError::new)))
-                .invalid("Unchecked", forwarding(reader, OnParse.unchecked(UncheckedError::new)))
+                .invalid("Checked", onParse(Sax::createReader, SaxListener.checked(SaxError::new)))
+                .invalid("Unchecked", onParse(Sax::createReader, SaxListener.unchecked(UncheckedError::new)))
                 .build();
 
         List<Meta<ContentHandler>> handlers = Meta.<ContentHandler>builder()
@@ -199,8 +197,8 @@ public class SaxTest {
         }
     }
 
-    private static IO.Supplier<XMLReader> forwarding(XMLReader delegate, OnParse event) {
-        return () -> new ForwardingXMLReader(delegate).onParse(event);
+    private static IO.Supplier<XMLReader> onParse(IO.Supplier<XMLReader> source, SaxListener onParse) {
+        return () -> new ForwardingXMLReader(source.getWithIO()).onParse(onParse);
     }
 
     private static final class IOError extends IOException {

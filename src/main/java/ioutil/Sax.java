@@ -185,7 +185,7 @@ public class Sax {
          * org.xml.sax.helpers.DefaultHandler)
          */
         private InputSource newInputSource(File file) {
-            return new InputSource(file.toURI().toASCIIString());
+            return new InputSource(Xml.getSystemId(file));
         }
     }
 

@@ -26,10 +26,10 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
-import _test.Forwarding.ForwardingUnmarshaller;
-import _test.Forwarding.ForwardingUnmarshaller.OnUnmarshal;
-import _test.Forwarding.ForwardingXMLInputFactory;
-import _test.Forwarding.ForwardingXMLInputFactory.OnEvent;
+import _test.ForwardingUnmarshaller;
+import _test.ForwardingXMLInputFactory;
+import _test.StaxListener;
+import _test.JaxbListener;
 import _test.Meta;
 
 /**
@@ -85,24 +85,23 @@ public class JaxbTest {
     @Test
     public void testParserResources() throws IOException {
         Unmarshaller unmarshaller = Jaxb.createUnmarshaller(Person.class);
-        XMLInputFactory inputFactory = XMLInputFactory.newFactory();
 
         List<Meta<IO.Supplier<Unmarshaller>>> factories = Meta.<IO.Supplier<Unmarshaller>>builder()
                 .valid("Ok", IO.Supplier.of(unmarshaller))
                 .invalid("Null", IO.Supplier.of(null))
                 .invalid("Throwing", IO.Supplier.throwing(IOError::new))
-                .invalid("Checked", forwarding(unmarshaller, OnUnmarshal.checked(JaxbError::new)))
-                .invalid("Unchecked", forwarding(unmarshaller, OnUnmarshal.unchecked(UncheckedError::new)))
+                .invalid("Checked", onUnmarshal(unmarshaller, JaxbListener.checked(JaxbError::new)))
+                .invalid("Unchecked", onUnmarshal(unmarshaller, JaxbListener.unchecked(UncheckedError::new)))
                 .build();
 
         for (boolean xxe : new boolean[]{true, false}) {
 
             List<Meta<IO.Supplier<XMLInputFactory>>> xxeFactories = Meta.<IO.Supplier<XMLInputFactory>>builder()
-                    .valid("Ok", IO.Supplier.of(inputFactory))
+                    .valid("Ok", XMLInputFactory::newFactory)
                     .of("Null", xxe, IO.Supplier.of(null))
                     .of("Throwing", xxe, IO.Supplier.throwing(IOError::new))
-                    .of("Checked", xxe, forwarding(inputFactory, OnEvent.checked(StaxError::new)))
-                    .of("Unchecked", xxe, forwarding(inputFactory, OnEvent.unchecked(UncheckedError::new)))
+                    .of("Checked", xxe, onUnmarshal(XMLInputFactory::newFactory, StaxListener.checked(StaxError::new)))
+                    .of("Unchecked", xxe, onUnmarshal(XMLInputFactory::newFactory, StaxListener.unchecked(UncheckedError::new)))
                     .build();
 
             for (Meta<IO.Supplier<Unmarshaller>> factory : factories) {
@@ -120,12 +119,12 @@ public class JaxbTest {
         }
     }
 
-    private static IO.Supplier<Unmarshaller> forwarding(Unmarshaller delegate, OnUnmarshal event) {
-        return () -> new ForwardingUnmarshaller(delegate).onUnmarshal(event);
+    private static IO.Supplier<Unmarshaller> onUnmarshal(Unmarshaller delegate, JaxbListener onUnmarshal) {
+        return () -> new ForwardingUnmarshaller(delegate).onUnmarshal(onUnmarshal);
     }
 
-    private static IO.Supplier<XMLInputFactory> forwarding(XMLInputFactory delegate, OnEvent event) {
-        return () -> new ForwardingXMLInputFactory(delegate).onCreate(event);
+    private static IO.Supplier<XMLInputFactory> onUnmarshal(IO.Supplier<XMLInputFactory> source, StaxListener onUnmarshal) {
+        return () -> new ForwardingXMLInputFactory(source.getWithIO()).onCreate(onUnmarshal);
     }
 
     private static final class IOError extends IOException {
