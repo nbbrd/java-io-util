@@ -18,12 +18,14 @@ package ioutil;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.Nonnull;
@@ -45,6 +47,7 @@ public class Xml {
 
         @Nonnull
         default T parseFile(@Nonnull File source) throws IOException {
+            checkFile(source);
             return parseStream(() -> new FileInputStream(source));
         }
 
@@ -92,12 +95,12 @@ public class Xml {
         return result;
     }
 
-    static void checkFile(File source) throws FileNotFoundException {
+    static void checkFile(File source) throws FileSystemException {
         if (!source.exists()) {
-            throw new FileNotFoundException(source.getPath());
+            throw new NoSuchFileException(source.getPath());
         }
         if (!source.isFile()) {
-            throw new FileNotFoundException(source.getPath() + " (acccess denied)");
+            throw new AccessDeniedException(source.getPath());
         }
     }
 }

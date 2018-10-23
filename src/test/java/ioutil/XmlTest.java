@@ -41,7 +41,8 @@ import static org.assertj.core.api.Assertions.*;
 import _test.Forwarding;
 import _test.Meta;
 import java.io.EOFException;
-import java.io.FileNotFoundException;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.NoSuchFileException;
 
 /**
  *
@@ -236,13 +237,13 @@ public class XmlTest {
                 .group("File")
                 .code().doesNotRaiseExceptionWhen(() -> p.parseFile(FILE))
                 .exception(EOFException.class).as("Empty").isThrownBy(() -> p.parseFile(FILE_EMPTY))
-                .exception(FileNotFoundException.class).as("Missing").isThrownBy(() -> p.parseFile(FILE_MISSING))
-                .exception(FileNotFoundException.class).as("Dir").isThrownBy(() -> p.parseFile(FILE_DIR))
+                .exception(NoSuchFileException.class).as("Missing").isThrownBy(() -> p.parseFile(FILE_MISSING))
+                .exception(AccessDeniedException.class).as("Dir").isThrownBy(() -> p.parseFile(FILE_DIR))
                 .group("Path")
                 .code().doesNotRaiseExceptionWhen(() -> p.parsePath(PATH))
                 .exception(EOFException.class).as("Empty").isThrownBy(() -> p.parsePath(PATH_EMPTY))
-                .exception(FileNotFoundException.class).as("Missing").isThrownBy(() -> p.parsePath(PATH_MISSING))
-                .exception(FileNotFoundException.class).as("Dir").isThrownBy(() -> p.parsePath(PATH_DIR))
+                .exception(NoSuchFileException.class).as("Missing").isThrownBy(() -> p.parsePath(PATH_MISSING))
+                .exception(AccessDeniedException.class).as("Dir").isThrownBy(() -> p.parsePath(PATH_DIR))
                 .group("Chars")
                 .code().doesNotRaiseExceptionWhen(() -> p.parseChars(CHARS))
                 .exception(EOFException.class).as("Empty").isThrownBy(() -> p.parseChars(CHARS_EMPTY))

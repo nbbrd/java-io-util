@@ -98,7 +98,7 @@ public class Jaxb {
 
         @Override
         public T parseFile(File source) throws IOException {
-            Objects.requireNonNull(source);
+            Xml.checkFile(source);
             Unmarshaller engine = factory.getWithIO();
 
             return !ignoreXXE
@@ -133,7 +133,6 @@ public class Jaxb {
         }
 
         private static <T> T parseFile(Unmarshaller engine, File source) throws IOException {
-            Xml.checkFile(source);
             try {
                 return (T) engine.unmarshal(source);
             } catch (JAXBException ex) {
