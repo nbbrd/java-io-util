@@ -305,6 +305,18 @@ public class IOTest {
         assertThat(IO.Supplier.of(null).getWithIO()).isNull();
         assertThat(IO.Supplier.of("").getWithIO()).isEqualTo("");
     }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testSupplierAndThen() throws IOException {
+        assertThatNullPointerException().isThrownBy(() -> ofIncrement.andThen(null));
+
+        assertThat(ofIncrement.andThen(o -> o + 3).getWithIO()).isEqualTo(ofIncrement.getWithIO() - 1 + 3);
+        assertThatThrownBy(() -> ofError1.andThen(IO.Function.throwing(Error2::new)).getWithIO())
+                .isInstanceOf(Error1.class);
+        assertThatThrownBy(() -> ofIncrement.andThen(IO.Function.throwing(Error2::new)).getWithIO())
+                .isInstanceOf(Error2.class);
+    }
     //</editor-fold>
 
     //<editor-fold defaultstate="collapsed" desc="Predicate">

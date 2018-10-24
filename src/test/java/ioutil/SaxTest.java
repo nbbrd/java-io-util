@@ -37,6 +37,8 @@ import javax.xml.parsers.SAXParserFactory;
  */
 public class SaxTest {
 
+    private final IO.Supplier<XMLReader> validFactory = Sax::createReader;
+
     @Test
     @SuppressWarnings("null")
     public void testPreventXXE() {
@@ -62,6 +64,7 @@ public class SaxTest {
     @Test
     public void testParserBuilder() throws Exception {
         Xml.Parser<Person> p = Sax.Parser.<Person>builder()
+                .factory(validFactory)
                 .contentHandler(PersonHandler.INSTANCE)
                 .before(PersonHandler.INSTANCE::clear)
                 .after(PersonHandler.INSTANCE::build)
@@ -72,11 +75,11 @@ public class SaxTest {
     @Test
     public void testParserResources() throws IOException {
         List<Meta<IO.Supplier<XMLReader>>> factories = Meta.<IO.Supplier<XMLReader>>builder()
-                .valid("Ok", Sax::createReader)
+                .valid("Ok", validFactory)
                 .invalid("Null", IO.Supplier.of(null))
                 .invalid("Throwing", IO.Supplier.throwing(IOError::new))
-                .invalid("Checked", onParse(Sax::createReader, SaxListener.checked(SaxError::new)))
-                .invalid("Unchecked", onParse(Sax::createReader, SaxListener.unchecked(UncheckedError::new)))
+                .invalid("Checked", validFactory.andThen(o -> new ForwardingXMLReader(o).onParse(SaxListener.checked(SaxError::new))))
+                .invalid("Unchecked", validFactory.andThen(o -> new ForwardingXMLReader(o).onParse(SaxListener.unchecked(UncheckedError::new))))
                 .build();
 
         List<Meta<ContentHandler>> handlers = Meta.<ContentHandler>builder()
@@ -195,10 +198,6 @@ public class SaxTest {
         public void startDocument() throws SAXException {
             throw new SaxError();
         }
-    }
-
-    private static IO.Supplier<XMLReader> onParse(IO.Supplier<XMLReader> source, SaxListener onParse) {
-        return () -> new ForwardingXMLReader(source.getWithIO()).onParse(onParse);
     }
 
     private static final class IOError extends IOException {

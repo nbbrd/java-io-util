@@ -41,6 +41,8 @@ import _test.Meta;
  */
 public class StaxTest {
 
+    private final IO.Supplier<XMLInputFactory> validFactory = XMLInputFactory::newFactory;
+
     @Test
     @SuppressWarnings("null")
     public void testPreventXXE() {
@@ -71,13 +73,13 @@ public class StaxTest {
         XmlTest.testParser(Stax.StreamParser.<Person>builder()
                 .handler(Stax.FlowHandler.of(StaxTest::parsePerson))
                 .ignoreXXE(true)
-                .factory(XMLInputFactory::newFactory)
+                .factory(validFactory)
                 .build());
 
         XmlTest.testParser(Stax.StreamParser.<Person>builder()
                 .handler(Stax.FlowHandler.of(StaxTest::parsePerson))
                 .ignoreXXE(false)
-                .factory(XMLInputFactory::newFactory)
+                .factory(validFactory)
                 .build());
     }
 
@@ -94,11 +96,11 @@ public class StaxTest {
         ResourceCounter counter = new ResourceCounter();
 
         List<Meta<IO.Supplier<XMLInputFactory>>> factories = Meta.<IO.Supplier<XMLInputFactory>>builder()
-                .valid("Ok", counter.onXMLInputFactory(XMLInputFactory::newFactory))
+                .valid("Ok", counter.onXMLInputFactory(validFactory))
                 .invalid("Null", IO.Supplier.of(null))
                 .invalid("Throwing", IO.Supplier.throwing(IOError::new))
-                .invalid("Checked", onCreate(XMLInputFactory::newFactory, StaxListener.checked(StaxError::new)))
-                .invalid("Unchecked", onCreate(XMLInputFactory::newFactory, StaxListener.unchecked(UncheckedError::new)))
+                .invalid("Checked", counter.onXMLInputFactory(validFactory).andThen(o -> new ForwardingXMLInputFactory(o).onCreate(StaxListener.checked(StaxError::new))))
+                .invalid("Unchecked", counter.onXMLInputFactory(validFactory).andThen(o -> new ForwardingXMLInputFactory(o).onCreate(StaxListener.unchecked(UncheckedError::new))))
                 .build();
 
         List<Meta<Stax.FlowHandler<XMLStreamReader, Person>>> streamHandlers = Meta.<Stax.FlowHandler<XMLStreamReader, Person>>builder()
@@ -201,10 +203,6 @@ public class StaxTest {
 
     enum Tag {
         UNKNOWN, FIRST, LAST;
-    }
-
-    private static IO.Supplier<XMLInputFactory> onCreate(IO.Supplier<XMLInputFactory> source, StaxListener onCreate) {
-        return () -> new ForwardingXMLInputFactory(source.getWithIO()).onCreate(onCreate);
     }
 
     private <I, O> Stax.FlowHandler<I, O> checked(Supplier<? extends XMLStreamException> x) {

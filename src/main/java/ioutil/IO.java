@@ -124,6 +124,25 @@ public class IO {
         @JdkWithIO
         T getWithIO() throws IOException;
 
+        /**
+         * Returns a composed supplier that first gets a value from this
+         * function, and then applies the {@code after} function to the result.
+         * If evaluation throws an exception, it is relayed to the caller of the
+         * composed function.
+         *
+         * @param <V> the type of output of the {@code after} function, and of
+         * the composed supplier
+         * @param after the function to apply after this function is applied
+         * @return a composed supplier that first gets a value from this
+         * function and then applies the {@code after} function
+         * @throws NullPointerException if after is null
+         */
+        @Nonnull
+        default <V> Supplier<V> andThen(@Nonnull Function<? super T, ? extends V> after) {
+            Objects.requireNonNull(after);
+            return () -> after.applyWithIO(getWithIO());
+        }
+
         @Nonnull
         default java.util.function.Supplier<T> asUnchecked() {
             return () -> {

@@ -38,6 +38,9 @@ import _test.Meta;
  */
 public class JaxbTest {
 
+    private final IO.Supplier<Unmarshaller> validFactory = () -> Jaxb.createUnmarshaller(Person.class);
+    private final IO.Supplier<XMLInputFactory> validXxeFactory = XMLInputFactory::newFactory;
+
     @Test
     @SuppressWarnings("null")
     public void testCreateUnmarshaller() throws Exception {
@@ -68,40 +71,35 @@ public class JaxbTest {
     @Test
     @SuppressWarnings("null")
     public void testParserBuilder() throws IOException {
-        Unmarshaller unmarshaller = Jaxb.createUnmarshaller(Person.class);
-        XMLInputFactory inputFactory = XMLInputFactory.newFactory();
-
         assertThatNullPointerException().isThrownBy(() -> Jaxb.Parser.builder().build());
         assertThatNullPointerException().isThrownBy(() -> Jaxb.Parser.builder().factory(null).build());
-        assertThatNullPointerException().isThrownBy(() -> Jaxb.Parser.builder().factory(IO.Supplier.of(unmarshaller)).xxeFactory(null).build());
+        assertThatNullPointerException().isThrownBy(() -> Jaxb.Parser.builder().factory(validFactory).xxeFactory(null).build());
 
         XmlTest.testParser(Jaxb.Parser.<Person>builder()
-                .factory(IO.Supplier.of(unmarshaller))
-                .xxeFactory(IO.Supplier.of(inputFactory))
+                .factory(validFactory)
+                .xxeFactory(validXxeFactory)
                 .build()
         );
     }
 
     @Test
     public void testParserResources() throws IOException {
-        Unmarshaller unmarshaller = Jaxb.createUnmarshaller(Person.class);
-
         List<Meta<IO.Supplier<Unmarshaller>>> factories = Meta.<IO.Supplier<Unmarshaller>>builder()
-                .valid("Ok", IO.Supplier.of(unmarshaller))
+                .valid("Ok", validFactory)
                 .invalid("Null", IO.Supplier.of(null))
                 .invalid("Throwing", IO.Supplier.throwing(IOError::new))
-                .invalid("Checked", onUnmarshal(unmarshaller, JaxbListener.checked(JaxbError::new)))
-                .invalid("Unchecked", onUnmarshal(unmarshaller, JaxbListener.unchecked(UncheckedError::new)))
+                .invalid("Checked", validFactory.andThen(o -> new ForwardingUnmarshaller(o).onUnmarshal(JaxbListener.checked(JaxbError::new))))
+                .invalid("Unchecked", validFactory.andThen(o -> new ForwardingUnmarshaller(o).onUnmarshal(JaxbListener.unchecked(UncheckedError::new))))
                 .build();
 
         for (boolean xxe : new boolean[]{true, false}) {
 
             List<Meta<IO.Supplier<XMLInputFactory>>> xxeFactories = Meta.<IO.Supplier<XMLInputFactory>>builder()
-                    .valid("Ok", XMLInputFactory::newFactory)
+                    .valid("Ok", validXxeFactory)
                     .of("Null", xxe, IO.Supplier.of(null))
                     .of("Throwing", xxe, IO.Supplier.throwing(IOError::new))
-                    .of("Checked", xxe, onUnmarshal(XMLInputFactory::newFactory, StaxListener.checked(StaxError::new)))
-                    .of("Unchecked", xxe, onUnmarshal(XMLInputFactory::newFactory, StaxListener.unchecked(UncheckedError::new)))
+                    .of("Checked", xxe, validXxeFactory.andThen(o -> new ForwardingXMLInputFactory(o).onCreate(StaxListener.checked(StaxError::new))))
+                    .of("Unchecked", xxe, validXxeFactory.andThen(o -> new ForwardingXMLInputFactory(o).onCreate(StaxListener.unchecked(UncheckedError::new))))
                     .build();
 
             for (Meta<IO.Supplier<Unmarshaller>> factory : factories) {
@@ -117,14 +115,6 @@ public class JaxbTest {
                 }
             }
         }
-    }
-
-    private static IO.Supplier<Unmarshaller> onUnmarshal(Unmarshaller delegate, JaxbListener onUnmarshal) {
-        return () -> new ForwardingUnmarshaller(delegate).onUnmarshal(onUnmarshal);
-    }
-
-    private static IO.Supplier<XMLInputFactory> onUnmarshal(IO.Supplier<XMLInputFactory> source, StaxListener onUnmarshal) {
-        return () -> new ForwardingXMLInputFactory(source.getWithIO()).onCreate(onUnmarshal);
     }
 
     private static final class IOError extends IOException {
