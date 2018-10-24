@@ -18,6 +18,7 @@ package ioutil;
 
 import java.io.Closeable;
 import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -110,6 +111,13 @@ public class Stax {
         private final IO.Supplier<? extends XMLInputFactory> factory;
 
         private final boolean ignoreXXE;
+
+        @Override
+        public T parseFile(File source) throws IOException {
+            Xml.checkFile(source);
+            InputStream resource = Xml.open(source);
+            return parse(o -> o.createXMLStreamReader(Xml.getSystemId(source), resource), resource);
+        }
 
         @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {
@@ -220,6 +228,13 @@ public class Stax {
         private final boolean ignoreXXE;
 
         @Override
+        public T parseFile(File source) throws IOException {
+            Xml.checkFile(source);
+            InputStream resource = Xml.open(source);
+            return parse(o -> o.createXMLEventReader(Xml.getSystemId(source), resource), resource);
+        }
+
+        @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {
             Reader resource = Xml.open(source);
             return parse(o -> o.createXMLEventReader(resource), resource);
@@ -305,16 +320,17 @@ public class Stax {
 
     IOException toIOException(XMLStreamException ex) {
         if (isEOF(ex)) {
-            return new EOFException(getFile(ex));
+            return new EOFException(Objects.toString(getFile(ex)));
         }
         return new Xml.WrappedException(ex);
     }
 
     private boolean isEOF(XMLStreamException ex) {
-        return ex.getLocation() != null && ex.getLocation().getLineNumber() == 1 && ex.getLocation().getColumnNumber() == 1;
+        return ex.getLocation() != null && ex.getMessage() != null && ex.getMessage().contains("end of file");
     }
 
-    private String getFile(XMLStreamException ex) {
-        return ex.getLocation().getSystemId();
+    private File getFile(XMLStreamException ex) {
+        String result = ex.getLocation().getSystemId();
+        return result != null && result.startsWith("file:/") ? Xml.getFile(result) : null;
     }
 }

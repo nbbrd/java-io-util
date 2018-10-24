@@ -22,6 +22,7 @@ import java.io.Reader;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLStreamReader;
+import org.xml.sax.InputSource;
 
 /**
  *
@@ -57,6 +58,12 @@ public class ForwardingUnmarshaller implements Unmarshaller {
             public Object unmarshal(File file) throws JAXBException {
                 onUnmarshal.run();
                 return super.unmarshal(file);
+            }
+
+            @Override
+            public Object unmarshal(InputSource source) throws JAXBException {
+                onUnmarshal.run();
+                return super.unmarshal(source);
             }
         };
     }

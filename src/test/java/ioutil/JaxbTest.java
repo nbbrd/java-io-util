@@ -78,6 +78,14 @@ public class JaxbTest {
         XmlTest.testParser(Jaxb.Parser.<Person>builder()
                 .factory(validFactory)
                 .xxeFactory(validXxeFactory)
+                .ignoreXXE(false)
+                .build()
+        );
+
+        XmlTest.testParser(Jaxb.Parser.<Person>builder()
+                .factory(validFactory)
+                .xxeFactory(validXxeFactory)
+                .ignoreXXE(true)
                 .build()
         );
     }

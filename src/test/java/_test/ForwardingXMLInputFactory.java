@@ -48,6 +48,12 @@ public class ForwardingXMLInputFactory extends XMLInputFactory {
             }
 
             @Override
+            public XMLStreamReader createXMLStreamReader(String systemId, InputStream is) throws XMLStreamException {
+                onCreate.run();
+                return super.createXMLStreamReader(systemId, is);
+            }
+
+            @Override
             public XMLEventReader createXMLEventReader(Reader reader) throws XMLStreamException {
                 onCreate.run();
                 return super.createXMLEventReader(reader);
@@ -57,6 +63,12 @@ public class ForwardingXMLInputFactory extends XMLInputFactory {
             public XMLEventReader createXMLEventReader(InputStream is) throws XMLStreamException {
                 onCreate.run();
                 return super.createXMLEventReader(is);
+            }
+
+            @Override
+            public XMLEventReader createXMLEventReader(String systemId, InputStream is) throws XMLStreamException {
+                onCreate.run();
+                return super.createXMLEventReader(systemId, is);
             }
         };
     }

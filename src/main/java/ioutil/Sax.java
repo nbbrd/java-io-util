@@ -175,18 +175,17 @@ public class Sax {
             }
             return after.getWithIO();
         }
+    }
 
-        /**
-         * Creates a new InputSource from a file.
-         *
-         * @param file
-         * @return
-         * @see SAXParser#parse(java.io.File,
-         * org.xml.sax.helpers.DefaultHandler)
-         */
-        private InputSource newInputSource(File file) {
-            return new InputSource(Xml.getSystemId(file));
-        }
+    /**
+     * Creates a new InputSource from a file.
+     *
+     * @param file
+     * @return
+     * @see SAXParser#parse(java.io.File, org.xml.sax.helpers.DefaultHandler)
+     */
+    InputSource newInputSource(File file) {
+        return new InputSource(Xml.getSystemId(file));
     }
 
     private final static SAXParserFactory DEFAULT_FACTORY = initFactory();
@@ -215,16 +214,17 @@ public class Sax {
 
     private IOException toIOException(SAXParseException ex) {
         if (isEOF(ex)) {
-            return new EOFException(getFile(ex));
+            return new EOFException(Objects.toString(getFile(ex)));
         }
         return new Xml.WrappedException(ex);
     }
 
     private boolean isEOF(SAXParseException ex) {
-        return ex.getLineNumber() == 1 && ex.getColumnNumber() == 1;
+        return ex.getMessage() != null && ex.getMessage().contains("end of file");
     }
 
-    private String getFile(SAXParseException ex) {
-        return ex.getSystemId();
+    private File getFile(SAXParseException ex) {
+        String result = ex.getSystemId();
+        return result != null && result.startsWith("file:/") ? Xml.getFile(result) : null;
     }
 }

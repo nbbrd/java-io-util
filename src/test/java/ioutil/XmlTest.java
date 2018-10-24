@@ -146,15 +146,18 @@ public class XmlTest {
 
         assertThatIOException()
                 .isThrownBy(() -> p.parseFile(FILE_EMPTY))
-                .isInstanceOf(EOFException.class);
+                .isInstanceOf(EOFException.class)
+                .withMessageContaining(FILE_EMPTY.toString());
 
         assertThatIOException()
                 .isThrownBy(() -> p.parseFile(FILE_MISSING))
-                .isInstanceOf(NoSuchFileException.class);
+                .isInstanceOf(NoSuchFileException.class)
+                .withMessageContaining(FILE_MISSING.toString());
 
         assertThatIOException()
                 .isThrownBy(() -> p.parseFile(FILE_DIR))
-                .isInstanceOf(AccessDeniedException.class);
+                .isInstanceOf(AccessDeniedException.class)
+                .withMessageContaining(FILE_DIR.toString());
     }
 
     @SuppressWarnings("null")

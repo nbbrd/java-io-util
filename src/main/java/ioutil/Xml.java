@@ -16,12 +16,14 @@
  */
 package ioutil;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.net.URI;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
@@ -48,7 +50,7 @@ public class Xml {
         @Nonnull
         default T parseFile(@Nonnull File source) throws IOException {
             checkFile(source);
-            return parseStream(() -> new FileInputStream(source));
+            return parseStream(() -> open(source));
         }
 
         @Nonnull
@@ -95,6 +97,10 @@ public class Xml {
         return result;
     }
 
+    static InputStream open(File source) throws IOException {
+        return new BufferedInputStream(new FileInputStream(source));
+    }
+
     static void checkFile(File source) throws FileSystemException {
         if (!source.exists()) {
             throw new NoSuchFileException(source.getPath());
@@ -106,5 +112,13 @@ public class Xml {
 
     static String getSystemId(File file) {
         return file.toURI().toASCIIString();
+    }
+
+    static File getFile(String systemId) {
+        try {
+            return new File(URI.create(systemId));
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
     }
 }

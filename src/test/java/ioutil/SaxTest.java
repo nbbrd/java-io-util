@@ -62,14 +62,29 @@ public class SaxTest {
     }
 
     @Test
+    @SuppressWarnings("null")
     public void testParserBuilder() throws Exception {
-        Xml.Parser<Person> p = Sax.Parser.<Person>builder()
+        assertThatNullPointerException().isThrownBy(() -> Sax.Parser.builder().build());
+        assertThatNullPointerException().isThrownBy(() -> Sax.Parser.builder().contentHandler(null).build());
+        assertThatNullPointerException().isThrownBy(() -> Sax.Parser.builder().contentHandler(PersonHandler.INSTANCE).after(null).build());
+
+        XmlTest.testParser(Sax.Parser.<Person>builder()
                 .factory(validFactory)
                 .contentHandler(PersonHandler.INSTANCE)
                 .before(PersonHandler.INSTANCE::clear)
                 .after(PersonHandler.INSTANCE::build)
-                .build();
-        XmlTest.testParser(p);
+                .ignoreXXE(false)
+                .build()
+        );
+        
+        XmlTest.testParser(Sax.Parser.<Person>builder()
+                .factory(validFactory)
+                .contentHandler(PersonHandler.INSTANCE)
+                .before(PersonHandler.INSTANCE::clear)
+                .after(PersonHandler.INSTANCE::build)
+                .ignoreXXE(true)
+                .build()
+        );
     }
 
     @Test

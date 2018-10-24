@@ -17,7 +17,6 @@
 package ioutil;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -134,7 +133,7 @@ public class Jaxb {
 
         private static <T> T parseFile(Unmarshaller engine, File source) throws IOException {
             try {
-                return (T) engine.unmarshal(source);
+                return (T) engine.unmarshal(Sax.newInputSource(source));
             } catch (JAXBException ex) {
                 throw toIOException(ex);
             }
@@ -157,8 +156,8 @@ public class Jaxb {
         }
 
         private static <T> T parseFileXXE(Unmarshaller engine, File source, XMLInputFactory xxe) throws IOException {
-            try (FileInputStream resource = new FileInputStream(source)) {
-                XMLStreamReader reader = xxe.createXMLStreamReader(resource);
+            try (InputStream resource = Xml.open(source)) {
+                XMLStreamReader reader = xxe.createXMLStreamReader(Xml.getSystemId(source), resource);
                 try {
                     return (T) engine.unmarshal(reader);
                 } finally {

@@ -52,10 +52,10 @@ public class StaxTest {
 
     @Test
     public void testXXE() throws IOException {
-        Stax.StreamParser<Person> stream = Stax.StreamParser.valueOf(StaxTest::parsePerson);
+        Stax.StreamParser<Person> stream = Stax.StreamParser.valueOf(StaxTest::parseByStream);
         XmlTest.testXXE(stream, stream.toBuilder().ignoreXXE(true).build());
 
-        Stax.EventParser<Person> event = Stax.EventParser.valueOf(StaxTest::parsePerson);
+        Stax.EventParser<Person> event = Stax.EventParser.valueOf(StaxTest::parseByEvent);
         XmlTest.testXXE(event, event.toBuilder().ignoreXXE(true).build());
     }
 
@@ -64,23 +64,25 @@ public class StaxTest {
     public void testStreamValueOf() throws IOException {
         assertThatNullPointerException().isThrownBy(() -> Stax.StreamParser.valueOf(null));
 
-        XmlTest.testParser(Stax.StreamParser.valueOf(StaxTest::parsePerson));
+        XmlTest.testParser(Stax.StreamParser.valueOf(StaxTest::parseByStream));
     }
 
     @Test
     @SuppressWarnings("null")
     public void testStreamBuilder() throws IOException {
         XmlTest.testParser(Stax.StreamParser.<Person>builder()
-                .handler(Stax.FlowHandler.of(StaxTest::parsePerson))
+                .handler(Stax.FlowHandler.of(StaxTest::parseByStream))
                 .ignoreXXE(true)
                 .factory(validFactory)
-                .build());
+                .build()
+        );
 
         XmlTest.testParser(Stax.StreamParser.<Person>builder()
-                .handler(Stax.FlowHandler.of(StaxTest::parsePerson))
+                .handler(Stax.FlowHandler.of(StaxTest::parseByStream))
                 .ignoreXXE(false)
                 .factory(validFactory)
-                .build());
+                .build()
+        );
     }
 
     @Test
@@ -88,7 +90,25 @@ public class StaxTest {
     public void testEventValueOf() throws IOException {
         assertThatNullPointerException().isThrownBy(() -> Stax.EventParser.valueOf(null));
 
-        XmlTest.testParser(Stax.EventParser.valueOf(StaxTest::parsePerson));
+        XmlTest.testParser(Stax.EventParser.valueOf(StaxTest::parseByEvent));
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testEventBuilder() throws IOException {
+        XmlTest.testParser(Stax.EventParser.<Person>builder()
+                .handler(Stax.FlowHandler.of(StaxTest::parseByEvent))
+                .ignoreXXE(true)
+                .factory(validFactory)
+                .build()
+        );
+
+        XmlTest.testParser(Stax.EventParser.<Person>builder()
+                .handler(Stax.FlowHandler.of(StaxTest::parseByEvent))
+                .ignoreXXE(false)
+                .factory(validFactory)
+                .build()
+        );
     }
 
     @Test
@@ -104,13 +124,13 @@ public class StaxTest {
                 .build();
 
         List<Meta<Stax.FlowHandler<XMLStreamReader, Person>>> streamHandlers = Meta.<Stax.FlowHandler<XMLStreamReader, Person>>builder()
-                .valid("Ok", Stax.FlowHandler.of(StaxTest::parsePerson))
+                .valid("Ok", Stax.FlowHandler.of(StaxTest::parseByStream))
                 .invalid("Checked", checked(StaxError::new))
                 .invalid("Unchecked", unchecked(UncheckedError::new))
                 .build();
 
         List<Meta<Stax.FlowHandler<XMLEventReader, Person>>> eventHandlers = Meta.<Stax.FlowHandler<XMLEventReader, Person>>builder()
-                .valid("Ok", Stax.FlowHandler.of(StaxTest::parsePerson))
+                .valid("Ok", Stax.FlowHandler.of(StaxTest::parseByEvent))
                 .invalid("Checked", checked(StaxError::new))
                 .invalid("Unchecked", unchecked(UncheckedError::new))
                 .build();
@@ -147,7 +167,7 @@ public class StaxTest {
         }
     }
 
-    private static Person parsePerson(XMLStreamReader reader) throws XMLStreamException {
+    private static Person parseByStream(XMLStreamReader reader) throws XMLStreamException {
         Person result = new Person();
         while (reader.hasNext()) {
             switch (reader.next()) {
@@ -166,7 +186,7 @@ public class StaxTest {
         return result;
     }
 
-    private static Person parsePerson(XMLEventReader reader) throws XMLStreamException {
+    private static Person parseByEvent(XMLEventReader reader) throws XMLStreamException {
         Person result = new Person();
         Tag current = Tag.UNKNOWN;
         while (reader.hasNext()) {
