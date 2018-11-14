@@ -35,7 +35,7 @@
         <junit.version>4.12</junit.version>
         <jsr305.version>3.0.2</jsr305.version>
         <assertj.version>3.11.1</assertj.version>
-        <lombok.version>edge-SNAPSHOT</lombok.version>
+        <lombok.version>1.18.4</lombok.version>
         
         <!-- dependencies -->
         <jimfs.version>1.1</jimfs.version>
