@@ -26,10 +26,10 @@ import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
-import _test.Forwarding.ForwardingUnmarshaller;
-import _test.Forwarding.ForwardingUnmarshaller.OnUnmarshal;
-import _test.Forwarding.ForwardingXMLInputFactory;
-import _test.Forwarding.ForwardingXMLInputFactory.OnEvent;
+import _test.ForwardingUnmarshaller;
+import _test.ForwardingXMLInputFactory;
+import _test.StaxListener;
+import _test.JaxbListener;
 import _test.Meta;
 
 /**
@@ -37,6 +37,9 @@ import _test.Meta;
  * @author Philippe Charles
  */
 public class JaxbTest {
+
+    private final IO.Supplier<Unmarshaller> validFactory = () -> Jaxb.createUnmarshaller(Person.class);
+    private final IO.Supplier<XMLInputFactory> validXxeFactory = XMLInputFactory::newFactory;
 
     @Test
     @SuppressWarnings("null")
@@ -52,7 +55,7 @@ public class JaxbTest {
     @Test
     public void testXXE() throws Exception {
         Jaxb.Parser<Person> p = Jaxb.Parser.of(Person.class);
-        XmlTest.testXXE(p, p.toBuilder().preventXXE(false).build());
+        XmlTest.testXXE(p, p.toBuilder().ignoreXXE(true).build());
     }
 
     @Test
@@ -68,41 +71,43 @@ public class JaxbTest {
     @Test
     @SuppressWarnings("null")
     public void testParserBuilder() throws IOException {
-        Unmarshaller unmarshaller = Jaxb.createUnmarshaller(Person.class);
-        XMLInputFactory inputFactory = XMLInputFactory.newFactory();
-
         assertThatNullPointerException().isThrownBy(() -> Jaxb.Parser.builder().build());
         assertThatNullPointerException().isThrownBy(() -> Jaxb.Parser.builder().factory(null).build());
-        assertThatNullPointerException().isThrownBy(() -> Jaxb.Parser.builder().factory(IO.Supplier.of(unmarshaller)).xxeFactory(null).build());
+        assertThatNullPointerException().isThrownBy(() -> Jaxb.Parser.builder().factory(validFactory).xxeFactory(null).build());
 
         XmlTest.testParser(Jaxb.Parser.<Person>builder()
-                .factory(IO.Supplier.of(unmarshaller))
-                .xxeFactory(IO.Supplier.of(inputFactory))
+                .factory(validFactory)
+                .xxeFactory(validXxeFactory)
+                .ignoreXXE(false)
+                .build()
+        );
+
+        XmlTest.testParser(Jaxb.Parser.<Person>builder()
+                .factory(validFactory)
+                .xxeFactory(validXxeFactory)
+                .ignoreXXE(true)
                 .build()
         );
     }
 
     @Test
     public void testParserResources() throws IOException {
-        Unmarshaller unmarshaller = Jaxb.createUnmarshaller(Person.class);
-        XMLInputFactory inputFactory = XMLInputFactory.newFactory();
-
         List<Meta<IO.Supplier<Unmarshaller>>> factories = Meta.<IO.Supplier<Unmarshaller>>builder()
-                .valid("Ok", IO.Supplier.of(unmarshaller))
+                .valid("Ok", validFactory)
                 .invalid("Null", IO.Supplier.of(null))
                 .invalid("Throwing", IO.Supplier.throwing(IOError::new))
-                .invalid("Checked", forwarding(unmarshaller, OnUnmarshal.checked(JaxbError::new)))
-                .invalid("Unchecked", forwarding(unmarshaller, OnUnmarshal.unchecked(UncheckedError::new)))
+                .invalid("Checked", validFactory.andThen(o -> new ForwardingUnmarshaller(o).onUnmarshal(JaxbListener.checked(JaxbError::new))))
+                .invalid("Unchecked", validFactory.andThen(o -> new ForwardingUnmarshaller(o).onUnmarshal(JaxbListener.unchecked(UncheckedError::new))))
                 .build();
 
         for (boolean xxe : new boolean[]{true, false}) {
 
             List<Meta<IO.Supplier<XMLInputFactory>>> xxeFactories = Meta.<IO.Supplier<XMLInputFactory>>builder()
-                    .valid("Ok", IO.Supplier.of(inputFactory))
+                    .valid("Ok", validXxeFactory)
                     .of("Null", xxe, IO.Supplier.of(null))
                     .of("Throwing", xxe, IO.Supplier.throwing(IOError::new))
-                    .of("Checked", xxe, forwarding(inputFactory, OnEvent.checked(StaxError::new)))
-                    .of("Unchecked", xxe, forwarding(inputFactory, OnEvent.unchecked(UncheckedError::new)))
+                    .of("Checked", xxe, validXxeFactory.andThen(o -> new ForwardingXMLInputFactory(o).onCreate(StaxListener.checked(StaxError::new))))
+                    .of("Unchecked", xxe, validXxeFactory.andThen(o -> new ForwardingXMLInputFactory(o).onCreate(StaxListener.unchecked(UncheckedError::new))))
                     .build();
 
             for (Meta<IO.Supplier<Unmarshaller>> factory : factories) {
@@ -110,22 +115,14 @@ public class JaxbTest {
 
                     Xml.Parser<Person> p = Jaxb.Parser.<Person>builder()
                             .factory(factory.getTarget())
-                            .preventXXE(xxe)
+                            .ignoreXXE(!xxe)
                             .xxeFactory(xxeFactory.getTarget())
                             .build();
 
-                    XmlTest.testParserResources(p, factory.isInvalid() || xxeFactory.isInvalid());
+                    XmlTest.testParserResources(p, Meta.lookupExpectedException(factory, xxeFactory));
                 }
             }
         }
-    }
-
-    private static IO.Supplier<Unmarshaller> forwarding(Unmarshaller delegate, OnUnmarshal event) {
-        return () -> new ForwardingUnmarshaller(delegate).onUnmarshal(event);
-    }
-
-    private static IO.Supplier<XMLInputFactory> forwarding(XMLInputFactory delegate, OnEvent event) {
-        return () -> new ForwardingXMLInputFactory(delegate).onCreate(event);
     }
 
     private static final class IOError extends IOException {

@@ -17,6 +17,8 @@
 package ioutil;
 
 import java.io.Closeable;
+import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -87,25 +89,45 @@ public class Stax {
             return StreamParser.<T>builder().handler(handler.asFlow()).build();
         }
 
+        public static class Builder<T> {
+
+            Builder() {
+                this.handler = null;
+                this.factory = XMLInputFactory::newFactory;
+                this.ignoreXXE = false;
+            }
+
+            @Deprecated
+            public Builder<T> preventXXE(boolean preventXXE) {
+                this.ignoreXXE = !preventXXE;
+                return this;
+            }
+        }
+
         @lombok.NonNull
         private final FlowHandler<XMLStreamReader, T> handler;
 
         @lombok.NonNull
-        @lombok.Builder.Default
-        private final IO.Supplier<? extends XMLInputFactory> factory = XMLInputFactory::newFactory;
+        private final IO.Supplier<? extends XMLInputFactory> factory;
 
-        @lombok.Builder.Default
-        private boolean preventXXE = true;
+        private final boolean ignoreXXE;
+
+        @Override
+        public T parseFile(File source) throws IOException {
+            Xml.checkFile(source);
+            InputStream resource = Xml.open(source);
+            return parse(o -> o.createXMLStreamReader(Xml.getSystemId(source), resource), resource);
+        }
 
         @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {
-            Reader resource = Objects.requireNonNull(source.getWithIO());
+            Reader resource = Xml.open(source);
             return parse(o -> o.createXMLStreamReader(resource), resource);
         }
 
         @Override
         public T parseStream(IO.Supplier<? extends InputStream> source) throws IOException {
-            InputStream resource = Objects.requireNonNull(source.getWithIO());
+            InputStream resource = Xml.open(source);
             return parse(o -> o.createXMLStreamReader(resource), resource);
         }
 
@@ -127,7 +149,7 @@ public class Stax {
                 return handler.parse(input, onClose);
             } catch (XMLStreamException ex) {
                 IO.ensureClosed(ex, onClose);
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             } catch (Error | RuntimeException | IOException ex) {
                 IO.ensureClosed(ex, onClose);
                 throw ex;
@@ -140,7 +162,7 @@ public class Stax {
                 return parse(input, () -> closeBoth(input, onClose));
             } catch (XMLStreamException ex) {
                 IO.ensureClosed(ex, onClose);
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             } catch (Error | RuntimeException | IOException ex) {
                 IO.ensureClosed(ex, onClose);
                 throw ex;
@@ -149,7 +171,7 @@ public class Stax {
 
         private XMLInputFactory getEngine() throws IOException {
             XMLInputFactory result = factory.getWithIO();
-            if (preventXXE) {
+            if (!ignoreXXE) {
                 preventXXE(result);
             }
             return result;
@@ -160,7 +182,7 @@ public class Stax {
                 input.close();
             } catch (XMLStreamException ex) {
                 IO.ensureClosed(ex, onClose);
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             } catch (Error | RuntimeException ex) {
                 IO.ensureClosed(ex, onClose);
                 throw ex;
@@ -182,25 +204,45 @@ public class Stax {
             return EventParser.<T>builder().handler(handler.asFlow()).build();
         }
 
+        public static class Builder<T> {
+
+            Builder() {
+                this.handler = null;
+                this.factory = XMLInputFactory::newFactory;
+                this.ignoreXXE = false;
+            }
+
+            @Deprecated
+            public Builder<T> preventXXE(boolean preventXXE) {
+                this.ignoreXXE = !preventXXE;
+                return this;
+            }
+        }
+
         @lombok.NonNull
         private final FlowHandler<XMLEventReader, T> handler;
 
         @lombok.NonNull
-        @lombok.Builder.Default
-        private final IO.Supplier<? extends XMLInputFactory> factory = XMLInputFactory::newFactory;
+        private final IO.Supplier<? extends XMLInputFactory> factory;
 
-        @lombok.Builder.Default
-        private boolean preventXXE = true;
+        private final boolean ignoreXXE;
+
+        @Override
+        public T parseFile(File source) throws IOException {
+            Xml.checkFile(source);
+            InputStream resource = Xml.open(source);
+            return parse(o -> o.createXMLEventReader(Xml.getSystemId(source), resource), resource);
+        }
 
         @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {
-            Reader resource = Objects.requireNonNull(source.getWithIO());
+            Reader resource = Xml.open(source);
             return parse(o -> o.createXMLEventReader(resource), resource);
         }
 
         @Override
         public T parseStream(IO.Supplier<? extends InputStream> source) throws IOException {
-            InputStream resource = Objects.requireNonNull(source.getWithIO());
+            InputStream resource = Xml.open(source);
             return parse(o -> o.createXMLEventReader(resource), resource);
         }
 
@@ -222,7 +264,7 @@ public class Stax {
                 return parse(input, () -> closeBoth(input, onClose));
             } catch (XMLStreamException ex) {
                 IO.ensureClosed(ex, onClose);
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             } catch (Error | RuntimeException | IOException ex) {
                 IO.ensureClosed(ex, onClose);
                 throw ex;
@@ -234,7 +276,7 @@ public class Stax {
                 return handler.parse(input, onClose);
             } catch (XMLStreamException ex) {
                 IO.ensureClosed(ex, onClose);
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             } catch (Error | RuntimeException | IOException ex) {
                 IO.ensureClosed(ex, onClose);
                 throw ex;
@@ -243,7 +285,7 @@ public class Stax {
 
         private XMLInputFactory getEngine() throws IOException {
             XMLInputFactory result = factory.getWithIO();
-            if (preventXXE) {
+            if (!ignoreXXE) {
                 preventXXE(result);
             }
             return result;
@@ -254,7 +296,7 @@ public class Stax {
                 input.close();
             } catch (XMLStreamException ex) {
                 IO.ensureClosed(ex, onClose);
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             } catch (Error | RuntimeException ex) {
                 IO.ensureClosed(ex, onClose);
                 throw ex;
@@ -274,5 +316,21 @@ public class Stax {
                 && ((Boolean) factory.getProperty(feature)) != value) {
             factory.setProperty(feature, value);
         }
+    }
+
+    IOException toIOException(XMLStreamException ex) {
+        if (isEOF(ex)) {
+            return new EOFException(Objects.toString(getFile(ex)));
+        }
+        return new Xml.WrappedException(ex);
+    }
+
+    private boolean isEOF(XMLStreamException ex) {
+        return ex.getLocation() != null && ex.getMessage() != null && ex.getMessage().contains("end of file");
+    }
+
+    private File getFile(XMLStreamException ex) {
+        String result = ex.getLocation().getSystemId();
+        return result != null && result.startsWith("file:/") ? Xml.getFile(result) : null;
     }
 }

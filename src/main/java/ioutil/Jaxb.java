@@ -17,7 +17,6 @@
 package ioutil;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
@@ -29,6 +28,7 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import org.xml.sax.SAXParseException;
 
 /**
  *
@@ -43,7 +43,7 @@ public class Jaxb {
         try {
             return JAXBContext.newInstance(type).createUnmarshaller();
         } catch (JAXBException ex) {
-            throw new Xml.WrappedException(ex);
+            throw toIOException(ex);
         }
     }
 
@@ -53,7 +53,7 @@ public class Jaxb {
         try {
             return context.createUnmarshaller();
         } catch (JAXBException ex) {
-            throw new Xml.WrappedException(ex);
+            throw toIOException(ex);
         }
     }
 
@@ -72,22 +72,35 @@ public class Jaxb {
             return Parser.<T>builder().factory(() -> createUnmarshaller(context)).build();
         }
 
+        public static class Builder<T> {
+
+            Builder() {
+                this.factory = null;
+                this.ignoreXXE = false;
+                this.xxeFactory = Parser::getStaxFactory;
+            }
+
+            @Deprecated
+            public Builder<T> preventXXE(boolean preventXXE) {
+                this.ignoreXXE = !preventXXE;
+                return this;
+            }
+        }
+
         @lombok.NonNull
         private final IO.Supplier<? extends Unmarshaller> factory;
 
-        @lombok.Builder.Default
-        private boolean preventXXE = true;
+        private final boolean ignoreXXE;
 
         @lombok.NonNull
-        @lombok.Builder.Default
-        private final IO.Supplier<? extends XMLInputFactory> xxeFactory = Parser::getStaxFactory;
+        private final IO.Supplier<? extends XMLInputFactory> xxeFactory;
 
         @Override
         public T parseFile(File source) throws IOException {
-            Objects.requireNonNull(source);
+            Xml.checkFile(source);
             Unmarshaller engine = factory.getWithIO();
 
-            return preventXXE
+            return !ignoreXXE
                     ? parseFileXXE(engine, source, xxeFactory.getWithIO())
                     : parseFile(engine, source);
         }
@@ -97,7 +110,7 @@ public class Jaxb {
             Objects.requireNonNull(resource);
             Unmarshaller engine = factory.getWithIO();
 
-            return preventXXE
+            return !ignoreXXE
                     ? parseReaderXXE(engine, resource, xxeFactory.getWithIO())
                     : parseReader(engine, resource);
         }
@@ -107,7 +120,7 @@ public class Jaxb {
             Objects.requireNonNull(resource);
             Unmarshaller engine = factory.getWithIO();
 
-            return preventXXE
+            return !ignoreXXE
                     ? parseStreamXXE(engine, resource, xxeFactory.getWithIO())
                     : parseStream(engine, resource);
         }
@@ -120,9 +133,9 @@ public class Jaxb {
 
         private static <T> T parseFile(Unmarshaller engine, File source) throws IOException {
             try {
-                return (T) engine.unmarshal(source);
+                return (T) engine.unmarshal(Sax.newInputSource(source));
             } catch (JAXBException ex) {
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             }
         }
 
@@ -130,7 +143,7 @@ public class Jaxb {
             try {
                 return (T) engine.unmarshal(resource);
             } catch (JAXBException ex) {
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             }
         }
 
@@ -138,20 +151,22 @@ public class Jaxb {
             try {
                 return (T) engine.unmarshal(resource);
             } catch (JAXBException ex) {
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             }
         }
 
         private static <T> T parseFileXXE(Unmarshaller engine, File source, XMLInputFactory xxe) throws IOException {
-            try (FileInputStream resource = new FileInputStream(source)) {
-                XMLStreamReader reader = xxe.createXMLStreamReader(resource);
+            try (InputStream resource = Xml.open(source)) {
+                XMLStreamReader reader = xxe.createXMLStreamReader(Xml.getSystemId(source), resource);
                 try {
                     return (T) engine.unmarshal(reader);
                 } finally {
                     reader.close();
                 }
-            } catch (XMLStreamException | JAXBException ex) {
-                throw new Xml.WrappedException(ex);
+            } catch (XMLStreamException ex) {
+                throw Stax.toIOException(ex);
+            } catch (JAXBException ex) {
+                throw toIOException(ex);
             }
         }
 
@@ -163,8 +178,10 @@ public class Jaxb {
                 } finally {
                     reader.close();
                 }
-            } catch (XMLStreamException | JAXBException ex) {
-                throw new Xml.WrappedException(ex);
+            } catch (XMLStreamException ex) {
+                throw Stax.toIOException(ex);
+            } catch (JAXBException ex) {
+                throw toIOException(ex);
             }
         }
 
@@ -176,9 +193,27 @@ public class Jaxb {
                 } finally {
                     reader.close();
                 }
-            } catch (XMLStreamException | JAXBException ex) {
-                throw new Xml.WrappedException(ex);
+            } catch (XMLStreamException ex) {
+                throw Stax.toIOException(ex);
+            } catch (JAXBException ex) {
+                throw toIOException(ex);
             }
         }
+    }
+
+    private IOException toIOException(JAXBException ex) {
+        if (hasLinkedException(ex)) {
+            if (ex.getCause() instanceof XMLStreamException) {
+                return Stax.toIOException((XMLStreamException) ex.getCause());
+            }
+            if (ex.getCause() instanceof SAXParseException) {
+                return Sax.toIOException((SAXParseException) ex.getCause());
+            }
+        }
+        return new Xml.WrappedException(ex);
+    }
+
+    private boolean hasLinkedException(JAXBException ex) {
+        return ex.getCause() != null && ex.getMessage() == null;
     }
 }

@@ -38,8 +38,10 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.annotation.XmlRootElement;
 import static org.assertj.core.api.Assertions.*;
-import _test.Forwarding;
 import _test.Meta;
+import java.io.EOFException;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.NoSuchFileException;
 
 /**
  *
@@ -62,13 +64,23 @@ public class XmlTest {
     static final String CHARS;
     static final Person JOHN_DOE;
 
-    static final File EMPTY_FILE;
-    static final Path EMPTY_PATH;
-    static final String EMPTY_CHARS;
+    static final File FILE_EMPTY;
+    static final Path PATH_EMPTY;
+    static final String CHARS_EMPTY;
+
+    static final File FILE_MISSING;
+    static final Path PATH_MISSING;
+
+    static final File FILE_DIR;
+    static final Path PATH_DIR;
+
+    static final IO.Supplier<Reader> READER;
+    static final IO.Supplier<InputStream> INPUT_STREAM;
 
     static {
         try {
             FILE = File.createTempFile("person", ".xml");
+            FILE.deleteOnExit();
             PATH = FILE.toPath();
             JOHN_DOE = new Person();
             JOHN_DOE.firstName = "John";
@@ -78,9 +90,23 @@ public class XmlTest {
                 CHARS = w.toString();
             }
             Files.write(PATH, Collections.singleton(CHARS));
-            EMPTY_FILE = File.createTempFile("empty", ".xml");
-            EMPTY_PATH = EMPTY_FILE.toPath();
-            EMPTY_CHARS = "";
+
+            FILE_EMPTY = File.createTempFile("empty", ".xml");
+            FILE_EMPTY.deleteOnExit();
+            PATH_EMPTY = FILE_EMPTY.toPath();
+
+            CHARS_EMPTY = "";
+
+            FILE_MISSING = File.createTempFile("missing", ".xml");
+            FILE_MISSING.delete();
+            PATH_MISSING = FILE_MISSING.toPath();
+
+            FILE_DIR = Files.createTempDirectory("xml").toFile();
+            FILE_DIR.deleteOnExit();
+            PATH_DIR = FILE_DIR.toPath();
+
+            READER = () -> new StringReader(CHARS);
+            INPUT_STREAM = () -> new ByteArrayInputStream(CHARS.getBytes(StandardCharsets.UTF_8));
         } catch (IOException | JAXBException ex) {
             throw new RuntimeException();
         }
@@ -99,57 +125,117 @@ public class XmlTest {
 
     @SuppressWarnings("null")
     private static void testParseChars(Xml.Parser<Person> p) throws IOException {
-        assertThatNullPointerException().isThrownBy(() -> p.parseChars(null));
-        assertThat(p.parseChars(CHARS)).isEqualTo(JOHN_DOE);
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.parseChars(null));
+
+        assertThat(p.parseChars(CHARS))
+                .isEqualTo(JOHN_DOE);
+
+        assertThatIOException()
+                .isThrownBy(() -> p.parseChars(CHARS_EMPTY))
+                .isInstanceOf(EOFException.class);
     }
 
     @SuppressWarnings("null")
     private static void testParseFile(Xml.Parser<Person> p) throws IOException {
-        assertThatNullPointerException().isThrownBy(() -> p.parseFile(null));
-        assertThat(p.parseFile(FILE)).isEqualTo(JOHN_DOE);
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.parseFile(null));
+
+        assertThat(p.parseFile(FILE))
+                .isEqualTo(JOHN_DOE);
+
+        assertThatIOException()
+                .isThrownBy(() -> p.parseFile(FILE_EMPTY))
+                .isInstanceOf(EOFException.class)
+                .withMessageContaining(FILE_EMPTY.toString());
+
+        assertThatIOException()
+                .isThrownBy(() -> p.parseFile(FILE_MISSING))
+                .isInstanceOf(NoSuchFileException.class)
+                .withMessageContaining(FILE_MISSING.toString());
+
+        assertThatIOException()
+                .isThrownBy(() -> p.parseFile(FILE_DIR))
+                .isInstanceOf(AccessDeniedException.class)
+                .withMessageContaining(FILE_DIR.toString());
     }
 
     @SuppressWarnings("null")
     private static void testParsePath(Xml.Parser<Person> p) throws IOException {
-        assertThatNullPointerException().isThrownBy(() -> p.parsePath(null));
-        assertThat(p.parsePath(PATH)).isEqualTo(JOHN_DOE);
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.parsePath(null));
+
+        assertThat(p.parsePath(PATH))
+                .isEqualTo(JOHN_DOE);
+
+        assertThatIOException()
+                .isThrownBy(() -> p.parsePath(PATH_EMPTY))
+                .isInstanceOf(EOFException.class);
+
+        assertThatIOException()
+                .isThrownBy(() -> p.parsePath(PATH_MISSING))
+                .isInstanceOf(NoSuchFileException.class);
+
+        assertThatIOException()
+                .isThrownBy(() -> p.parsePath(PATH_DIR))
+                .isInstanceOf(AccessDeniedException.class);
     }
 
     @SuppressWarnings("null")
     private static void testParseReaderFromSupplier(Xml.Parser<Person> p) throws IOException {
-        assertThatNullPointerException().isThrownBy(() -> p.parseReader((IO.Supplier) null));
-        assertThatNullPointerException().isThrownBy(() -> p.parseReader(IO.Supplier.of(null)));
-        assertThat(p.parseReader(() -> openReader(new ResourceCounter()))).isEqualTo(JOHN_DOE);
-        assertThat(new ResourceCounter()).satisfies(o -> {
-            assertThatCode(() -> p.parseReader(() -> openReader(o).onClose(o::onClose))).doesNotThrowAnyException();
-            assertThat(o.getCount()).isLessThanOrEqualTo(0);
-        });
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.parseReader((IO.Supplier) null));
+
+        assertThat(p.parseReader(READER))
+                .isEqualTo(JOHN_DOE);
+
+        assertThatIOException()
+                .isThrownBy(() -> p.parseReader(IO.Supplier.of(null)))
+                .isInstanceOf(IOException.class)
+                .withMessageContaining("Null resource");
+
+        assertThatIOException()
+                .isThrownBy(() -> p.parseReader(IO.Supplier.throwing(SourceError::new)))
+                .isInstanceOf(SourceError.class);
     }
 
     @SuppressWarnings("null")
     private static void testParseStreamFromSupplier(Xml.Parser<Person> p) throws IOException {
-        assertThatNullPointerException().isThrownBy(() -> p.parseStream((IO.Supplier) null));
-        assertThatNullPointerException().isThrownBy(() -> p.parseStream(IO.Supplier.of(null)));
-        assertThat(p.parseStream(() -> openStream(new ResourceCounter()))).isEqualTo(JOHN_DOE);
-        assertThat(new ResourceCounter()).satisfies(o -> {
-            assertThatCode(() -> p.parseStream(() -> openStream(o).onClose(o::onClose))).doesNotThrowAnyException();
-            assertThat(o.getCount()).isLessThanOrEqualTo(0);
-        });
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.parseStream((IO.Supplier) null));
+
+        assertThat(p.parseStream(INPUT_STREAM))
+                .isEqualTo(JOHN_DOE);
+
+        assertThatIOException()
+                .isThrownBy(() -> p.parseStream(IO.Supplier.of(null)))
+                .isInstanceOf(IOException.class)
+                .withMessageContaining("Null resource");
+
+        assertThatIOException()
+                .isThrownBy(() -> p.parseStream(IO.Supplier.throwing(SourceError::new)))
+                .isInstanceOf(SourceError.class);
     }
 
     @SuppressWarnings("null")
     private static void testParseReader(Xml.Parser<Person> p) throws IOException {
-        assertThatNullPointerException().isThrownBy(() -> p.parseReader((Reader) null));
-        try (Reader resource = openReader(new ResourceCounter())) {
-            assertThat(p.parseReader(resource)).isEqualTo(JOHN_DOE);
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.parseReader((Reader) null));
+
+        try (Reader resource = READER.getWithIO()) {
+            assertThat(p.parseReader(resource))
+                    .isEqualTo(JOHN_DOE);
         }
     }
 
     @SuppressWarnings("null")
     private static void testParseStream(Xml.Parser<Person> p) throws IOException {
-        assertThatNullPointerException().isThrownBy(() -> p.parseStream((InputStream) null));
-        try (InputStream resource = openStream(new ResourceCounter())) {
-            assertThat(p.parseStream(resource)).isEqualTo(JOHN_DOE);
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.parseStream((InputStream) null));
+
+        try (InputStream resource = INPUT_STREAM.getWithIO()) {
+            assertThat(p.parseStream(resource))
+                    .isEqualTo(JOHN_DOE);
         }
     }
 
@@ -193,40 +279,41 @@ public class XmlTest {
                 + "<person>&sp;</person> ";
     }
 
-    private static Forwarding.ForwardingReader openReader(ResourceCounter counter) throws IOException {
-        counter.onOpen();
-        return new Forwarding.ForwardingReader(new StringReader(CHARS));
-    }
-
-    private static Forwarding.ForwardingInputStream openStream(ResourceCounter counter) throws IOException {
-        counter.onOpen();
-        return new Forwarding.ForwardingInputStream(new ByteArrayInputStream(CHARS.getBytes(StandardCharsets.UTF_8)));
-    }
-
-    static void testParserResources(Xml.Parser<Person> p, boolean throwException) throws IOException {
+    static void testParserResources(Xml.Parser<Person> p, Class<? extends Throwable> expectedException) throws IOException {
         ResourceCounter counter = new ResourceCounter();
 
         List<Meta<IO.Supplier<Person>>> callables = Meta.<IO.Supplier<Person>>builder()
-                .valid("Reader", () -> p.parseReader(() -> openReader(counter).onClose(counter::onClose)))
-                .invalid("Reader/Null", () -> p.parseReader(IO.Supplier.of(null)))
-                .invalid("Reader/Throwing", () -> p.parseReader(IO.Supplier.throwing(SourceError::new)))
-                .valid("Stream", () -> p.parseStream(() -> openStream(counter).onClose(counter::onClose)))
-                .invalid("Stream/Null", () -> p.parseStream(IO.Supplier.of(null)))
-                .invalid("Stream/Throwing", () -> p.parseStream(IO.Supplier.throwing(SourceError::new)))
-                .valid("File", () -> p.parseFile(XmlTest.FILE))
-                .invalid("File/Empty", () -> p.parseFile(XmlTest.EMPTY_FILE))
-                .valid("Path", () -> p.parsePath(XmlTest.PATH))
-                .invalid("Path/Empty", () -> p.parsePath(XmlTest.EMPTY_PATH))
-                .valid("String", () -> p.parseChars(XmlTest.CHARS))
-                .invalid("String/Empty", () -> p.parseChars(XmlTest.EMPTY_CHARS))
+                .group("Reader")
+                .code().doesNotRaiseExceptionWhen(() -> p.parseReader(counter.onReader(READER)))
+                .exception(IOException.class).as("Null").isThrownBy(() -> p.parseReader(IO.Supplier.of(null)))
+                .exception(SourceError.class).as("Throwing").isThrownBy(() -> p.parseReader(IO.Supplier.throwing(SourceError::new)))
+                .group("Stream")
+                .code().doesNotRaiseExceptionWhen(() -> p.parseStream(counter.onStream(INPUT_STREAM)))
+                .exception(IOException.class).as("Null").isThrownBy(() -> p.parseStream(IO.Supplier.of(null)))
+                .exception(SourceError.class).as("Throwing").isThrownBy(() -> p.parseStream(IO.Supplier.throwing(SourceError::new)))
+                .group("File")
+                .code().doesNotRaiseExceptionWhen(() -> p.parseFile(FILE))
+                .exception(EOFException.class).as("Empty").isThrownBy(() -> p.parseFile(FILE_EMPTY))
+                .exception(NoSuchFileException.class).as("Missing").isThrownBy(() -> p.parseFile(FILE_MISSING))
+                .exception(AccessDeniedException.class).as("Dir").isThrownBy(() -> p.parseFile(FILE_DIR))
+                .group("Path")
+                .code().doesNotRaiseExceptionWhen(() -> p.parsePath(PATH))
+                .exception(EOFException.class).as("Empty").isThrownBy(() -> p.parsePath(PATH_EMPTY))
+                .exception(NoSuchFileException.class).as("Missing").isThrownBy(() -> p.parsePath(PATH_MISSING))
+                .exception(AccessDeniedException.class).as("Dir").isThrownBy(() -> p.parsePath(PATH_DIR))
+                .group("Chars")
+                .code().doesNotRaiseExceptionWhen(() -> p.parseChars(CHARS))
+                .exception(EOFException.class).as("Empty").isThrownBy(() -> p.parseChars(CHARS_EMPTY))
                 .build();
 
         for (Meta<IO.Supplier<Person>> callable : callables) {
             counter.reset();
-            if (throwException || callable.isInvalid()) {
-                assertThatThrownBy(() -> callable.getTarget().getWithIO()).isInstanceOf(Throwable.class);
+            if (expectedException != null) {
+                assertThatThrownBy(() -> callable.getTarget().getWithIO()).isInstanceOf(expectedException);
+            } else if (callable.getExpectedException() != null) {
+                assertThatThrownBy(() -> callable.getTarget().getWithIO()).isInstanceOf(callable.getExpectedException());
             } else {
-                assertThat(callable.getTarget().getWithIO()).isEqualTo(XmlTest.JOHN_DOE);
+                assertThat(callable.getTarget().getWithIO()).isEqualTo(JOHN_DOE);
             }
             assertThat(counter.getCount()).isLessThanOrEqualTo(0);
         }

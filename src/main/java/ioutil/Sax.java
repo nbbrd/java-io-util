@@ -16,19 +16,28 @@
  */
 package ioutil;
 
+import java.io.EOFException;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.util.Objects;
 import java.util.logging.Level;
 import javax.annotation.Nonnull;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import org.xml.sax.ContentHandler;
+import org.xml.sax.DTDHandler;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXNotRecognizedException;
 import org.xml.sax.SAXNotSupportedException;
+import org.xml.sax.SAXParseException;
 import org.xml.sax.XMLReader;
-import org.xml.sax.helpers.XMLReaderFactory;
+import org.xml.sax.helpers.DefaultHandler;
 
 /**
  *
@@ -55,9 +64,11 @@ public class Sax {
     @Nonnull
     public static XMLReader createReader() throws IOException {
         try {
-            return XMLReaderFactory.createXMLReader();
-        } catch (SAXException ex) {
+            return DEFAULT_FACTORY.newSAXParser().getXMLReader();
+        } catch (ParserConfigurationException ex) {
             throw new Xml.WrappedException(ex);
+        } catch (SAXException ex) {
+            throw toIOException(ex);
         }
     }
 
@@ -66,25 +77,74 @@ public class Sax {
 
         @Nonnull
         public static <T> Parser<T> of(@Nonnull ContentHandler handler, @Nonnull IO.Supplier<? extends T> after) {
-            return Parser.<T>builder().handler(handler).after(after).build();
+            Parser.Builder<T> result = Parser.<T>builder().contentHandler(handler);
+            if (handler instanceof DTDHandler) {
+                result.dtdHandler((DTDHandler) handler);
+            }
+            if (handler instanceof EntityResolver) {
+                result.entityResolver((EntityResolver) handler);
+            }
+            if (handler instanceof ErrorHandler) {
+                result.errorHandler((ErrorHandler) handler);
+            }
+            return result.after(after).build();
+        }
+
+        public static class Builder<T> {
+
+            Builder() {
+                this.factory = Sax::createReader;
+                this.contentHandler = null;
+                this.dtdHandler = DEFAULT_HANDLER;
+                this.entityResolver = DEFAULT_HANDLER;
+                this.errorHandler = DEFAULT_HANDLER;
+                this.before = IO.Runnable.noOp();
+                this.after = null;
+                this.ignoreXXE = false;
+            }
+
+            @Deprecated
+            @Nonnull
+            public Builder<T> handler(@Nonnull ContentHandler handler) {
+                this.contentHandler = Objects.requireNonNull(handler);
+                return this;
+            }
+
+            @Deprecated
+            public Builder<T> preventXXE(boolean preventXXE) {
+                this.ignoreXXE = !preventXXE;
+                return this;
+            }
         }
 
         @lombok.NonNull
-        @lombok.Builder.Default
-        private final IO.Supplier<? extends XMLReader> factory = Sax::createReader;
+        private final IO.Supplier<? extends XMLReader> factory;
 
         @lombok.NonNull
-        private final ContentHandler handler;
+        private final ContentHandler contentHandler;
 
         @lombok.NonNull
-        @lombok.Builder.Default
-        private final IO.Runnable before = IO.Runnable.noOp();
+        private final DTDHandler dtdHandler;
+
+        @lombok.NonNull
+        private final EntityResolver entityResolver;
+
+        @lombok.NonNull
+        private final ErrorHandler errorHandler;
+
+        @lombok.NonNull
+        private final IO.Runnable before;
 
         @lombok.NonNull
         private final IO.Supplier<? extends T> after;
 
-        @lombok.Builder.Default
-        private boolean preventXXE = true;
+        private final boolean ignoreXXE;
+
+        @Override
+        public T parseFile(File source) throws IOException {
+            Xml.checkFile(source);
+            return parse(newInputSource(source));
+        }
 
         @Override
         public T parseReader(Reader resource) throws IOException {
@@ -100,18 +160,41 @@ public class Sax {
 
         private T parse(InputSource input) throws IOException {
             XMLReader engine = factory.getWithIO();
-            if (preventXXE) {
+            if (!ignoreXXE) {
                 preventXXE(engine);
             }
-            engine.setContentHandler(handler);
+            engine.setContentHandler(contentHandler);
+            engine.setDTDHandler(dtdHandler);
+            engine.setEntityResolver(entityResolver);
+            engine.setErrorHandler(errorHandler);
             before.runWithIO();
             try {
                 engine.parse(input);
             } catch (SAXException ex) {
-                throw new Xml.WrappedException(ex);
+                throw toIOException(ex);
             }
             return after.getWithIO();
         }
+    }
+
+    /**
+     * Creates a new InputSource from a file.
+     *
+     * @param file
+     * @return
+     * @see SAXParser#parse(java.io.File, org.xml.sax.helpers.DefaultHandler)
+     */
+    InputSource newInputSource(File file) {
+        return new InputSource(Xml.getSystemId(file));
+    }
+
+    private final static SAXParserFactory DEFAULT_FACTORY = initFactory();
+    private final static DefaultHandler DEFAULT_HANDLER = new DefaultHandler();
+
+    private static SAXParserFactory initFactory() {
+        SAXParserFactory result = SAXParserFactory.newInstance();
+        result.setNamespaceAware(true);
+        return result;
     }
 
     private void setFeatureQuietly(XMLReader reader, String feature, boolean value) {
@@ -120,5 +203,28 @@ public class Sax {
         } catch (SAXNotRecognizedException | SAXNotSupportedException ex) {
             log.log(Level.FINE, ex, () -> String.format("Failed to set feature '%s' to '%s'", feature, value));
         }
+    }
+
+    IOException toIOException(SAXException ex) {
+        if (ex instanceof SAXParseException) {
+            return toIOException((SAXParseException) ex);
+        }
+        return new Xml.WrappedException(ex);
+    }
+
+    private IOException toIOException(SAXParseException ex) {
+        if (isEOF(ex)) {
+            return new EOFException(Objects.toString(getFile(ex)));
+        }
+        return new Xml.WrappedException(ex);
+    }
+
+    private boolean isEOF(SAXParseException ex) {
+        return ex.getMessage() != null && ex.getMessage().contains("end of file");
+    }
+
+    private File getFile(SAXParseException ex) {
+        String result = ex.getSystemId();
+        return result != null && result.startsWith("file:/") ? Xml.getFile(result) : null;
     }
 }
