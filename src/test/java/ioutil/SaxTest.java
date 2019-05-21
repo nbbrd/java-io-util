@@ -16,7 +16,8 @@
  */
 package ioutil;
 
-import ioutil.XmlTest.Person;
+import _test.sample.ParseAssertions;
+import _test.sample.Person;
 import java.io.IOException;
 import java.util.List;
 import static org.assertj.core.api.Assertions.*;
@@ -29,6 +30,7 @@ import org.xml.sax.helpers.DefaultHandler;
 import _test.ForwardingXMLReader;
 import _test.SaxListener;
 import _test.Meta;
+import static _test.sample.ParseAssertions.assertParserCompliance;
 import javax.xml.parsers.SAXParserFactory;
 
 /**
@@ -49,7 +51,7 @@ public class SaxTest {
     @Test
     public void testXXE() throws IOException {
         Sax.Parser<Person> p = Sax.Parser.of(PersonHandler.INSTANCE, PersonHandler.INSTANCE::build);
-        XmlTest.testXXE(p, p.toBuilder().ignoreXXE(true).build());
+        ParseAssertions.testXXE(p, p.toBuilder().ignoreXXE(true).build());
     }
 
     @Test
@@ -58,7 +60,7 @@ public class SaxTest {
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.of(null, PersonHandler.INSTANCE::build));
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.of(PersonHandler.INSTANCE, null));
 
-        XmlTest.testParser(Sax.Parser.of(PersonHandler.INSTANCE, PersonHandler.INSTANCE::build));
+        assertParserCompliance(Sax.Parser.of(PersonHandler.INSTANCE, PersonHandler.INSTANCE::build));
     }
 
     @Test
@@ -68,7 +70,7 @@ public class SaxTest {
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.builder().contentHandler(null).build());
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.builder().contentHandler(PersonHandler.INSTANCE).after(null).build());
 
-        XmlTest.testParser(Sax.Parser.<Person>builder()
+        assertParserCompliance(Sax.Parser.<Person>builder()
                 .factory(validFactory)
                 .contentHandler(PersonHandler.INSTANCE)
                 .before(PersonHandler.INSTANCE::clear)
@@ -76,8 +78,8 @@ public class SaxTest {
                 .ignoreXXE(false)
                 .build()
         );
-        
-        XmlTest.testParser(Sax.Parser.<Person>builder()
+
+        assertParserCompliance(Sax.Parser.<Person>builder()
                 .factory(validFactory)
                 .contentHandler(PersonHandler.INSTANCE)
                 .before(PersonHandler.INSTANCE::clear)
@@ -108,7 +110,7 @@ public class SaxTest {
                 .build();
 
         List<Meta<IO.Supplier<Person>>> afters = Meta.<IO.Supplier<Person>>builder()
-                .valid("Ok", IO.Supplier.of(XmlTest.JOHN_DOE))
+                .valid("Ok", IO.Supplier.of(Person.JOHN_DOE))
                 .invalid("Throwing", IO.Supplier.throwing(IOError::new))
                 .build();
 
@@ -126,7 +128,7 @@ public class SaxTest {
                                     .after(after.getTarget())
                                     .build();
 
-                            XmlTest.testParserResources(p, Meta.lookupExpectedException(factory, handler, before, after));
+                            ParseAssertions.testParserResources(p, Meta.lookupExpectedException(factory, handler, before, after));
                         }
                     }
                 }

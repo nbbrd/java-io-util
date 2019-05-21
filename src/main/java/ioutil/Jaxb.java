@@ -19,11 +19,15 @@ package ioutil;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Reader;
+import java.io.Writer;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.PropertyException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -52,6 +56,26 @@ public class Jaxb {
         Objects.requireNonNull(context);
         try {
             return context.createUnmarshaller();
+        } catch (JAXBException ex) {
+            throw toIOException(ex);
+        }
+    }
+
+    @Nonnull
+    public Marshaller createMarshaller(@Nonnull Class<?> type) throws IOException {
+        Objects.requireNonNull(type);
+        try {
+            return JAXBContext.newInstance(type).createMarshaller();
+        } catch (JAXBException ex) {
+            throw toIOException(ex);
+        }
+    }
+
+    @Nonnull
+    public Marshaller createMarshaller(@Nonnull JAXBContext context) throws IOException {
+        Objects.requireNonNull(context);
+        try {
+            return context.createMarshaller();
         } catch (JAXBException ex) {
             throw toIOException(ex);
         }
@@ -97,7 +121,7 @@ public class Jaxb {
 
         @Override
         public T parseFile(File source) throws IOException {
-            Xml.checkFile(source);
+            LegacyFiles.checkSource(source);
             Unmarshaller engine = factory.getWithIO();
 
             return !ignoreXXE
@@ -156,8 +180,8 @@ public class Jaxb {
         }
 
         private static <T> T parseFileXXE(Unmarshaller engine, File source, XMLInputFactory xxe) throws IOException {
-            try (InputStream resource = Xml.open(source)) {
-                XMLStreamReader reader = xxe.createXMLStreamReader(Xml.getSystemId(source), resource);
+            try (InputStream resource = LegacyFiles.newInputStream(source)) {
+                XMLStreamReader reader = xxe.createXMLStreamReader(Xml.toSystemId(source), resource);
                 try {
                     return (T) engine.unmarshal(reader);
                 } finally {
@@ -198,6 +222,66 @@ public class Jaxb {
             } catch (JAXBException ex) {
                 throw toIOException(ex);
             }
+        }
+    }
+
+    @lombok.Builder(builderClassName = "Builder", toBuilder = true)
+    public static final class Formatter<T> implements Xml.Formatter<T> {
+
+        @Nonnull
+        public static <T> Formatter<T> of(@Nonnull Class<T> type) throws IOException {
+            Objects.requireNonNull(type);
+            return Formatter.<T>builder().factory(() -> createMarshaller(type)).build();
+        }
+
+        @Nonnull
+        public static <T> Formatter<T> of(@Nonnull JAXBContext context) throws IOException {
+            Objects.requireNonNull(context);
+            return Formatter.<T>builder().factory(() -> createMarshaller(context)).build();
+        }
+
+        @lombok.NonNull
+        private final IO.Supplier<? extends Marshaller> factory;
+
+        private final boolean formatted;
+
+        @Override
+        public void formatFile(T value, File target) throws IOException {
+            Objects.requireNonNull(value);
+            LegacyFiles.checkTarget(target);
+            try {
+                getEngine().marshal(value, target);
+            } catch (JAXBException ex) {
+                throw toIOException(ex);
+            }
+        }
+
+        @Override
+        public void formatWriter(T value, Writer resource) throws IOException {
+            Objects.requireNonNull(value);
+            Objects.requireNonNull(resource);
+            try {
+                getEngine().marshal(value, resource);
+            } catch (JAXBException ex) {
+                throw toIOException(ex);
+            }
+        }
+
+        @Override
+        public void formatStream(T value, OutputStream resource) throws IOException {
+            Objects.requireNonNull(value);
+            Objects.requireNonNull(resource);
+            try {
+                getEngine().marshal(value, resource);
+            } catch (JAXBException ex) {
+                throw toIOException(ex);
+            }
+        }
+
+        private Marshaller getEngine() throws PropertyException, IOException {
+            Marshaller result = factory.getWithIO();
+            result.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, formatted);
+            return result;
         }
     }
 

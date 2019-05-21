@@ -16,18 +16,16 @@
  */
 package ioutil;
 
-import java.io.BufferedInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Reader;
 import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.net.URI;
-import java.nio.file.AccessDeniedException;
-import java.nio.file.FileSystemException;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.Nonnull;
@@ -49,8 +47,8 @@ public class Xml {
 
         @Nonnull
         default T parseFile(@Nonnull File source) throws IOException {
-            checkFile(source);
-            return parseStream(() -> open(source));
+            LegacyFiles.checkSource(source);
+            return parseStream(() -> LegacyFiles.newInputStream(source));
         }
 
         @Nonnull
@@ -82,6 +80,45 @@ public class Xml {
         T parseStream(@Nonnull InputStream resource) throws IOException;
     }
 
+    public interface Formatter<T> {
+
+        default void formatChars(@Nonnull T value, @Nonnull Appendable target) throws IOException {
+            StringWriter writer = new StringWriter();
+            formatWriter(value, writer);
+            target.append(writer.getBuffer());
+        }
+
+        default void formatFile(@Nonnull T value, @Nonnull File target) throws IOException {
+            LegacyFiles.checkTarget(target);
+            formatStream(value, () -> LegacyFiles.newOutputStream(target));
+        }
+
+        default void formatPath(@Nonnull T value, @Nonnull Path target) throws IOException {
+            Optional<File> file = IO.getFile(target);
+            if (file.isPresent()) {
+                formatFile(value, file.get());
+            } else {
+                formatWriter(value, () -> Files.newBufferedWriter(target));
+            }
+        }
+
+        default void formatWriter(@Nonnull T value, @Nonnull IO.Supplier<? extends Writer> target) throws IOException {
+            try (Writer resource = open(target)) {
+                formatWriter(value, resource);
+            }
+        }
+
+        default void formatStream(@Nonnull T value, @Nonnull IO.Supplier<? extends OutputStream> target) throws IOException {
+            try (OutputStream resource = open(target)) {
+                formatStream(value, resource);
+            }
+        }
+
+        void formatWriter(@Nonnull T value, @Nonnull Writer resource) throws IOException;
+
+        void formatStream(@Nonnull T value, @Nonnull OutputStream resource) throws IOException;
+    }
+
     public static final class WrappedException extends IOException {
 
         public WrappedException(Exception ex) {
@@ -97,24 +134,11 @@ public class Xml {
         return result;
     }
 
-    static InputStream open(File source) throws IOException {
-        return new BufferedInputStream(new FileInputStream(source));
-    }
-
-    static void checkFile(File source) throws FileSystemException {
-        if (!source.exists()) {
-            throw new NoSuchFileException(source.getPath());
-        }
-        if (!source.isFile()) {
-            throw new AccessDeniedException(source.getPath());
-        }
-    }
-
-    static String getSystemId(File file) {
+    static String toSystemId(File file) {
         return file.toURI().toASCIIString();
     }
 
-    static File getFile(String systemId) {
+    static File fromSystemId(String systemId) {
         try {
             return new File(URI.create(systemId));
         } catch (IllegalArgumentException ex) {

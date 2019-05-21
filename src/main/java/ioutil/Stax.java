@@ -114,9 +114,9 @@ public class Stax {
 
         @Override
         public T parseFile(File source) throws IOException {
-            Xml.checkFile(source);
-            InputStream resource = Xml.open(source);
-            return parse(o -> o.createXMLStreamReader(Xml.getSystemId(source), resource), resource);
+            LegacyFiles.checkSource(source);
+            InputStream resource = LegacyFiles.newInputStream(source);
+            return parse(o -> o.createXMLStreamReader(Xml.toSystemId(source), resource), resource);
         }
 
         @Override
@@ -229,9 +229,9 @@ public class Stax {
 
         @Override
         public T parseFile(File source) throws IOException {
-            Xml.checkFile(source);
-            InputStream resource = Xml.open(source);
-            return parse(o -> o.createXMLEventReader(Xml.getSystemId(source), resource), resource);
+            LegacyFiles.checkSource(source);
+            InputStream resource = LegacyFiles.newInputStream(source);
+            return parse(o -> o.createXMLEventReader(Xml.toSystemId(source), resource), resource);
         }
 
         @Override
@@ -331,6 +331,6 @@ public class Stax {
 
     private File getFile(XMLStreamException ex) {
         String result = ex.getLocation().getSystemId();
-        return result != null && result.startsWith("file:/") ? Xml.getFile(result) : null;
+        return result != null && result.startsWith("file:/") ? Xml.fromSystemId(result) : null;
     }
 }

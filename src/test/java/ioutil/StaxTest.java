@@ -16,8 +16,9 @@
  */
 package ioutil;
 
+import _test.sample.ParseAssertions;
 import _test.ResourceCounter;
-import ioutil.XmlTest.Person;
+import _test.sample.Person;
 import java.io.IOException;
 import java.util.List;
 import java.util.function.Supplier;
@@ -34,6 +35,7 @@ import org.junit.Test;
 import _test.ForwardingXMLInputFactory;
 import _test.StaxListener;
 import _test.Meta;
+import static _test.sample.ParseAssertions.assertParserCompliance;
 
 /**
  *
@@ -53,10 +55,10 @@ public class StaxTest {
     @Test
     public void testXXE() throws IOException {
         Stax.StreamParser<Person> stream = Stax.StreamParser.valueOf(StaxTest::parseByStream);
-        XmlTest.testXXE(stream, stream.toBuilder().ignoreXXE(true).build());
+        ParseAssertions.testXXE(stream, stream.toBuilder().ignoreXXE(true).build());
 
         Stax.EventParser<Person> event = Stax.EventParser.valueOf(StaxTest::parseByEvent);
-        XmlTest.testXXE(event, event.toBuilder().ignoreXXE(true).build());
+        ParseAssertions.testXXE(event, event.toBuilder().ignoreXXE(true).build());
     }
 
     @Test
@@ -64,20 +66,20 @@ public class StaxTest {
     public void testStreamValueOf() throws IOException {
         assertThatNullPointerException().isThrownBy(() -> Stax.StreamParser.valueOf(null));
 
-        XmlTest.testParser(Stax.StreamParser.valueOf(StaxTest::parseByStream));
+        assertParserCompliance(Stax.StreamParser.valueOf(StaxTest::parseByStream));
     }
 
     @Test
     @SuppressWarnings("null")
     public void testStreamBuilder() throws IOException {
-        XmlTest.testParser(Stax.StreamParser.<Person>builder()
+        assertParserCompliance(Stax.StreamParser.<Person>builder()
                 .handler(Stax.FlowHandler.of(StaxTest::parseByStream))
                 .ignoreXXE(true)
                 .factory(validFactory)
                 .build()
         );
 
-        XmlTest.testParser(Stax.StreamParser.<Person>builder()
+        assertParserCompliance(Stax.StreamParser.<Person>builder()
                 .handler(Stax.FlowHandler.of(StaxTest::parseByStream))
                 .ignoreXXE(false)
                 .factory(validFactory)
@@ -90,20 +92,20 @@ public class StaxTest {
     public void testEventValueOf() throws IOException {
         assertThatNullPointerException().isThrownBy(() -> Stax.EventParser.valueOf(null));
 
-        XmlTest.testParser(Stax.EventParser.valueOf(StaxTest::parseByEvent));
+        assertParserCompliance(Stax.EventParser.valueOf(StaxTest::parseByEvent));
     }
 
     @Test
     @SuppressWarnings("null")
     public void testEventBuilder() throws IOException {
-        XmlTest.testParser(Stax.EventParser.<Person>builder()
+        assertParserCompliance(Stax.EventParser.<Person>builder()
                 .handler(Stax.FlowHandler.of(StaxTest::parseByEvent))
                 .ignoreXXE(true)
                 .factory(validFactory)
                 .build()
         );
 
-        XmlTest.testParser(Stax.EventParser.<Person>builder()
+        assertParserCompliance(Stax.EventParser.<Person>builder()
                 .handler(Stax.FlowHandler.of(StaxTest::parseByEvent))
                 .ignoreXXE(false)
                 .factory(validFactory)
@@ -146,7 +148,7 @@ public class StaxTest {
                             .build();
 
                     counter.reset();
-                    XmlTest.testParserResources(p, Meta.lookupExpectedException(handler, factory));
+                    ParseAssertions.testParserResources(p, Meta.lookupExpectedException(handler, factory));
                     assertThat(counter.getCount()).isLessThanOrEqualTo(0);
                     assertThat(counter.getMax()).isLessThanOrEqualTo(1);
                 }
@@ -159,7 +161,7 @@ public class StaxTest {
                             .build();
 
                     counter.reset();
-                    XmlTest.testParserResources(p, Meta.lookupExpectedException(handler, factory));
+                    ParseAssertions.testParserResources(p, Meta.lookupExpectedException(handler, factory));
                     assertThat(counter.getCount()).isLessThanOrEqualTo(0);
                     assertThat(counter.getMax()).isLessThanOrEqualTo(1);
                 }

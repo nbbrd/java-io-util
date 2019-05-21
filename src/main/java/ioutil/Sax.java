@@ -142,7 +142,7 @@ public class Sax {
 
         @Override
         public T parseFile(File source) throws IOException {
-            Xml.checkFile(source);
+            LegacyFiles.checkSource(source);
             return parse(newInputSource(source));
         }
 
@@ -185,7 +185,7 @@ public class Sax {
      * @see SAXParser#parse(java.io.File, org.xml.sax.helpers.DefaultHandler)
      */
     InputSource newInputSource(File file) {
-        return new InputSource(Xml.getSystemId(file));
+        return new InputSource(Xml.toSystemId(file));
     }
 
     private final static SAXParserFactory DEFAULT_FACTORY = initFactory();
@@ -225,6 +225,6 @@ public class Sax {
 
     private File getFile(SAXParseException ex) {
         String result = ex.getSystemId();
-        return result != null && result.startsWith("file:/") ? Xml.getFile(result) : null;
+        return result != null && result.startsWith("file:/") ? Xml.fromSystemId(result) : null;
     }
 }
