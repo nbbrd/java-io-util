@@ -32,12 +32,17 @@ import _test.SaxListener;
 import _test.Meta;
 import static _test.sample.ParseAssertions.assertParserCompliance;
 import javax.xml.parsers.SAXParserFactory;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 
 /**
  *
  * @author Philippe Charles
  */
 public class SaxTest {
+
+    @Rule
+    public TemporaryFolder temp = new TemporaryFolder();
 
     private final IO.Supplier<XMLReader> validFactory = Sax::createReader;
 
@@ -60,7 +65,7 @@ public class SaxTest {
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.of(null, PersonHandler.INSTANCE::build));
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.of(PersonHandler.INSTANCE, null));
 
-        assertParserCompliance(Sax.Parser.of(PersonHandler.INSTANCE, PersonHandler.INSTANCE::build));
+        assertParserCompliance(Sax.Parser.of(PersonHandler.INSTANCE, PersonHandler.INSTANCE::build), temp);
     }
 
     @Test
@@ -70,23 +75,16 @@ public class SaxTest {
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.builder().contentHandler(null).build());
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.builder().contentHandler(PersonHandler.INSTANCE).after(null).build());
 
-        assertParserCompliance(Sax.Parser.<Person>builder()
-                .factory(validFactory)
-                .contentHandler(PersonHandler.INSTANCE)
-                .before(PersonHandler.INSTANCE::clear)
-                .after(PersonHandler.INSTANCE::build)
-                .ignoreXXE(false)
-                .build()
-        );
-
-        assertParserCompliance(Sax.Parser.<Person>builder()
-                .factory(validFactory)
-                .contentHandler(PersonHandler.INSTANCE)
-                .before(PersonHandler.INSTANCE::clear)
-                .after(PersonHandler.INSTANCE::build)
-                .ignoreXXE(true)
-                .build()
-        );
+        for (boolean ignoreXXE : new boolean[]{false, true}) {
+            assertParserCompliance(Sax.Parser.<Person>builder()
+                    .factory(validFactory)
+                    .contentHandler(PersonHandler.INSTANCE)
+                    .before(PersonHandler.INSTANCE::clear)
+                    .after(PersonHandler.INSTANCE::build)
+                    .ignoreXXE(ignoreXXE)
+                    .build(),
+                    temp);
+        }
     }
 
     @Test

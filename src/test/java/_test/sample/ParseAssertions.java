@@ -33,6 +33,7 @@ import ioutil.Xml;
 import java.io.EOFException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
+import org.junit.rules.TemporaryFolder;
 
 /**
  *
@@ -40,10 +41,10 @@ import java.nio.file.NoSuchFileException;
  */
 public class ParseAssertions {
 
-    public static void assertParserCompliance(Xml.Parser<Person> p) throws IOException {
+    public static void assertParserCompliance(Xml.Parser<Person> p, TemporaryFolder temp) throws IOException {
         testParseChars(p);
-        testParseFile(p);
-        testParsePath(p);
+        testParseFile(p, temp);
+        testParsePath(p, temp);
         testParseReaderFromSupplier(p);
         testParseStreamFromSupplier(p);
         testParseReader(p);
@@ -64,7 +65,7 @@ public class ParseAssertions {
     }
 
     @SuppressWarnings("null")
-    private static void testParseFile(Xml.Parser<Person> p) throws IOException {
+    private static void testParseFile(Xml.Parser<Person> p, TemporaryFolder temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> p.parseFile(null));
 
@@ -88,7 +89,7 @@ public class ParseAssertions {
     }
 
     @SuppressWarnings("null")
-    private static void testParsePath(Xml.Parser<Person> p) throws IOException {
+    private static void testParsePath(Xml.Parser<Person> p, TemporaryFolder temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> p.parsePath(null));
 
@@ -104,7 +105,7 @@ public class ParseAssertions {
                 .isInstanceOf(NoSuchFileException.class);
 
         assertThatIOException()
-                .isThrownBy(() -> p.parsePath(PATH_DIR))
+                .isThrownBy(() -> p.parsePath(temp.newFolder().toPath()))
                 .isInstanceOf(AccessDeniedException.class);
     }
 

@@ -28,7 +28,9 @@ import java.io.OutputStream;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import org.junit.rules.TemporaryFolder;
 
 /**
  *
@@ -36,10 +38,10 @@ import java.nio.file.Path;
  */
 public class FormatAssertions {
 
-    public static void assertFormatterCompliance(Xml.Formatter<Person> p, boolean formatted) throws IOException {
+    public static void assertFormatterCompliance(Xml.Formatter<Person> p, boolean formatted, TemporaryFolder temp) throws IOException {
         testFormatChars(p, formatted);
-        testFormatFile(p, formatted);
-        testFormatPath(p, formatted);
+        testFormatFile(p, formatted, temp);
+        testFormatPath(p, formatted, temp);
         testFormatWriterFromSupplier(p, formatted);
         testFormatStreamFromSupplier(p, formatted);
         testFormatWriter(p, formatted);
@@ -61,44 +63,50 @@ public class FormatAssertions {
     }
 
     @SuppressWarnings("null")
-    private static void testFormatFile(Xml.Formatter<Person> p, boolean formatted) throws IOException {
-        File target = File.createTempFile("testFormatFile", ".xml");
-        target.deleteOnExit();
+    private static void testFormatFile(Xml.Formatter<Person> p, boolean formatted, TemporaryFolder temp) throws IOException {
+        File target = temp.newFile();
+        target.delete();
 
         assertThatNullPointerException()
                 .isThrownBy(() -> p.formatFile(null, target));
+        assertThat(target).doesNotExist();
 
         assertThatNullPointerException()
                 .isThrownBy(() -> p.formatFile(JOHN_DOE, null));
+        assertThat(target).doesNotExist();
 
         p.formatFile(JOHN_DOE, target);
+        assertThat(target).exists().isFile();
         assertThat(target)
                 .usingCharset(StandardCharsets.UTF_8)
                 .hasContent(formatted ? FORMATTED_CHARS : CHARS);
 
         assertThatIOException()
-                .isThrownBy(() -> p.formatFile(JOHN_DOE, FILE_DIR))
+                .isThrownBy(() -> p.formatFile(JOHN_DOE, temp.newFolder()))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
     @SuppressWarnings("null")
-    private static void testFormatPath(Xml.Formatter<Person> p, boolean formatted) throws IOException {
-        Path target = File.createTempFile("testFormatPath", ".xml").toPath();
-        target.toFile().deleteOnExit();
+    private static void testFormatPath(Xml.Formatter<Person> p, boolean formatted, TemporaryFolder temp) throws IOException {
+        Path target = temp.newFile().toPath();
+        Files.delete(target);
 
         assertThatNullPointerException()
                 .isThrownBy(() -> p.formatPath(null, target));
+        assertThat(target).doesNotExist();
 
         assertThatNullPointerException()
                 .isThrownBy(() -> p.formatPath(JOHN_DOE, null));
+        assertThat(target).doesNotExist();
 
         p.formatPath(JOHN_DOE, target);
+        assertThat(target).exists().isReadable();
         assertThat(target)
                 .usingCharset(StandardCharsets.UTF_8)
                 .hasContent(formatted ? FORMATTED_CHARS : CHARS);
 
         assertThatIOException()
-                .isThrownBy(() -> p.formatPath(JOHN_DOE, PATH_DIR))
+                .isThrownBy(() -> p.formatPath(JOHN_DOE, temp.newFolder().toPath()))
                 .isInstanceOf(AccessDeniedException.class);
     }
 

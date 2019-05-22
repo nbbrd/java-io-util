@@ -27,7 +27,6 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -83,7 +82,7 @@ public class Person {
                 marshaller.marshal(JOHN_DOE, w);
                 FORMATTED_CHARS = w.toString();
             }
-            Files.write(PATH, Collections.singleton(CHARS));
+            Files.write(PATH, CHARS.getBytes(StandardCharsets.UTF_8));
 
             FILE_EMPTY = File.createTempFile("empty", ".xml");
             FILE_EMPTY.deleteOnExit();

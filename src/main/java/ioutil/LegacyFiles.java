@@ -20,6 +20,7 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,6 +28,7 @@ import java.io.OutputStream;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
 import java.nio.file.NoSuchFileException;
+import javax.annotation.Nonnull;
 
 /**
  *
@@ -35,32 +37,50 @@ import java.nio.file.NoSuchFileException;
 @lombok.experimental.UtilityClass
 class LegacyFiles {
 
-    static InputStream newInputStream(File source) throws IOException {
-        return new BufferedInputStream(new FileInputStream(source));
+    @Nonnull
+    static InputStream newInputStream(@Nonnull File source) throws IOException {
+        return new BufferedFileInputStream(source);
     }
 
-    static OutputStream newOutputStream(File target) throws IOException {
+    @Nonnull
+    static OutputStream newOutputStream(@Nonnull File target) throws IOException {
         return new BufferedOutputStream(new FileOutputStream(target));
     }
 
-    static void checkSource(File source) throws FileSystemException {
+    static void checkSource(@Nonnull File source) throws FileSystemException {
         checkExist(source);
         checkIsFile(source);
     }
 
-    static void checkTarget(File source) throws FileSystemException {
-        checkIsFile(source);
+    static void checkTarget(@Nonnull File source) throws FileSystemException {
+        if (source.exists()) {
+            checkIsFile(source);
+        }
     }
 
-    static void checkExist(File source) throws FileSystemException {
+    static void checkExist(@Nonnull File source) throws FileSystemException {
         if (!source.exists()) {
             throw new NoSuchFileException(source.getPath());
         }
     }
 
-    static void checkIsFile(File source) throws FileSystemException {
+    static void checkIsFile(@Nonnull File source) throws FileSystemException {
         if (!source.isFile()) {
             throw new AccessDeniedException(source.getPath());
+        }
+    }
+
+    static final class BufferedFileInputStream extends BufferedInputStream {
+
+        private final File file;
+
+        public BufferedFileInputStream(File source) throws FileNotFoundException {
+            super(new FileInputStream(source));
+            this.file = source;
+        }
+
+        public File getFile() {
+            return file;
         }
     }
 }

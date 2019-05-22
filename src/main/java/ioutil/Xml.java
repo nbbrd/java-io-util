@@ -16,6 +16,7 @@
  */
 package ioutil;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -126,12 +127,15 @@ public class Xml {
         }
     }
 
-    static <T> T open(IO.Supplier<T> source) throws IOException {
-        T result = source.getWithIO();
-        if (result == null) {
+    static <T extends Closeable> T open(IO.Supplier<T> source) throws IOException {
+        return checkResource(source.getWithIO());
+    }
+
+    static <T extends Closeable> T checkResource(T resource) throws IOException {
+        if (resource == null) {
             throw new IOException("Null resource");
         }
-        return result;
+        return resource;
     }
 
     static String toSystemId(File file) {

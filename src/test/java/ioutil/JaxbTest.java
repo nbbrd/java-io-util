@@ -35,12 +35,17 @@ import _test.Meta;
 import javax.xml.bind.Marshaller;
 import static _test.sample.FormatAssertions.assertFormatterCompliance;
 import static _test.sample.ParseAssertions.assertParserCompliance;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 
 /**
  *
  * @author Philippe Charles
  */
 public class JaxbTest {
+
+    @Rule
+    public TemporaryFolder temp = new TemporaryFolder();
 
     private final IO.Supplier<Unmarshaller> validUnmarshaller = () -> Jaxb.createUnmarshaller(Person.class);
     private final IO.Supplier<Marshaller> validMarshaller = () -> Jaxb.createMarshaller(Person.class);
@@ -86,7 +91,7 @@ public class JaxbTest {
         assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Parser.of((Class<?>) null));
 
-        assertParserCompliance(Jaxb.Parser.of(Person.class));
+        assertParserCompliance(Jaxb.Parser.of(Person.class), temp);
     }
 
     @Test
@@ -95,7 +100,7 @@ public class JaxbTest {
         assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Parser.of((JAXBContext) null));
 
-        assertParserCompliance(Jaxb.Parser.of(JAXBContext.newInstance(Person.class)));
+        assertParserCompliance(Jaxb.Parser.of(JAXBContext.newInstance(Person.class)), temp);
     }
 
     @Test
@@ -116,8 +121,8 @@ public class JaxbTest {
                             .factory(validUnmarshaller)
                             .xxeFactory(validXxeFactory)
                             .ignoreXXE(ignoreXXE)
-                            .build()
-            );
+                            .build(),
+                    temp);
         }
     }
 
@@ -162,7 +167,7 @@ public class JaxbTest {
         assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Formatter.of((Class<?>) null));
 
-        assertFormatterCompliance(Jaxb.Formatter.of(Person.class), false);
+        assertFormatterCompliance(Jaxb.Formatter.of(Person.class), false, temp);
     }
 
     @Test
@@ -171,7 +176,7 @@ public class JaxbTest {
         assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Formatter.of((JAXBContext) null));
 
-        assertFormatterCompliance(Jaxb.Formatter.of(JAXBContext.newInstance(Person.class)), false);
+        assertFormatterCompliance(Jaxb.Formatter.of(JAXBContext.newInstance(Person.class)), false, temp);
     }
 
     @Test
@@ -189,7 +194,7 @@ public class JaxbTest {
                             .factory(validMarshaller)
                             .formatted(formatted)
                             .build(),
-                    formatted);
+                    formatted, temp);
         }
     }
 
