@@ -310,7 +310,7 @@ public class StaxTest {
 
     private static void formatByEvent(Person person, XMLEventWriter w) throws XMLStreamException {
         XMLEventFactory factory = XMLEventFactory.newInstance();
-        w.add(factory.createStartDocument("UTF-8", "1.0", true));
+        w.add(factory.createProcessingInstruction("xml version=\"1.0\" encoding=\"UTF-8\"", "standalone=\"yes\""));
         {
             w.add(factory.createStartElement("", "", "person"));
             {
@@ -325,7 +325,6 @@ public class StaxTest {
             }
             w.add(factory.createEndElement("", "", "person"));
         }
-        w.add(factory.createEndDocument());
     }
 
     enum Tag {
