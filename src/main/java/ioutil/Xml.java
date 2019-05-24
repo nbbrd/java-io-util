@@ -64,6 +64,13 @@ public class Xml {
         }
 
         @Nonnull
+        default T parseResource(@Nonnull Class<?> type, @Nonnull String name) throws IOException {
+            Objects.requireNonNull(type, "type");
+            Objects.requireNonNull(name, "name");
+            return parseStream(() -> type.getResourceAsStream(name));
+        }
+
+        @Nonnull
         default T parseReader(@Nonnull IO.Supplier<? extends Reader> source) throws IOException {
             Objects.requireNonNull(source, "source");
             try (Reader resource = open(source)) {

@@ -45,6 +45,7 @@ public class ParseAssertions {
         testParseChars(p);
         testParseFile(p, temp);
         testParsePath(p, temp);
+        testParseResource(p);
         testParseReaderFromSupplier(p);
         testParseStreamFromSupplier(p);
         testParseReader(p);
@@ -110,6 +111,24 @@ public class ParseAssertions {
         assertThatIOException()
                 .isThrownBy(() -> p.parsePath(temp.newFolder().toPath()))
                 .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @SuppressWarnings("null")
+    private static void testParseResource(Xml.Parser<Person> p) throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.parseResource(null, ""))
+                .withMessageContaining("type");
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.parseResource(Person.class, null))
+                .withMessageContaining("name");
+
+        assertThat(p.parseResource(Person.class, "/ioutil/johndoe.xml"))
+                .isEqualTo(JOHN_DOE);
+
+        assertThatIOException()
+                .isThrownBy(() -> p.parseResource(Person.class, "/johndoe.xml"))
+                .withMessageContaining("Null resource");
     }
 
     @SuppressWarnings("null")
