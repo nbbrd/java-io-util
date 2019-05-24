@@ -128,7 +128,9 @@ public class ParseAssertions {
 
         assertThatIOException()
                 .isThrownBy(() -> p.parseResource(Person.class, "/johndoe.xml"))
-                .withMessageContaining("Null resource");
+                .withMessageContaining("Missing")
+                .withMessageContaining("/johndoe.xml")
+                .withMessageContaining(Person.class.getName());
     }
 
     @SuppressWarnings("null")
@@ -143,7 +145,7 @@ public class ParseAssertions {
         assertThatIOException()
                 .isThrownBy(() -> p.parseReader(IO.Supplier.of(null)))
                 .isInstanceOf(IOException.class)
-                .withMessageContaining("Null resource");
+                .withMessageContaining("Missing Reader");
 
         assertThatIOException()
                 .isThrownBy(() -> p.parseReader(IO.Supplier.throwing(SourceError::new)))
@@ -162,7 +164,7 @@ public class ParseAssertions {
         assertThatIOException()
                 .isThrownBy(() -> p.parseStream(IO.Supplier.of(null)))
                 .isInstanceOf(IOException.class)
-                .withMessageContaining("Null resource");
+                .withMessageContaining("Missing InputStream");
 
         assertThatIOException()
                 .isThrownBy(() -> p.parseStream(IO.Supplier.throwing(SourceError::new)))

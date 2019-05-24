@@ -133,7 +133,7 @@ public class FormatAssertions {
         assertThatIOException()
                 .isThrownBy(() -> p.formatWriter(JOHN_DOE, IO.Supplier.of(null)))
                 .isInstanceOf(IOException.class)
-                .withMessageContaining("Null resource");
+                .withMessageContaining("Missing Writer");
 
         assertThatIOException()
                 .isThrownBy(() -> p.formatWriter(JOHN_DOE, IO.Supplier.throwing(TargetError::new)))
@@ -158,7 +158,7 @@ public class FormatAssertions {
         assertThatIOException()
                 .isThrownBy(() -> p.formatStream(JOHN_DOE, IO.Supplier.of(null)))
                 .isInstanceOf(IOException.class)
-                .withMessageContaining("Null resource");
+                .withMessageContaining("Missing OutputStream");
 
         assertThatIOException()
                 .isThrownBy(() -> p.formatStream(JOHN_DOE, IO.Supplier.throwing(TargetError::new)))

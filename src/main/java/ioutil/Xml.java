@@ -67,13 +67,13 @@ public class Xml {
         default T parseResource(@Nonnull Class<?> type, @Nonnull String name) throws IOException {
             Objects.requireNonNull(type, "type");
             Objects.requireNonNull(name, "name");
-            return parseStream(() -> type.getResourceAsStream(name));
+            return parseStream(() -> checkResource(type.getResourceAsStream(name), "Missing resource '" + name + "' of '" + type.getName() + "'"));
         }
 
         @Nonnull
         default T parseReader(@Nonnull IO.Supplier<? extends Reader> source) throws IOException {
             Objects.requireNonNull(source, "source");
-            try (Reader resource = open(source)) {
+            try (Reader resource = checkResource(source.getWithIO(), "Missing Reader")) {
                 return parseReader(resource);
             }
         }
@@ -81,7 +81,7 @@ public class Xml {
         @Nonnull
         default T parseStream(@Nonnull IO.Supplier<? extends InputStream> source) throws IOException {
             Objects.requireNonNull(source, "source");
-            try (InputStream resource = open(source)) {
+            try (InputStream resource = checkResource(source.getWithIO(), "Missing InputStream")) {
                 return parseStream(resource);
             }
         }
@@ -123,7 +123,7 @@ public class Xml {
         default void formatWriter(@Nonnull T value, @Nonnull IO.Supplier<? extends Writer> target) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
-            try (Writer resource = open(target)) {
+            try (Writer resource = checkResource(target.getWithIO(), "Missing Writer")) {
                 formatWriter(value, resource);
             }
         }
@@ -131,7 +131,7 @@ public class Xml {
         default void formatStream(@Nonnull T value, @Nonnull IO.Supplier<? extends OutputStream> target) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
-            try (OutputStream resource = open(target)) {
+            try (OutputStream resource = checkResource(target.getWithIO(), "Missing OutputStream")) {
                 formatStream(value, resource);
             }
         }
@@ -148,13 +148,9 @@ public class Xml {
         }
     }
 
-    static <T extends Closeable> T open(IO.Supplier<T> source) throws IOException {
-        return checkResource(source.getWithIO());
-    }
-
-    static <T extends Closeable> T checkResource(T resource) throws IOException {
+    static <T extends Closeable> T checkResource(T resource, String message) throws IOException {
         if (resource == null) {
-            throw new IOException("Null resource");
+            throw new IOException(message);
         }
         return resource;
     }

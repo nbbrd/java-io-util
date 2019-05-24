@@ -142,14 +142,14 @@ public class Stax {
         @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {
             Objects.requireNonNull(source, "source");
-            Reader resource = Xml.open(source);
+            Reader resource = Xml.checkResource(source.getWithIO(), "Missing Reader");
             return parse(o -> o.createXMLStreamReader(resource), resource);
         }
 
         @Override
         public T parseStream(IO.Supplier<? extends InputStream> source) throws IOException {
             Objects.requireNonNull(source, "source");
-            InputStream resource = Xml.open(source);
+            InputStream resource = Xml.checkResource(source.getWithIO(), "Missing InputStream");
             return parse(o -> o.createXMLStreamReader(resource), resource);
         }
 
@@ -239,14 +239,14 @@ public class Stax {
         @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {
             Objects.requireNonNull(source, "source");
-            Reader resource = Xml.open(source);
+            Reader resource = Xml.checkResource(source.getWithIO(), "Missing Reader");
             return parse(o -> o.createXMLEventReader(resource), resource);
         }
 
         @Override
         public T parseStream(IO.Supplier<? extends InputStream> source) throws IOException {
             Objects.requireNonNull(source, "source");
-            InputStream resource = Xml.open(source);
+            InputStream resource = Xml.checkResource(source.getWithIO(), "Missing InputStream");
             return parse(o -> o.createXMLEventReader(resource), resource);
         }
 
@@ -316,7 +316,7 @@ public class Stax {
         public void formatWriter(T value, IO.Supplier<? extends Writer> target) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
-            try (Writer resource = Xml.open(target)) {
+            try (Writer resource = Xml.checkResource(target.getWithIO(), "Missing Writer")) {
                 format(value, o -> o.createXMLStreamWriter(resource));
             }
         }
@@ -325,7 +325,7 @@ public class Stax {
         public void formatStream(T value, IO.Supplier<? extends OutputStream> target) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
-            try (OutputStream resource = Xml.open(target)) {
+            try (OutputStream resource = Xml.checkResource(target.getWithIO(), "Missing OutputStream")) {
                 format(value, o -> o.createXMLStreamWriter(resource));
             }
         }
@@ -395,7 +395,7 @@ public class Stax {
         public void formatWriter(T value, IO.Supplier<? extends Writer> target) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
-            try (Writer resource = Xml.open(target)) {
+            try (Writer resource = Xml.checkResource(target.getWithIO(), "Missing Writer")) {
                 format(value, o -> o.createXMLEventWriter(resource));
             }
         }
@@ -404,7 +404,7 @@ public class Stax {
         public void formatStream(T value, IO.Supplier<? extends OutputStream> target) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
-            try (OutputStream resource = Xml.open(target)) {
+            try (OutputStream resource = Xml.checkResource(target.getWithIO(), "Missing OutputStream")) {
                 format(value, o -> o.createXMLEventWriter(resource));
             }
         }
