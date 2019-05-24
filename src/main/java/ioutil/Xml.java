@@ -95,6 +95,13 @@ public class Xml {
 
     public interface Formatter<T> {
 
+        default String formatToString(@Nonnull T value) throws IOException {
+            Objects.requireNonNull(value, "value");
+            StringWriter writer = new StringWriter();
+            formatWriter(value, writer);
+            return writer.toString();
+        }
+
         default void formatChars(@Nonnull T value, @Nonnull Appendable target) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");

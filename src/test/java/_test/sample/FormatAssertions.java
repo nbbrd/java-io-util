@@ -39,6 +39,7 @@ import org.junit.rules.TemporaryFolder;
 public class FormatAssertions {
 
     public static void assertFormatterCompliance(Xml.Formatter<Person> p, boolean formatted, TemporaryFolder temp) throws IOException {
+        testFormatToString(p, formatted);
         testFormatChars(p, formatted);
         testFormatFile(p, formatted, temp);
         testFormatPath(p, formatted, temp);
@@ -46,6 +47,16 @@ public class FormatAssertions {
         testFormatStreamFromSupplier(p, formatted);
         testFormatWriter(p, formatted);
         testFormatStream(p, formatted);
+    }
+
+    @SuppressWarnings("null")
+    private static void testFormatToString(Xml.Formatter<Person> p, boolean formatted) throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.formatToString(null))
+                .withMessageContaining("value");
+
+        assertThat(p.formatToString(JOHN_DOE))
+                .isEqualTo(formatted ? FORMATTED_CHARS : CHARS);
     }
 
     @SuppressWarnings("null")
