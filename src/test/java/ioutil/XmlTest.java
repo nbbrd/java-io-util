@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.util.Objects;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -51,6 +52,7 @@ public class XmlTest {
 
         @Override
         public Person parseReader(Reader resource) throws IOException {
+            Objects.requireNonNull(resource, "resource");
             String xml = toString(resource);
             if (isJohnDoe(xml)) {
                 return JOHN_DOE;
@@ -63,6 +65,7 @@ public class XmlTest {
 
         @Override
         public Person parseStream(InputStream resource) throws IOException {
+            Objects.requireNonNull(resource, "resource");
             String xml = toString(new InputStreamReader(resource));
             if (isJohnDoe(xml)) {
                 return JOHN_DOE;

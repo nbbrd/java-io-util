@@ -54,7 +54,8 @@ public class ParseAssertions {
     @SuppressWarnings("null")
     private static void testParseChars(Xml.Parser<Person> p) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> p.parseChars(null));
+                .isThrownBy(() -> p.parseChars(null))
+                .withMessageContaining("source");
 
         assertThat(p.parseChars(CHARS))
                 .isEqualTo(JOHN_DOE);
@@ -67,7 +68,8 @@ public class ParseAssertions {
     @SuppressWarnings("null")
     private static void testParseFile(Xml.Parser<Person> p, TemporaryFolder temp) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> p.parseFile(null));
+                .isThrownBy(() -> p.parseFile(null))
+                .withMessageContaining("source");
 
         assertThat(p.parseFile(FILE))
                 .isEqualTo(JOHN_DOE);
@@ -91,7 +93,8 @@ public class ParseAssertions {
     @SuppressWarnings("null")
     private static void testParsePath(Xml.Parser<Person> p, TemporaryFolder temp) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> p.parsePath(null));
+                .isThrownBy(() -> p.parsePath(null))
+                .withMessageContaining("source");
 
         assertThat(p.parsePath(PATH))
                 .isEqualTo(JOHN_DOE);
@@ -112,7 +115,8 @@ public class ParseAssertions {
     @SuppressWarnings("null")
     private static void testParseReaderFromSupplier(Xml.Parser<Person> p) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> p.parseReader((IO.Supplier) null));
+                .isThrownBy(() -> p.parseReader((IO.Supplier) null))
+                .withMessageContaining("source");
 
         assertThat(p.parseReader(READER))
                 .isEqualTo(JOHN_DOE);
@@ -130,7 +134,8 @@ public class ParseAssertions {
     @SuppressWarnings("null")
     private static void testParseStreamFromSupplier(Xml.Parser<Person> p) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> p.parseStream((IO.Supplier) null));
+                .isThrownBy(() -> p.parseStream((IO.Supplier) null))
+                .withMessageContaining("source");
 
         assertThat(p.parseStream(INPUT_STREAM))
                 .isEqualTo(JOHN_DOE);
@@ -148,7 +153,8 @@ public class ParseAssertions {
     @SuppressWarnings("null")
     private static void testParseReader(Xml.Parser<Person> p) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> p.parseReader((Reader) null));
+                .isThrownBy(() -> p.parseReader((Reader) null))
+                .withMessageContaining("resource");
 
         try (Reader resource = READER.getWithIO()) {
             assertThat(p.parseReader(resource))
@@ -159,7 +165,8 @@ public class ParseAssertions {
     @SuppressWarnings("null")
     private static void testParseStream(Xml.Parser<Person> p) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> p.parseStream((InputStream) null));
+                .isThrownBy(() -> p.parseStream((InputStream) null))
+                .withMessageContaining("resource");
 
         try (InputStream resource = INPUT_STREAM.getWithIO()) {
             assertThat(p.parseStream(resource))

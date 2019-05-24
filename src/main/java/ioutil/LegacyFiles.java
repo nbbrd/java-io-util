@@ -28,6 +28,7 @@ import java.io.OutputStream;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
 import java.nio.file.NoSuchFileException;
+import java.util.Objects;
 import javax.annotation.Nonnull;
 
 /**
@@ -48,13 +49,15 @@ class LegacyFiles {
     }
 
     static void checkSource(@Nonnull File source) throws FileSystemException {
+        Objects.requireNonNull(source, "source");
         checkExist(source);
         checkIsFile(source);
     }
 
-    static void checkTarget(@Nonnull File source) throws FileSystemException {
-        if (source.exists()) {
-            checkIsFile(source);
+    static void checkTarget(@Nonnull File target) throws FileSystemException {
+        Objects.requireNonNull(target, "target");
+        if (target.exists()) {
+            checkIsFile(target);
         }
     }
 

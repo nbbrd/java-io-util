@@ -148,13 +148,13 @@ public class Sax {
 
         @Override
         public T parseReader(Reader resource) throws IOException {
-            Objects.requireNonNull(resource);
+            Objects.requireNonNull(resource, "resource");
             return parse(new InputSource(resource));
         }
 
         @Override
         public T parseStream(InputStream resource) throws IOException {
-            Objects.requireNonNull(resource);
+            Objects.requireNonNull(resource, "resource");
             return parse(new InputSource(resource));
         }
 

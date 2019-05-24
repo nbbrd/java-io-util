@@ -51,7 +51,8 @@ public class FormatAssertions {
     @SuppressWarnings("null")
     private static void testFormatChars(Xml.Formatter<Person> p, boolean formatted) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> p.formatChars(null, new StringBuilder()));
+                .isThrownBy(() -> p.formatChars(null, new StringBuilder()))
+                .withMessageContaining("value");
 
         assertThatNullPointerException()
                 .isThrownBy(() -> p.formatChars(JOHN_DOE, null));
@@ -68,11 +69,13 @@ public class FormatAssertions {
         target.delete();
 
         assertThatNullPointerException()
-                .isThrownBy(() -> p.formatFile(null, target));
+                .isThrownBy(() -> p.formatFile(null, target))
+                .withMessageContaining("value");
         assertThat(target).doesNotExist();
 
         assertThatNullPointerException()
-                .isThrownBy(() -> p.formatFile(JOHN_DOE, null));
+                .isThrownBy(() -> p.formatFile(JOHN_DOE, null))
+                .withMessageContaining("target");
         assertThat(target).doesNotExist();
 
         p.formatFile(JOHN_DOE, target);
@@ -92,11 +95,13 @@ public class FormatAssertions {
         Files.delete(target);
 
         assertThatNullPointerException()
-                .isThrownBy(() -> p.formatPath(null, target));
+                .isThrownBy(() -> p.formatPath(null, target))
+                .withMessageContaining("value");
         assertThat(target).doesNotExist();
 
         assertThatNullPointerException()
-                .isThrownBy(() -> p.formatPath(JOHN_DOE, null));
+                .isThrownBy(() -> p.formatPath(JOHN_DOE, null))
+                .withMessageContaining("target");
         assertThat(target).doesNotExist();
 
         p.formatPath(JOHN_DOE, target);
@@ -113,10 +118,12 @@ public class FormatAssertions {
     @SuppressWarnings("null")
     private static void testFormatWriterFromSupplier(Xml.Formatter<Person> p, boolean formatted) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> p.formatWriter(null, StringWriter::new));
+                .isThrownBy(() -> p.formatWriter(null, StringWriter::new))
+                .withMessageContaining("value");
 
         assertThatNullPointerException()
-                .isThrownBy(() -> p.formatWriter(JOHN_DOE, (IO.Supplier) null));
+                .isThrownBy(() -> p.formatWriter(JOHN_DOE, (IO.Supplier) null))
+                .withMessageContaining("target");
 
         StringWriter writer = new StringWriter();
         p.formatWriter(JOHN_DOE, () -> writer);
@@ -136,10 +143,12 @@ public class FormatAssertions {
     @SuppressWarnings("null")
     private static void testFormatStreamFromSupplier(Xml.Formatter<Person> p, boolean formatted) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> p.formatStream(null, ByteArrayOutputStream::new));
+                .isThrownBy(() -> p.formatStream(null, ByteArrayOutputStream::new))
+                .withMessageContaining("value");
 
         assertThatNullPointerException()
-                .isThrownBy(() -> p.formatStream(JOHN_DOE, (IO.Supplier) null));
+                .isThrownBy(() -> p.formatStream(JOHN_DOE, (IO.Supplier) null))
+                .withMessageContaining("target");
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         p.formatStream(JOHN_DOE, () -> stream);
@@ -159,10 +168,12 @@ public class FormatAssertions {
     @SuppressWarnings("null")
     private static void testFormatWriter(Xml.Formatter<Person> p, boolean formatted) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> p.formatWriter(null, StringWriter::new));
+                .isThrownBy(() -> p.formatWriter(null, StringWriter::new))
+                .withMessageContaining("value");
 
         assertThatNullPointerException()
-                .isThrownBy(() -> p.formatWriter(JOHN_DOE, (Writer) null));
+                .isThrownBy(() -> p.formatWriter(JOHN_DOE, (Writer) null))
+                .withMessageContaining("resource");
 
         StringWriter resource = new StringWriter();
         p.formatWriter(JOHN_DOE, resource);
@@ -173,10 +184,12 @@ public class FormatAssertions {
     @SuppressWarnings("null")
     private static void testFormatStream(Xml.Formatter<Person> p, boolean formatted) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> p.formatStream(null, ByteArrayOutputStream::new));
+                .isThrownBy(() -> p.formatStream(null, ByteArrayOutputStream::new))
+                .withMessageContaining("value");
 
         assertThatNullPointerException()
-                .isThrownBy(() -> p.formatStream(JOHN_DOE, (OutputStream) null));
+                .isThrownBy(() -> p.formatStream(JOHN_DOE, (OutputStream) null))
+                .withMessageContaining("resource");
 
         ByteArrayOutputStream resource = new ByteArrayOutputStream();
         p.formatStream(JOHN_DOE, resource);

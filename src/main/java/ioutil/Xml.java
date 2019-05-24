@@ -28,6 +28,7 @@ import java.io.Writer;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
@@ -43,6 +44,7 @@ public class Xml {
 
         @Nonnull
         default T parseChars(@Nonnull CharSequence source) throws IOException {
+            Objects.requireNonNull(source, "source");
             return parseReader(() -> new StringReader(source.toString()));
         }
 
@@ -54,6 +56,7 @@ public class Xml {
 
         @Nonnull
         default T parsePath(@Nonnull Path source) throws IOException {
+            Objects.requireNonNull(source, "source");
             Optional<File> file = IO.getFile(source);
             return file.isPresent()
                     ? parseFile(file.get())
@@ -62,6 +65,7 @@ public class Xml {
 
         @Nonnull
         default T parseReader(@Nonnull IO.Supplier<? extends Reader> source) throws IOException {
+            Objects.requireNonNull(source, "source");
             try (Reader resource = open(source)) {
                 return parseReader(resource);
             }
@@ -69,6 +73,7 @@ public class Xml {
 
         @Nonnull
         default T parseStream(@Nonnull IO.Supplier<? extends InputStream> source) throws IOException {
+            Objects.requireNonNull(source, "source");
             try (InputStream resource = open(source)) {
                 return parseStream(resource);
             }
@@ -84,17 +89,22 @@ public class Xml {
     public interface Formatter<T> {
 
         default void formatChars(@Nonnull T value, @Nonnull Appendable target) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(target, "target");
             StringWriter writer = new StringWriter();
             formatWriter(value, writer);
             target.append(writer.getBuffer());
         }
 
         default void formatFile(@Nonnull T value, @Nonnull File target) throws IOException {
+            Objects.requireNonNull(value, "value");
             LegacyFiles.checkTarget(target);
             formatStream(value, () -> LegacyFiles.newOutputStream(target));
         }
 
         default void formatPath(@Nonnull T value, @Nonnull Path target) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(target, "target");
             Optional<File> file = IO.getFile(target);
             if (file.isPresent()) {
                 formatFile(value, file.get());
@@ -104,12 +114,16 @@ public class Xml {
         }
 
         default void formatWriter(@Nonnull T value, @Nonnull IO.Supplier<? extends Writer> target) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(target, "target");
             try (Writer resource = open(target)) {
                 formatWriter(value, resource);
             }
         }
 
         default void formatStream(@Nonnull T value, @Nonnull IO.Supplier<? extends OutputStream> target) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(target, "target");
             try (OutputStream resource = open(target)) {
                 formatStream(value, resource);
             }

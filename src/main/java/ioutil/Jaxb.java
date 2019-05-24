@@ -131,7 +131,7 @@ public class Jaxb {
 
         @Override
         public T parseReader(Reader resource) throws IOException {
-            Objects.requireNonNull(resource);
+            Objects.requireNonNull(resource, "resource");
             Unmarshaller engine = factory.getWithIO();
 
             return !ignoreXXE
@@ -141,7 +141,7 @@ public class Jaxb {
 
         @Override
         public T parseStream(InputStream resource) throws IOException {
-            Objects.requireNonNull(resource);
+            Objects.requireNonNull(resource, "resource");
             Unmarshaller engine = factory.getWithIO();
 
             return !ignoreXXE
@@ -247,7 +247,7 @@ public class Jaxb {
 
         @Override
         public void formatFile(T value, File target) throws IOException {
-            Objects.requireNonNull(value);
+            Objects.requireNonNull(value, "value");
             LegacyFiles.checkTarget(target);
             try {
                 getEngine().marshal(value, target);
@@ -258,8 +258,8 @@ public class Jaxb {
 
         @Override
         public void formatWriter(T value, Writer resource) throws IOException {
-            Objects.requireNonNull(value);
-            Objects.requireNonNull(resource);
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(resource, "resource");
             try {
                 getEngine().marshal(value, resource);
             } catch (JAXBException ex) {
@@ -269,8 +269,8 @@ public class Jaxb {
 
         @Override
         public void formatStream(T value, OutputStream resource) throws IOException {
-            Objects.requireNonNull(value);
-            Objects.requireNonNull(resource);
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(resource, "resource");
             try {
                 getEngine().marshal(value, resource);
             } catch (JAXBException ex) {

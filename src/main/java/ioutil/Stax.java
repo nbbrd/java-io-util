@@ -141,25 +141,27 @@ public class Stax {
 
         @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {
+            Objects.requireNonNull(source, "source");
             Reader resource = Xml.open(source);
             return parse(o -> o.createXMLStreamReader(resource), resource);
         }
 
         @Override
         public T parseStream(IO.Supplier<? extends InputStream> source) throws IOException {
+            Objects.requireNonNull(source, "source");
             InputStream resource = Xml.open(source);
             return parse(o -> o.createXMLStreamReader(resource), resource);
         }
 
         @Override
         public T parseReader(Reader resource) throws IOException {
-            Objects.requireNonNull(resource);
+            Objects.requireNonNull(resource, "resource");
             return parse(o -> o.createXMLStreamReader(resource), NOTHING_TO_CLOSE);
         }
 
         @Override
         public T parseStream(InputStream resource) throws IOException {
-            Objects.requireNonNull(resource);
+            Objects.requireNonNull(resource, "resource");
             return parse(o -> o.createXMLStreamReader(resource), NOTHING_TO_CLOSE);
         }
 
@@ -236,25 +238,27 @@ public class Stax {
 
         @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {
+            Objects.requireNonNull(source, "source");
             Reader resource = Xml.open(source);
             return parse(o -> o.createXMLEventReader(resource), resource);
         }
 
         @Override
         public T parseStream(IO.Supplier<? extends InputStream> source) throws IOException {
+            Objects.requireNonNull(source, "source");
             InputStream resource = Xml.open(source);
             return parse(o -> o.createXMLEventReader(resource), resource);
         }
 
         @Override
         public T parseReader(Reader resource) throws IOException {
-            Objects.requireNonNull(resource);
+            Objects.requireNonNull(resource, "resource");
             return parse(o -> o.createXMLEventReader(resource), NOTHING_TO_CLOSE);
         }
 
         @Override
         public T parseStream(InputStream resource) throws IOException {
-            Objects.requireNonNull(resource);
+            Objects.requireNonNull(resource, "resource");
             return parse(o -> o.createXMLEventReader(resource), NOTHING_TO_CLOSE);
         }
 
@@ -301,7 +305,7 @@ public class Stax {
 
         @Override
         public void formatFile(T value, File target) throws IOException {
-            Objects.requireNonNull(value);
+            Objects.requireNonNull(value, "value");
             LegacyFiles.checkTarget(target);
             try (OutputStream resource = LegacyFiles.newOutputStream(target)) {
                 format(value, o -> o.createXMLStreamWriter(resource));
@@ -310,7 +314,8 @@ public class Stax {
 
         @Override
         public void formatWriter(T value, IO.Supplier<? extends Writer> target) throws IOException {
-            Objects.requireNonNull(value);
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(target, "target");
             try (Writer resource = Xml.open(target)) {
                 format(value, o -> o.createXMLStreamWriter(resource));
             }
@@ -318,7 +323,8 @@ public class Stax {
 
         @Override
         public void formatStream(T value, IO.Supplier<? extends OutputStream> target) throws IOException {
-            Objects.requireNonNull(value);
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(target, "target");
             try (OutputStream resource = Xml.open(target)) {
                 format(value, o -> o.createXMLStreamWriter(resource));
             }
@@ -326,15 +332,15 @@ public class Stax {
 
         @Override
         public void formatWriter(T value, Writer resource) throws IOException {
-            Objects.requireNonNull(value);
-            Objects.requireNonNull(resource);
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(resource, "resource");
             format(value, o -> o.createXMLStreamWriter(resource));
         }
 
         @Override
         public void formatStream(T value, OutputStream resource) throws IOException {
             Objects.requireNonNull(value);
-            Objects.requireNonNull(resource);
+            Objects.requireNonNull(resource, "resource");
             format(value, o -> o.createXMLStreamWriter(resource));
         }
 
@@ -378,7 +384,7 @@ public class Stax {
 
         @Override
         public void formatFile(T value, File target) throws IOException {
-            Objects.requireNonNull(value);
+            Objects.requireNonNull(value, "value");
             LegacyFiles.checkTarget(target);
             try (OutputStream resource = LegacyFiles.newOutputStream(target)) {
                 format(value, o -> o.createXMLEventWriter(resource));
@@ -387,7 +393,8 @@ public class Stax {
 
         @Override
         public void formatWriter(T value, IO.Supplier<? extends Writer> target) throws IOException {
-            Objects.requireNonNull(value);
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(target, "target");
             try (Writer resource = Xml.open(target)) {
                 format(value, o -> o.createXMLEventWriter(resource));
             }
@@ -395,7 +402,8 @@ public class Stax {
 
         @Override
         public void formatStream(T value, IO.Supplier<? extends OutputStream> target) throws IOException {
-            Objects.requireNonNull(value);
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(target, "target");
             try (OutputStream resource = Xml.open(target)) {
                 format(value, o -> o.createXMLEventWriter(resource));
             }
@@ -403,15 +411,15 @@ public class Stax {
 
         @Override
         public void formatWriter(T value, Writer resource) throws IOException {
-            Objects.requireNonNull(value);
-            Objects.requireNonNull(resource);
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(resource, "resource");
             format(value, o -> o.createXMLEventWriter(resource));
         }
 
         @Override
         public void formatStream(T value, OutputStream resource) throws IOException {
-            Objects.requireNonNull(value);
-            Objects.requireNonNull(resource);
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(resource, "resource");
             format(value, o -> o.createXMLEventWriter(resource));
         }
 
