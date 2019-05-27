@@ -36,7 +36,9 @@ import _test.StaxListener;
 import _test.Meta;
 import static _test.sample.FormatAssertions.assertFormatterCompliance;
 import static _test.sample.ParseAssertions.assertParserCompliance;
+import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
+import java.nio.charset.StandardCharsets;
 import javax.xml.stream.XMLEventFactory;
 import javax.xml.stream.XMLEventWriter;
 import javax.xml.stream.XMLOutputFactory;
@@ -150,6 +152,22 @@ public class StaxTest {
 
     @Test
     @SuppressWarnings("null")
+    public void testStreamFormatterWithAlternateEncoding() throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> Stax.StreamFormatter.valueOf(StaxTest::formatByStream).toBuilder().encoding(null).build());
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        Stax.StreamFormatter.valueOf(StaxTest::formatByStream)
+                .toBuilder()
+                .encoding(StandardCharsets.ISO_8859_1)
+                .build()
+                .formatStream(Person.JOHN_DOE, outputStream);
+        assertThat(outputStream.toString(StandardCharsets.ISO_8859_1.name()))
+                .isEqualTo(Person.CHARS);
+    }
+
+    @Test
+    @SuppressWarnings("null")
     public void testEventFormatterFactories() throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> Stax.EventFormatter.valueOf(null));
@@ -166,6 +184,22 @@ public class StaxTest {
                         .factory(XMLOutputFactory::newFactory)
                         .build(),
                 false, temp);
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testEventFormatterWithAlternateEncoding() throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> Stax.EventFormatter.valueOf(StaxTest::formatByEvent).toBuilder().encoding(null).build());
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        Stax.EventFormatter.valueOf(StaxTest::formatByEvent)
+                .toBuilder()
+                .encoding(StandardCharsets.ISO_8859_1)
+                .build()
+                .formatStream(Person.JOHN_DOE, outputStream);
+        assertThat(outputStream.toString(StandardCharsets.ISO_8859_1.name()))
+                .isEqualTo(Person.CHARS);
     }
 
     @Test

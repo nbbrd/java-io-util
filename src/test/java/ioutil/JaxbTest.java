@@ -35,6 +35,7 @@ import _test.Meta;
 import javax.xml.bind.Marshaller;
 import static _test.sample.FormatAssertions.assertFormatterCompliance;
 import static _test.sample.ParseAssertions.assertParserCompliance;
+import java.nio.charset.StandardCharsets;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
 
@@ -196,6 +197,16 @@ public class JaxbTest {
                             .build(),
                     formatted, temp);
         }
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testFormatterWithAlternateEncoding() throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> Jaxb.Formatter.of(Person.class).toBuilder().encoding(null).build());
+
+        assertThat(Jaxb.Formatter.of(Person.class).toBuilder().encoding(StandardCharsets.ISO_8859_1).build().formatToString(Person.JOHN_DOE))
+                .isEqualTo(Person.CHARS.replace("UTF-8", "ISO-8859-1"));
     }
 
     @Test

@@ -24,6 +24,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.xml.stream.XMLEventReader;
@@ -294,6 +296,7 @@ public class Stax {
             Builder() {
                 this.handler = null;
                 this.factory = XMLOutputFactory::newFactory;
+                this.encoding = StandardCharsets.UTF_8;
             }
         }
 
@@ -303,12 +306,15 @@ public class Stax {
         @lombok.NonNull
         private final IO.Supplier<? extends XMLOutputFactory> factory;
 
+        @lombok.NonNull
+        private final Charset encoding;
+
         @Override
         public void formatFile(T value, File target) throws IOException {
             Objects.requireNonNull(value, "value");
             LegacyFiles.checkTarget(target);
             try (OutputStream resource = LegacyFiles.newOutputStream(target)) {
-                format(value, o -> o.createXMLStreamWriter(resource));
+                format(value, o -> o.createXMLStreamWriter(resource, encoding.name()));
             }
         }
 
@@ -326,7 +332,7 @@ public class Stax {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
             try (OutputStream resource = Xml.checkResource(target.getWithIO(), "Missing OutputStream")) {
-                format(value, o -> o.createXMLStreamWriter(resource));
+                format(value, o -> o.createXMLStreamWriter(resource, encoding.name()));
             }
         }
 
@@ -341,13 +347,14 @@ public class Stax {
         public void formatStream(T value, OutputStream resource) throws IOException {
             Objects.requireNonNull(value);
             Objects.requireNonNull(resource, "resource");
-            format(value, o -> o.createXMLStreamWriter(resource));
+            format(value, o -> o.createXMLStreamWriter(resource, encoding.name()));
         }
 
         private void format(T value, XFunction<XMLOutputFactory, XMLStreamWriter> supplier) throws IOException {
             try {
                 XMLStreamWriter output = supplier.apply(getEngine());
                 doFormat(handler, value, output, () -> close(output::close));
+                output.close();
             } catch (XMLStreamException ex) {
                 throw toIOException(ex);
             }
@@ -373,6 +380,7 @@ public class Stax {
             Builder() {
                 this.handler = null;
                 this.factory = XMLOutputFactory::newFactory;
+                this.encoding = StandardCharsets.UTF_8;
             }
         }
 
@@ -382,12 +390,15 @@ public class Stax {
         @lombok.NonNull
         private final IO.Supplier<? extends XMLOutputFactory> factory;
 
+        @lombok.NonNull
+        private final Charset encoding;
+
         @Override
         public void formatFile(T value, File target) throws IOException {
             Objects.requireNonNull(value, "value");
             LegacyFiles.checkTarget(target);
             try (OutputStream resource = LegacyFiles.newOutputStream(target)) {
-                format(value, o -> o.createXMLEventWriter(resource));
+                format(value, o -> o.createXMLEventWriter(resource, encoding.name()));
             }
         }
 
@@ -405,7 +416,7 @@ public class Stax {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
             try (OutputStream resource = Xml.checkResource(target.getWithIO(), "Missing OutputStream")) {
-                format(value, o -> o.createXMLEventWriter(resource));
+                format(value, o -> o.createXMLEventWriter(resource, encoding.name()));
             }
         }
 
@@ -420,13 +431,14 @@ public class Stax {
         public void formatStream(T value, OutputStream resource) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(resource, "resource");
-            format(value, o -> o.createXMLEventWriter(resource));
+            format(value, o -> o.createXMLEventWriter(resource, encoding.name()));
         }
 
         private void format(T value, XFunction<XMLOutputFactory, XMLEventWriter> supplier) throws IOException {
             try {
                 XMLEventWriter output = supplier.apply(getEngine());
                 doFormat(handler, value, output, () -> close(output::close));
+                output.close();
             } catch (XMLStreamException ex) {
                 throw toIOException(ex);
             }

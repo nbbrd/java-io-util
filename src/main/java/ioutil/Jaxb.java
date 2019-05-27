@@ -22,6 +22,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.io.Writer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.xml.bind.JAXBContext;
@@ -98,6 +100,7 @@ public class Jaxb {
 
         public static class Builder<T> {
 
+            // default values
             Builder() {
                 this.factory = null;
                 this.ignoreXXE = false;
@@ -240,10 +243,23 @@ public class Jaxb {
             return Formatter.<T>builder().factory(() -> createMarshaller(context)).build();
         }
 
+        public static class Builder<T> {
+
+            // default values
+            Builder() {
+                this.factory = null;
+                this.formatted = false;
+                this.encoding = StandardCharsets.UTF_8;
+            }
+        }
+
         @lombok.NonNull
         private final IO.Supplier<? extends Marshaller> factory;
 
         private final boolean formatted;
+
+        @lombok.NonNull
+        private final Charset encoding;
 
         @Override
         public void formatFile(T value, File target) throws IOException {
@@ -281,6 +297,7 @@ public class Jaxb {
         private Marshaller getEngine() throws PropertyException, IOException {
             Marshaller result = factory.getWithIO();
             result.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, formatted);
+            result.setProperty(Marshaller.JAXB_ENCODING, encoding.name());
             return result;
         }
     }
