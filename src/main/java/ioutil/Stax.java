@@ -86,7 +86,7 @@ public class Stax {
     @FunctionalInterface
     public interface OutputHandler<O, T> {
 
-        void format(@Nonnull T value, @Nonnull O output) throws XMLStreamException;
+        void format(@Nonnull T value, @Nonnull O output) throws Exception;
     }
 
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
@@ -473,10 +473,10 @@ public class Stax {
     private <T, OUTPUT> void doFormat(OutputHandler<OUTPUT, T> handler, T value, OUTPUT output, Closeable onClose) throws IOException {
         try {
             handler.format(value, output);
-        } catch (XMLStreamException ex) {
+        } catch (Exception ex) {
             IO.ensureClosed(ex, onClose);
             throw toIOException(ex);
-        } catch (Error | RuntimeException ex) {
+        } catch (Error ex) {
             IO.ensureClosed(ex, onClose);
             throw ex;
         }
@@ -520,6 +520,16 @@ public class Stax {
                 && ((Boolean) factory.getProperty(feature)) != value) {
             factory.setProperty(feature, value);
         }
+    }
+
+    private IOException toIOException(Exception ex) {
+        if (ex instanceof XMLStreamException) {
+            return toIOException((XMLStreamException) ex);
+        }
+        if (ex instanceof IOException) {
+            return (IOException) ex;
+        }
+        return new Xml.WrappedException(ex);
     }
 
     IOException toIOException(XMLStreamException ex) {
