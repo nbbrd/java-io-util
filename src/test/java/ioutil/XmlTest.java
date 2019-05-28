@@ -16,18 +16,22 @@
  */
 package ioutil;
 
+import static _test.sample.FormatAssertions.assertFormatterCompliance;
 import static _test.sample.ParseAssertions.assertParserCompliance;
 import _test.sample.Person;
 import static _test.sample.Person.CHARS;
 import static _test.sample.Person.FORMATTED_CHARS;
-import static _test.sample.Person.JOHN_DOE;
 import ioutil.LegacyFiles.BufferedFileInputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.Reader;
+import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -42,20 +46,68 @@ public class XmlTest {
     public TemporaryFolder temp = new TemporaryFolder();
 
     @Test
-    public void testCompliance() throws IOException {
-        assertParserCompliance(DummyParser.INSTANCE, temp);
+    public void testParserCompliance() throws IOException {
+        assertParserCompliance(new DummyParser<>(Person.JOHN_DOE), temp);
     }
 
-    private enum DummyParser implements Xml.Parser<Person> {
+    @Test
+    public void testFormatterCompliance() throws IOException {
+        assertFormatterCompliance(new DummyFormatter<>(Person.JOHN_DOE), false, temp);
+    }
 
-        INSTANCE;
+    @Test
+    @SuppressWarnings("null")
+    public void testAndThen() throws IOException {
+        Xml.Parser<Employee> parser = new DummyParser<>(Employee.JOHN_DOE);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> parser.andThen(null));
+
+        assertParserCompliance(parser.andThen(Employee::toPerson), temp);
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testCompose() throws IOException {
+        Xml.Formatter<Employee> formatter = new DummyFormatter<>(Employee.JOHN_DOE);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> formatter.compose(null));
+
+        assertFormatterCompliance(formatter.compose(Employee::fromPerson), false, temp);
+    }
+
+    @lombok.Value
+    private static final class Employee {
+
+        private String firstName;
+        private String lastName;
+
+        Person toPerson() {
+            Person result = new Person();
+            result.firstName = firstName;
+            result.lastName = lastName;
+            return result;
+        }
+
+        static Employee fromPerson(Person person) {
+            return new Employee(person.firstName, person.lastName);
+        }
+
+        private static final Employee JOHN_DOE = fromPerson(Person.JOHN_DOE);
+    }
+
+    @lombok.AllArgsConstructor
+    private static final class DummyParser<T> implements Xml.Parser<T> {
+
+        private final T johnDoe;
 
         @Override
-        public Person parseReader(Reader resource) throws IOException {
+        public T parseReader(Reader resource) throws IOException {
             Objects.requireNonNull(resource, "resource");
-            String xml = toString(resource);
+            String xml = readtoString(resource);
             if (isJohnDoe(xml)) {
-                return JOHN_DOE;
+                return johnDoe;
             }
             if (xml.equals("")) {
                 throw new EOFException();
@@ -64,11 +116,11 @@ public class XmlTest {
         }
 
         @Override
-        public Person parseStream(InputStream resource) throws IOException {
+        public T parseStream(InputStream resource) throws IOException {
             Objects.requireNonNull(resource, "resource");
-            String xml = toString(new InputStreamReader(resource));
+            String xml = readtoString(new InputStreamReader(resource));
             if (isJohnDoe(xml)) {
-                return JOHN_DOE;
+                return johnDoe;
             }
             if (xml.equals("")) {
                 throw new EOFException(getFile(resource));
@@ -76,7 +128,7 @@ public class XmlTest {
             throw new IOException(getFile(resource));
         }
 
-        private boolean isJohnDoe(String xml) {
+        private static boolean isJohnDoe(String xml) {
             if (xml.equals(CHARS)) {
                 return true;
             }
@@ -86,7 +138,7 @@ public class XmlTest {
             return false;
         }
 
-        private String toString(Reader resource) throws IOException {
+        private static String readtoString(Reader resource) throws IOException {
             StringBuilder result = new StringBuilder();
             char[] buffer = new char[8 * 1024];
             int n;
@@ -96,10 +148,40 @@ public class XmlTest {
             return result.toString();
         }
 
-        private String getFile(InputStream resource) {
+        private static String getFile(InputStream resource) {
             return resource instanceof BufferedFileInputStream
                     ? ((BufferedFileInputStream) resource).getFile().toString()
                     : null;
+        }
+    }
+
+    @lombok.AllArgsConstructor
+    private static final class DummyFormatter<T> implements Xml.Formatter<T> {
+
+        private final T johnDoe;
+
+        @Override
+        public void formatWriter(T value, Writer resource) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(resource, "resource");
+
+            if (!johnDoe.equals(value)) {
+                throw new IOException();
+            }
+
+            resource.append(CHARS);
+        }
+
+        @Override
+        public void formatStream(T value, OutputStream resource) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(resource, "resource");
+
+            if (!johnDoe.equals(value)) {
+                throw new IOException();
+            }
+
+            resource.write(CHARS.getBytes(StandardCharsets.UTF_8));
         }
     }
 }
