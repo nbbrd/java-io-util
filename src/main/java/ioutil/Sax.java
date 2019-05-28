@@ -72,6 +72,7 @@ public class Sax {
         }
     }
 
+    @lombok.experimental.Wither
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class Parser<T> implements Xml.Parser<T> {
 

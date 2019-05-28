@@ -56,7 +56,7 @@ public class SaxTest {
     @Test
     public void testXXE() throws IOException {
         Sax.Parser<Person> p = Sax.Parser.of(PersonHandler.INSTANCE, PersonHandler.INSTANCE::build);
-        ParseAssertions.testXXE(p, p.toBuilder().ignoreXXE(true).build());
+        ParseAssertions.testXXE(p, p.withIgnoreXXE(true));
     }
 
     @Test

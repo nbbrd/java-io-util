@@ -83,7 +83,7 @@ public class JaxbTest {
     @Test
     public void testXXE() throws Exception {
         Jaxb.Parser<Person> p = Jaxb.Parser.of(Person.class);
-        ParseAssertions.testXXE(p, p.toBuilder().ignoreXXE(true).build());
+        ParseAssertions.testXXE(p, p.withIgnoreXXE(true));
     }
 
     @Test
@@ -203,9 +203,9 @@ public class JaxbTest {
     @SuppressWarnings("null")
     public void testFormatterWithAlternateEncoding() throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> Jaxb.Formatter.of(Person.class).toBuilder().encoding(null).build());
+                .isThrownBy(() -> Jaxb.Formatter.of(Person.class).withEncoding(null));
 
-        assertThat(Jaxb.Formatter.of(Person.class).toBuilder().encoding(StandardCharsets.ISO_8859_1).build().formatToString(Person.JOHN_DOE))
+        assertThat(Jaxb.Formatter.of(Person.class).withEncoding(StandardCharsets.ISO_8859_1).formatToString(Person.JOHN_DOE))
                 .isEqualTo(Person.CHARS.replace("UTF-8", "ISO-8859-1"));
     }
 

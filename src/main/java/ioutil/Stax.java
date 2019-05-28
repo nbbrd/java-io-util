@@ -89,6 +89,7 @@ public class Stax {
         void format(@Nonnull T value, @Nonnull O output) throws Exception;
     }
 
+    @lombok.experimental.Wither
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class StreamParser<T> implements Xml.Parser<T> {
 
@@ -186,6 +187,7 @@ public class Stax {
         }
     }
 
+    @lombok.experimental.Wither
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class EventParser<T> implements Xml.Parser<T> {
 
@@ -282,6 +284,7 @@ public class Stax {
         }
     }
 
+    @lombok.experimental.Wither
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class StreamFormatter<T> implements Xml.Formatter<T> {
 
@@ -366,6 +369,7 @@ public class Stax {
         }
     }
 
+    @lombok.experimental.Wither
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class EventFormatter<T> implements Xml.Formatter<T> {
 

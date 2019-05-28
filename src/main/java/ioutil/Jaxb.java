@@ -83,6 +83,7 @@ public class Jaxb {
         }
     }
 
+    @lombok.experimental.Wither
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class Parser<T> implements Xml.Parser<T> {
 
@@ -228,6 +229,7 @@ public class Jaxb {
         }
     }
 
+    @lombok.experimental.Wither
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class Formatter<T> implements Xml.Formatter<T> {
 

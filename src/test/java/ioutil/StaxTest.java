@@ -68,10 +68,10 @@ public class StaxTest {
     @Test
     public void testXXE() throws IOException {
         Stax.StreamParser<Person> stream = Stax.StreamParser.valueOf(StaxTest::parseByStream);
-        ParseAssertions.testXXE(stream, stream.toBuilder().ignoreXXE(true).build());
+        ParseAssertions.testXXE(stream, stream.withIgnoreXXE(true));
 
         Stax.EventParser<Person> event = Stax.EventParser.valueOf(StaxTest::parseByEvent);
-        ParseAssertions.testXXE(event, event.toBuilder().ignoreXXE(true).build());
+        ParseAssertions.testXXE(event, event.withIgnoreXXE(true));
     }
 
     @Test
@@ -154,14 +154,10 @@ public class StaxTest {
     @SuppressWarnings("null")
     public void testStreamFormatterWithAlternateEncoding() throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> Stax.StreamFormatter.valueOf(StaxTest::formatByStream).toBuilder().encoding(null).build());
+                .isThrownBy(() -> Stax.StreamFormatter.valueOf(StaxTest::formatByStream).withEncoding(null));
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        Stax.StreamFormatter.valueOf(StaxTest::formatByStream)
-                .toBuilder()
-                .encoding(StandardCharsets.ISO_8859_1)
-                .build()
-                .formatStream(Person.JOHN_DOE, outputStream);
+        Stax.StreamFormatter.valueOf(StaxTest::formatByStream).withEncoding(StandardCharsets.ISO_8859_1).formatStream(Person.JOHN_DOE, outputStream);
         assertThat(outputStream.toString(StandardCharsets.ISO_8859_1.name()))
                 .isEqualTo(Person.CHARS);
     }
@@ -190,14 +186,10 @@ public class StaxTest {
     @SuppressWarnings("null")
     public void testEventFormatterWithAlternateEncoding() throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> Stax.EventFormatter.valueOf(StaxTest::formatByEvent).toBuilder().encoding(null).build());
+                .isThrownBy(() -> Stax.EventFormatter.valueOf(StaxTest::formatByEvent).withEncoding(null));
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        Stax.EventFormatter.valueOf(StaxTest::formatByEvent)
-                .toBuilder()
-                .encoding(StandardCharsets.ISO_8859_1)
-                .build()
-                .formatStream(Person.JOHN_DOE, outputStream);
+        Stax.EventFormatter.valueOf(StaxTest::formatByEvent).withEncoding(StandardCharsets.ISO_8859_1).formatStream(Person.JOHN_DOE, outputStream);
         assertThat(outputStream.toString(StandardCharsets.ISO_8859_1.name()))
                 .isEqualTo(Person.CHARS);
     }
