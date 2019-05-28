@@ -25,7 +25,6 @@ import static _test.sample.Person.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
-import java.util.List;
 import static org.assertj.core.api.Assertions.*;
 import _test.Meta;
 import ioutil.IO;
@@ -235,16 +234,16 @@ public class ParseAssertions {
                 + "<person>&sp;</person> ";
     }
 
-    public static void testParserResources(Xml.Parser<Person> p, Class<? extends Throwable> expectedException) throws IOException {
+    public static void assertParserSafety(Xml.Parser<Person> p, Class<? extends Throwable> expectedException) {
         ResourceCounter counter = new ResourceCounter();
 
-        List<Meta<IO.Supplier<Person>>> callables = Meta.<IO.Supplier<Person>>builder()
+        Meta.<IO.Runnable>builder()
                 .group("Reader")
                 .code().doesNotRaiseExceptionWhen(() -> p.parseReader(counter.onReader(READER)))
                 .exception(IOException.class).as("Null").isThrownBy(() -> p.parseReader(IO.Supplier.of(null)))
                 .exception(SourceError.class).as("Throwing").isThrownBy(() -> p.parseReader(IO.Supplier.throwing(SourceError::new)))
                 .group("Stream")
-                .code().doesNotRaiseExceptionWhen(() -> p.parseStream(counter.onStream(INPUT_STREAM)))
+                .code().doesNotRaiseExceptionWhen(() -> p.parseStream(counter.onInputStream(INPUT_STREAM)))
                 .exception(IOException.class).as("Null").isThrownBy(() -> p.parseStream(IO.Supplier.of(null)))
                 .exception(SourceError.class).as("Throwing").isThrownBy(() -> p.parseStream(IO.Supplier.throwing(SourceError::new)))
                 .group("File")
@@ -260,19 +259,23 @@ public class ParseAssertions {
                 .group("Chars")
                 .code().doesNotRaiseExceptionWhen(() -> p.parseChars(CHARS))
                 .exception(EOFException.class).as("Empty").isThrownBy(() -> p.parseChars(CHARS_EMPTY))
-                .build();
+                .build()
+                .forEach(callable -> testSafeParse(counter, expectedException, callable));
+    }
 
-        for (Meta<IO.Supplier<Person>> callable : callables) {
-            counter.reset();
-            if (expectedException != null) {
-                assertThatThrownBy(() -> callable.getTarget().getWithIO()).isInstanceOf(expectedException);
-            } else if (callable.getExpectedException() != null) {
-                assertThatThrownBy(() -> callable.getTarget().getWithIO()).isInstanceOf(callable.getExpectedException());
-            } else {
-                assertThat(callable.getTarget().getWithIO()).isEqualTo(JOHN_DOE);
-            }
-            assertThat(counter.getCount()).isLessThanOrEqualTo(0);
+    private static void testSafeParse(ResourceCounter counter, Class<? extends Throwable> expectedException, Meta<IO.Runnable> callable) {
+        counter.reset();
+        if (expectedException != null) {
+            assertThatThrownBy(() -> callable.getTarget().runWithIO())
+                    .isInstanceOf(expectedException);
+        } else if (callable.getExpectedException() != null) {
+            assertThatThrownBy(() -> callable.getTarget().runWithIO())
+                    .isInstanceOf(callable.getExpectedException());
+        } else {
+            assertThatCode(() -> callable.getTarget().runWithIO())
+                    .doesNotThrowAnyException();
         }
+        assertThat(counter.getCount()).isLessThanOrEqualTo(0);
     }
 
     private static final class SourceError extends IOException {

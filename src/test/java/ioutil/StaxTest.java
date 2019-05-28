@@ -32,12 +32,18 @@ import javax.xml.stream.events.StartElement;
 import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
 import _test.ForwardingXMLInputFactory;
+import _test.ForwardingXMLOutputFactory;
 import _test.StaxListener;
 import _test.Meta;
 import static _test.sample.FormatAssertions.assertFormatterCompliance;
+import static _test.sample.FormatAssertions.assertFormatterSafety;
 import static _test.sample.ParseAssertions.assertParserCompliance;
+import static _test.sample.ParseAssertions.assertParserSafety;
+import static _test.sample.Person.BOOLS;
+import static _test.sample.Person.ENCODINGS;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import javax.xml.stream.XMLEventFactory;
 import javax.xml.stream.XMLEventWriter;
@@ -56,7 +62,8 @@ public class StaxTest {
     @Rule
     public TemporaryFolder temp = new TemporaryFolder();
 
-    private final IO.Supplier<XMLInputFactory> validFactory = XMLInputFactory::newFactory;
+    private final IO.Supplier<XMLInputFactory> validInputFactory = XMLInputFactory::newFactory;
+    private final IO.Supplier<XMLOutputFactory> validOutputFactory = XMLOutputFactory::newFactory;
 
     @Test
     @SuppressWarnings("null")
@@ -91,15 +98,27 @@ public class StaxTest {
     @Test
     @SuppressWarnings("null")
     public void testStreamParserBuilder() throws IOException {
-        for (boolean ignoreXXE : new boolean[]{false, true}) {
+        for (boolean ignoreXXE : BOOLS) {
             assertParserCompliance(
                     Stax.StreamParser.<Person>builder()
                             .value(StaxTest::parseByStream)
                             .ignoreXXE(ignoreXXE)
-                            .factory(validFactory)
+                            .factory(validInputFactory)
                             .build(),
                     temp);
         }
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testStreamParserWither() throws IOException {
+        Stax.StreamParser<Person> parser = Stax.StreamParser.valueOf(StaxTest::parseByStream);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> parser.withFactory(null));
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> parser.withHandler(null));
     }
 
     @Test
@@ -119,15 +138,27 @@ public class StaxTest {
     @Test
     @SuppressWarnings("null")
     public void testEventParserBuilder() throws IOException {
-        for (boolean ignoreXXE : new boolean[]{false, true}) {
+        for (boolean ignoreXXE : BOOLS) {
             assertParserCompliance(
                     Stax.EventParser.<Person>builder()
                             .value(StaxTest::parseByEvent)
                             .ignoreXXE(ignoreXXE)
-                            .factory(validFactory)
+                            .factory(validInputFactory)
                             .build(),
                     temp);
         }
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testEventParserWither() throws IOException {
+        Stax.EventParser<Person> parser = Stax.EventParser.valueOf(StaxTest::parseByEvent);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> parser.withFactory(null));
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> parser.withHandler(null));
     }
 
     @Test
@@ -148,6 +179,21 @@ public class StaxTest {
                         .factory(XMLOutputFactory::newFactory)
                         .build(),
                 false, temp);
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testStreamFormatterWither() throws IOException {
+        Stax.StreamFormatter<Person> formatter = Stax.StreamFormatter.valueOf(StaxTest::formatByStream);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> formatter.withEncoding(null));
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> formatter.withFactory(null));
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> formatter.withHandler(null));
     }
 
     @Test
@@ -184,6 +230,21 @@ public class StaxTest {
 
     @Test
     @SuppressWarnings("null")
+    public void testEventFormatterWither() throws IOException {
+        Stax.EventFormatter<Person> formatter = Stax.EventFormatter.valueOf(StaxTest::formatByEvent);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> formatter.withEncoding(null));
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> formatter.withFactory(null));
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> formatter.withHandler(null));
+    }
+
+    @Test
+    @SuppressWarnings("null")
     public void testEventFormatterWithAlternateEncoding() throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> Stax.EventFormatter.valueOf(StaxTest::formatByEvent).withEncoding(null));
@@ -195,15 +256,15 @@ public class StaxTest {
     }
 
     @Test
-    public void testParseResources() throws IOException {
+    public void testParserSafety() throws IOException {
         ResourceCounter counter = new ResourceCounter();
 
         List<Meta<IO.Supplier<XMLInputFactory>>> factories = Meta.<IO.Supplier<XMLInputFactory>>builder()
-                .valid("Ok", counter.onXMLInputFactory(validFactory))
+                .valid("Ok", counter.onXMLInputFactory(validInputFactory))
                 .invalid("Null", IO.Supplier.of(null))
                 .invalid("Throwing", IO.Supplier.throwing(IOError::new))
-                .invalid("Checked", counter.onXMLInputFactory(validFactory).andThen(o -> new ForwardingXMLInputFactory(o).onCreate(StaxListener.checked(StaxError::new))))
-                .invalid("Unchecked", counter.onXMLInputFactory(validFactory).andThen(o -> new ForwardingXMLInputFactory(o).onCreate(StaxListener.unchecked(UncheckedError::new))))
+                .invalid("Checked", counter.onXMLInputFactory(validInputFactory).andThen(o -> new ForwardingXMLInputFactory(o).onCreate(StaxListener.checked(StaxError::new))))
+                .invalid("Unchecked", counter.onXMLInputFactory(validInputFactory).andThen(o -> new ForwardingXMLInputFactory(o).onCreate(StaxListener.unchecked(UncheckedError::new))))
                 .build();
 
         List<Meta<Stax.ValueHandler<XMLStreamReader, Person>>> streamHandlers = Meta.<Stax.ValueHandler<XMLStreamReader, Person>>builder()
@@ -218,31 +279,91 @@ public class StaxTest {
                 .invalid("Unchecked", unchecked(UncheckedError::new))
                 .build();
 
-        for (boolean xxe : new boolean[]{true, false}) {
+        for (boolean xxe : BOOLS) {
             for (Meta<IO.Supplier<XMLInputFactory>> factory : factories) {
                 for (Meta<Stax.ValueHandler<XMLStreamReader, Person>> handler : streamHandlers) {
 
-                    Xml.Parser<Person> p = Stax.StreamParser.<Person>builder()
+                    Xml.Parser<Person> parser = Stax.StreamParser
+                            .<Person>builder()
                             .value(handler.getTarget())
                             .factory(factory.getTarget())
                             .ignoreXXE(!xxe)
                             .build();
 
                     counter.reset();
-                    ParseAssertions.testParserResources(p, Meta.lookupExpectedException(handler, factory));
+                    assertParserSafety(parser, Meta.lookupExpectedException(handler, factory));
                     assertThat(counter.getCount()).isLessThanOrEqualTo(0);
                     assertThat(counter.getMax()).isLessThanOrEqualTo(1);
                 }
                 for (Meta<Stax.ValueHandler<XMLEventReader, Person>> handler : eventHandlers) {
 
-                    Xml.Parser<Person> p = Stax.EventParser.<Person>builder()
+                    Xml.Parser<Person> parser = Stax.EventParser
+                            .<Person>builder()
                             .value(handler.getTarget())
                             .factory(factory.getTarget())
                             .ignoreXXE(!xxe)
                             .build();
 
                     counter.reset();
-                    ParseAssertions.testParserResources(p, Meta.lookupExpectedException(handler, factory));
+                    assertParserSafety(parser, Meta.lookupExpectedException(handler, factory));
+                    assertThat(counter.getCount()).isLessThanOrEqualTo(0);
+                    assertThat(counter.getMax()).isLessThanOrEqualTo(1);
+                }
+            }
+        }
+    }
+
+    @Test
+    public void testFormatterSafety() throws IOException {
+        ResourceCounter counter = new ResourceCounter();
+
+        List<Meta<IO.Supplier<XMLOutputFactory>>> factories = Meta.<IO.Supplier<XMLOutputFactory>>builder()
+                .valid("Ok", counter.onXMLOutputFactory(validOutputFactory))
+                .invalid("Null", IO.Supplier.of(null))
+                .invalid("Throwing", IO.Supplier.throwing(IOError::new))
+                .invalid("Checked", counter.onXMLOutputFactory(validOutputFactory).andThen(o -> new ForwardingXMLOutputFactory(o).onCreate(StaxListener.checked(StaxError::new))))
+                .invalid("Unchecked", counter.onXMLOutputFactory(validOutputFactory).andThen(o -> new ForwardingXMLOutputFactory(o).onCreate(StaxListener.unchecked(UncheckedError::new))))
+                .build();
+
+        List<Meta<Stax.OutputHandler<XMLStreamWriter, Person>>> streamHandlers = Meta.<Stax.OutputHandler<XMLStreamWriter, Person>>builder()
+                .valid("Ok", StaxTest::formatByStream)
+                .invalid("Checked", checkedOutput(StaxError::new))
+                .invalid("Unchecked", uncheckedOutput(UncheckedError::new))
+                .build();
+
+        List<Meta<Stax.OutputHandler<XMLEventWriter, Person>>> eventHandlers = Meta.<Stax.OutputHandler<XMLEventWriter, Person>>builder()
+                .valid("Ok", StaxTest::formatByEvent)
+                .invalid("Checked", checkedOutput(StaxError::new))
+                .invalid("Unchecked", uncheckedOutput(UncheckedError::new))
+                .build();
+
+        for (Charset encoding : ENCODINGS) {
+            for (Meta<IO.Supplier<XMLOutputFactory>> factory : factories) {
+                for (Meta<Stax.OutputHandler<XMLStreamWriter, Person>> handler : streamHandlers) {
+
+                    Xml.Formatter<Person> formatter = Stax.StreamFormatter
+                            .<Person>builder()
+                            .handler(handler.getTarget())
+                            .factory(factory.getTarget())
+                            .encoding(encoding)
+                            .build();
+
+                    counter.reset();
+                    assertFormatterSafety(formatter, Meta.lookupExpectedException(handler, factory), temp);
+                    assertThat(counter.getCount()).isLessThanOrEqualTo(0);
+                    assertThat(counter.getMax()).isLessThanOrEqualTo(1);
+                }
+                for (Meta<Stax.OutputHandler<XMLEventWriter, Person>> handler : eventHandlers) {
+
+                    Xml.Formatter<Person> formatter = Stax.EventFormatter
+                            .<Person>builder()
+                            .handler(handler.getTarget())
+                            .factory(factory.getTarget())
+                            .encoding(encoding)
+                            .build();
+
+                    counter.reset();
+                    assertFormatterSafety(formatter, Meta.lookupExpectedException(handler, factory), temp);
                     assertThat(counter.getCount()).isLessThanOrEqualTo(0);
                     assertThat(counter.getMax()).isLessThanOrEqualTo(1);
                 }
@@ -350,6 +471,7 @@ public class StaxTest {
                 w.add(factory.createEndElement("", "", "lastName"));
             }
             w.add(factory.createEndElement("", "", "person"));
+
         }
     }
 
@@ -357,16 +479,29 @@ public class StaxTest {
         UNKNOWN, FIRST, LAST;
     }
 
-    private <I, O> Stax.ValueHandler<I, O> checked(Supplier<? extends XMLStreamException> x) {
-        return (i) -> {
+    private <I, T> Stax.ValueHandler<I, T> checked(Supplier<? extends XMLStreamException> x) {
+        return (value) -> {
             throw x.get();
         };
     }
 
-    private <I, O> Stax.ValueHandler<I, O> unchecked(Supplier<? extends RuntimeException> x) {
-        return (i) -> {
+    private <I, T> Stax.ValueHandler<I, T> unchecked(Supplier<? extends RuntimeException> x) {
+        return (value) -> {
             throw x.get();
         };
+    }
+
+    private <O, T> Stax.OutputHandler<O, T> checkedOutput(Supplier<? extends XMLStreamException> x) {
+        return (value, o) -> {
+            throw x.get();
+        };
+    }
+
+    private <O, T> Stax.OutputHandler<O, T> uncheckedOutput(Supplier<? extends RuntimeException> x) {
+        return (value, o) -> {
+            throw x.get();
+        };
+
     }
 
     private static final class IOError extends IOException {

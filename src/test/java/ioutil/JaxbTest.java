@@ -16,6 +16,7 @@
  */
 package ioutil;
 
+import _test.ForwardingMarshaller;
 import _test.sample.ParseAssertions;
 import _test.sample.Person;
 import java.io.IOException;
@@ -34,7 +35,12 @@ import _test.JaxbListener;
 import _test.Meta;
 import javax.xml.bind.Marshaller;
 import static _test.sample.FormatAssertions.assertFormatterCompliance;
+import static _test.sample.FormatAssertions.assertFormatterSafety;
 import static _test.sample.ParseAssertions.assertParserCompliance;
+import static _test.sample.ParseAssertions.assertParserSafety;
+import static _test.sample.Person.BOOLS;
+import static _test.sample.Person.ENCODINGS;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import org.junit.Rule;
 import org.junit.rules.TemporaryFolder;
@@ -116,7 +122,7 @@ public class JaxbTest {
         assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Parser.builder().factory(validUnmarshaller).xxeFactory(null).build());
 
-        for (boolean ignoreXXE : new boolean[]{false, true}) {
+        for (boolean ignoreXXE : BOOLS) {
             assertParserCompliance(
                     Jaxb.Parser.<Person>builder()
                             .factory(validUnmarshaller)
@@ -128,7 +134,19 @@ public class JaxbTest {
     }
 
     @Test
-    public void testParserResources() throws IOException {
+    @SuppressWarnings("null")
+    public void testParserWither() throws IOException {
+        Jaxb.Parser<Person> parser = Jaxb.Parser.of(Person.class);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> parser.withFactory(null));
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> parser.withXxeFactory(null));
+    }
+
+    @Test
+    public void testParserSafety() throws IOException {
         List<Meta<IO.Supplier<Unmarshaller>>> factories = Meta.<IO.Supplier<Unmarshaller>>builder()
                 .valid("Ok", validUnmarshaller)
                 .invalid("Null", IO.Supplier.of(null))
@@ -137,7 +155,7 @@ public class JaxbTest {
                 .invalid("Unchecked", validUnmarshaller.andThen(o -> new ForwardingUnmarshaller(o).onUnmarshal(JaxbListener.unchecked(UncheckedError::new))))
                 .build();
 
-        for (boolean xxe : new boolean[]{true, false}) {
+        for (boolean xxe : BOOLS) {
 
             List<Meta<IO.Supplier<XMLInputFactory>>> xxeFactories = Meta.<IO.Supplier<XMLInputFactory>>builder()
                     .valid("Ok", validXxeFactory)
@@ -150,13 +168,14 @@ public class JaxbTest {
             for (Meta<IO.Supplier<Unmarshaller>> factory : factories) {
                 for (Meta<IO.Supplier<XMLInputFactory>> xxeFactory : xxeFactories) {
 
-                    Xml.Parser<Person> p = Jaxb.Parser.<Person>builder()
+                    Xml.Parser<Person> parser = Jaxb.Parser
+                            .<Person>builder()
                             .factory(factory.getTarget())
                             .ignoreXXE(!xxe)
                             .xxeFactory(xxeFactory.getTarget())
                             .build();
 
-                    ParseAssertions.testParserResources(p, Meta.lookupExpectedException(factory, xxeFactory));
+                    assertParserSafety(parser, Meta.lookupExpectedException(factory, xxeFactory));
                 }
             }
         }
@@ -189,7 +208,7 @@ public class JaxbTest {
         assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Formatter.builder().factory(null).build());
 
-        for (boolean formatted : new boolean[]{false, true}) {
+        for (boolean formatted : BOOLS) {
             assertFormatterCompliance(
                     Jaxb.Formatter.<Person>builder()
                             .factory(validMarshaller)
@@ -197,6 +216,18 @@ public class JaxbTest {
                             .build(),
                     formatted, temp);
         }
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testFormatterWither() throws IOException {
+        Jaxb.Formatter<Person> formatter = Jaxb.Formatter.of(Person.class);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> formatter.withFactory(null));
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> formatter.withEncoding(null));
     }
 
     @Test
@@ -210,8 +241,30 @@ public class JaxbTest {
     }
 
     @Test
-    public void testFormatterResources() throws IOException {
-        // TODO
+    public void testFormatterSafety() throws IOException {
+        List<Meta<IO.Supplier<Marshaller>>> factories = Meta.<IO.Supplier<Marshaller>>builder()
+                .valid("Ok", validMarshaller)
+                .invalid("Null", IO.Supplier.of(null))
+                .invalid("Throwing", IO.Supplier.throwing(IOError::new))
+                .invalid("Checked", validMarshaller.andThen(o -> new ForwardingMarshaller(o).onMarshal(JaxbListener.checked(JaxbError::new))))
+                .invalid("Unchecked", validMarshaller.andThen(o -> new ForwardingMarshaller(o).onMarshal(JaxbListener.unchecked(UncheckedError::new))))
+                .build();
+
+        for (boolean formatted : BOOLS) {
+            for (Charset encoding : ENCODINGS) {
+                for (Meta<IO.Supplier<Marshaller>> factory : factories) {
+
+                    Xml.Formatter<Person> formatter = Jaxb.Formatter
+                            .<Person>builder()
+                            .factory(factory.getTarget())
+                            .formatted(formatted)
+                            .encoding(encoding)
+                            .build();
+
+                    assertFormatterSafety(formatter, Meta.lookupExpectedException(factory), temp);
+                }
+            }
+        }
     }
 
     private static final class IOError extends IOException {

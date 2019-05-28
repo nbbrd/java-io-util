@@ -16,6 +16,8 @@
  */
 package _test.sample;
 
+import _test.Meta;
+import _test.ResourceCounter;
 import static _test.sample.Person.*;
 import ioutil.IO;
 import java.io.File;
@@ -209,5 +211,45 @@ public class FormatAssertions {
     }
 
     private static final class TargetError extends IOException {
+    }
+
+    public static void assertFormatterSafety(Xml.Formatter<Person> p, Class<? extends Throwable> expectedException, TemporaryFolder temp) {
+        ResourceCounter counter = new ResourceCounter();
+
+        Meta.<IO.Runnable>builder()
+                .group("Reader")
+                .code().doesNotRaiseExceptionWhen(() -> p.formatWriter(JOHN_DOE, counter.onWriter(StringWriter::new)))
+                .exception(IOException.class).as("Null").isThrownBy(() -> p.formatWriter(JOHN_DOE, IO.Supplier.of(null)))
+                .exception(TargetError.class).as("Throwing").isThrownBy(() -> p.formatWriter(JOHN_DOE, IO.Supplier.throwing(TargetError::new)))
+                .group("Stream")
+                .code().doesNotRaiseExceptionWhen(() -> p.formatStream(JOHN_DOE, counter.onOutputStream(ByteArrayOutputStream::new)))
+                .exception(IOException.class).as("Null").isThrownBy(() -> p.formatStream(JOHN_DOE, IO.Supplier.of(null)))
+                .exception(TargetError.class).as("Throwing").isThrownBy(() -> p.formatStream(JOHN_DOE, IO.Supplier.throwing(TargetError::new)))
+                .group("File")
+                .code().doesNotRaiseExceptionWhen(() -> p.formatFile(JOHN_DOE, temp.newFile()))
+                .exception(AccessDeniedException.class).as("Dir").isThrownBy(() -> p.formatFile(JOHN_DOE, temp.newFolder()))
+                .group("Path")
+                .code().doesNotRaiseExceptionWhen(() -> p.formatPath(JOHN_DOE, temp.newFile().toPath()))
+                .exception(AccessDeniedException.class).as("Dir").isThrownBy(() -> p.formatPath(JOHN_DOE, temp.newFolder().toPath()))
+                .group("Chars")
+                .code().doesNotRaiseExceptionWhen(() -> p.formatChars(JOHN_DOE, new StringBuilder()))
+                .code().doesNotRaiseExceptionWhen(() -> p.formatToString(JOHN_DOE))
+                .build()
+                .forEach(callable -> testSafeFormat(counter, expectedException, callable));
+    }
+
+    private static void testSafeFormat(ResourceCounter counter, Class<? extends Throwable> expectedException, Meta<IO.Runnable> callable) {
+        counter.reset();
+        if (expectedException != null) {
+            assertThatThrownBy(() -> callable.getTarget().runWithIO())
+                    .isInstanceOf(expectedException);
+        } else if (callable.getExpectedException() != null) {
+            assertThatThrownBy(() -> callable.getTarget().runWithIO())
+                    .isInstanceOf(callable.getExpectedException());
+        } else {
+            assertThatCode(() -> callable.getTarget().runWithIO())
+                    .doesNotThrowAnyException();
+        }
+        assertThat(counter.getCount()).isLessThanOrEqualTo(0);
     }
 }

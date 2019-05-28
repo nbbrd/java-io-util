@@ -24,9 +24,12 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -62,6 +65,9 @@ public class Person {
 
     public static final IO.Supplier<Reader> READER;
     public static final IO.Supplier<InputStream> INPUT_STREAM;
+
+    public static final List<Boolean> BOOLS = Arrays.asList(false, true);
+    public static final List<Charset> ENCODINGS = Arrays.asList(StandardCharsets.UTF_8, StandardCharsets.ISO_8859_1);
 
     static {
         try {
