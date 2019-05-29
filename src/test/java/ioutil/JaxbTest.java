@@ -16,7 +16,9 @@
  */
 package ioutil;
 
-import ioutil.XmlTest.Person;
+import _test.ForwardingMarshaller;
+import _test.sample.ParseAssertions;
+import _test.sample.Person;
 import java.io.IOException;
 import java.util.List;
 import javax.xml.bind.JAXBContext;
@@ -31,6 +33,17 @@ import _test.ForwardingXMLInputFactory;
 import _test.StaxListener;
 import _test.JaxbListener;
 import _test.Meta;
+import javax.xml.bind.Marshaller;
+import static _test.sample.FormatAssertions.assertFormatterCompliance;
+import static _test.sample.FormatAssertions.assertFormatterSafety;
+import static _test.sample.ParseAssertions.assertParserCompliance;
+import static _test.sample.ParseAssertions.assertParserSafety;
+import static _test.sample.Person.BOOLS;
+import static _test.sample.Person.ENCODINGS;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import org.junit.Rule;
+import org.junit.rules.TemporaryFolder;
 
 /**
  *
@@ -38,69 +51,111 @@ import _test.Meta;
  */
 public class JaxbTest {
 
-    private final IO.Supplier<Unmarshaller> validFactory = () -> Jaxb.createUnmarshaller(Person.class);
+    @Rule
+    public TemporaryFolder temp = new TemporaryFolder();
+
+    private final IO.Supplier<Unmarshaller> validUnmarshaller = () -> Jaxb.createUnmarshaller(Person.class);
+    private final IO.Supplier<Marshaller> validMarshaller = () -> Jaxb.createMarshaller(Person.class);
     private final IO.Supplier<XMLInputFactory> validXxeFactory = XMLInputFactory::newFactory;
 
     @Test
     @SuppressWarnings("null")
     public void testCreateUnmarshaller() throws Exception {
-        assertThatNullPointerException().isThrownBy(() -> Jaxb.createUnmarshaller((Class<?>) null));
+        assertThatNullPointerException()
+                .isThrownBy(() -> Jaxb.createUnmarshaller((Class<?>) null));
+
         assertThatThrownBy(() -> Jaxb.createUnmarshaller(Runnable.class))
                 .isInstanceOf(Xml.WrappedException.class)
                 .hasCauseInstanceOf(JAXBException.class);
 
-        assertThatNullPointerException().isThrownBy(() -> Jaxb.createUnmarshaller((JAXBContext) null));
+        assertThatNullPointerException()
+                .isThrownBy(() -> Jaxb.createUnmarshaller((JAXBContext) null));
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testCreateMarshaller() throws Exception {
+        assertThatNullPointerException()
+                .isThrownBy(() -> Jaxb.createMarshaller((Class<?>) null));
+
+        assertThatThrownBy(() -> Jaxb.createMarshaller(Runnable.class))
+                .isInstanceOf(Xml.WrappedException.class)
+                .hasCauseInstanceOf(JAXBException.class);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> Jaxb.createMarshaller((JAXBContext) null));
     }
 
     @Test
     public void testXXE() throws Exception {
         Jaxb.Parser<Person> p = Jaxb.Parser.of(Person.class);
-        XmlTest.testXXE(p, p.toBuilder().ignoreXXE(true).build());
+        ParseAssertions.testXXE(p, p.withIgnoreXXE(true));
     }
 
     @Test
     @SuppressWarnings("null")
-    public void testParserOf() throws Exception {
-        assertThatNullPointerException().isThrownBy(() -> Jaxb.Parser.of((Class<?>) null));
-        XmlTest.testParser(Jaxb.Parser.of(Person.class));
+    public void testParserOfClass() throws Exception {
+        assertThatNullPointerException()
+                .isThrownBy(() -> Jaxb.Parser.of((Class<?>) null));
 
-        assertThatNullPointerException().isThrownBy(() -> Jaxb.Parser.of((JAXBContext) null));
-        XmlTest.testParser(Jaxb.Parser.of(JAXBContext.newInstance(Person.class)));
+        assertParserCompliance(Jaxb.Parser.of(Person.class), temp);
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testParserOfContext() throws Exception {
+        assertThatNullPointerException()
+                .isThrownBy(() -> Jaxb.Parser.of((JAXBContext) null));
+
+        assertParserCompliance(Jaxb.Parser.of(JAXBContext.newInstance(Person.class)), temp);
     }
 
     @Test
     @SuppressWarnings("null")
     public void testParserBuilder() throws IOException {
-        assertThatNullPointerException().isThrownBy(() -> Jaxb.Parser.builder().build());
-        assertThatNullPointerException().isThrownBy(() -> Jaxb.Parser.builder().factory(null).build());
-        assertThatNullPointerException().isThrownBy(() -> Jaxb.Parser.builder().factory(validFactory).xxeFactory(null).build());
+        assertThatNullPointerException()
+                .isThrownBy(() -> Jaxb.Parser.builder().build());
 
-        XmlTest.testParser(Jaxb.Parser.<Person>builder()
-                .factory(validFactory)
-                .xxeFactory(validXxeFactory)
-                .ignoreXXE(false)
-                .build()
-        );
+        assertThatNullPointerException()
+                .isThrownBy(() -> Jaxb.Parser.builder().factory(null).build());
 
-        XmlTest.testParser(Jaxb.Parser.<Person>builder()
-                .factory(validFactory)
-                .xxeFactory(validXxeFactory)
-                .ignoreXXE(true)
-                .build()
-        );
+        assertThatNullPointerException()
+                .isThrownBy(() -> Jaxb.Parser.builder().factory(validUnmarshaller).xxeFactory(null).build());
+
+        for (boolean ignoreXXE : BOOLS) {
+            assertParserCompliance(
+                    Jaxb.Parser.<Person>builder()
+                            .factory(validUnmarshaller)
+                            .xxeFactory(validXxeFactory)
+                            .ignoreXXE(ignoreXXE)
+                            .build(),
+                    temp);
+        }
     }
 
     @Test
-    public void testParserResources() throws IOException {
+    @SuppressWarnings("null")
+    public void testParserWither() throws IOException {
+        Jaxb.Parser<Person> parser = Jaxb.Parser.of(Person.class);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> parser.withFactory(null));
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> parser.withXxeFactory(null));
+    }
+
+    @Test
+    public void testParserSafety() throws IOException {
         List<Meta<IO.Supplier<Unmarshaller>>> factories = Meta.<IO.Supplier<Unmarshaller>>builder()
-                .valid("Ok", validFactory)
+                .valid("Ok", validUnmarshaller)
                 .invalid("Null", IO.Supplier.of(null))
                 .invalid("Throwing", IO.Supplier.throwing(IOError::new))
-                .invalid("Checked", validFactory.andThen(o -> new ForwardingUnmarshaller(o).onUnmarshal(JaxbListener.checked(JaxbError::new))))
-                .invalid("Unchecked", validFactory.andThen(o -> new ForwardingUnmarshaller(o).onUnmarshal(JaxbListener.unchecked(UncheckedError::new))))
+                .invalid("Checked", validUnmarshaller.andThen(o -> new ForwardingUnmarshaller(o).onUnmarshal(JaxbListener.checked(JaxbError::new))))
+                .invalid("Unchecked", validUnmarshaller.andThen(o -> new ForwardingUnmarshaller(o).onUnmarshal(JaxbListener.unchecked(UncheckedError::new))))
                 .build();
 
-        for (boolean xxe : new boolean[]{true, false}) {
+        for (boolean xxe : BOOLS) {
 
             List<Meta<IO.Supplier<XMLInputFactory>>> xxeFactories = Meta.<IO.Supplier<XMLInputFactory>>builder()
                     .valid("Ok", validXxeFactory)
@@ -113,13 +168,100 @@ public class JaxbTest {
             for (Meta<IO.Supplier<Unmarshaller>> factory : factories) {
                 for (Meta<IO.Supplier<XMLInputFactory>> xxeFactory : xxeFactories) {
 
-                    Xml.Parser<Person> p = Jaxb.Parser.<Person>builder()
+                    Xml.Parser<Person> parser = Jaxb.Parser
+                            .<Person>builder()
                             .factory(factory.getTarget())
                             .ignoreXXE(!xxe)
                             .xxeFactory(xxeFactory.getTarget())
                             .build();
 
-                    XmlTest.testParserResources(p, Meta.lookupExpectedException(factory, xxeFactory));
+                    assertParserSafety(parser, Meta.lookupExpectedException(factory, xxeFactory));
+                }
+            }
+        }
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testFormatterOfClass() throws Exception {
+        assertThatNullPointerException()
+                .isThrownBy(() -> Jaxb.Formatter.of((Class<?>) null));
+
+        assertFormatterCompliance(Jaxb.Formatter.of(Person.class), false, temp);
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testFormatterOfContext() throws Exception {
+        assertThatNullPointerException()
+                .isThrownBy(() -> Jaxb.Formatter.of((JAXBContext) null));
+
+        assertFormatterCompliance(Jaxb.Formatter.of(JAXBContext.newInstance(Person.class)), false, temp);
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testFormatterBuilder() throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> Jaxb.Formatter.builder().build());
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> Jaxb.Formatter.builder().factory(null).build());
+
+        for (boolean formatted : BOOLS) {
+            assertFormatterCompliance(
+                    Jaxb.Formatter.<Person>builder()
+                            .factory(validMarshaller)
+                            .formatted(formatted)
+                            .build(),
+                    formatted, temp);
+        }
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testFormatterWither() throws IOException {
+        Jaxb.Formatter<Person> formatter = Jaxb.Formatter.of(Person.class);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> formatter.withFactory(null));
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> formatter.withEncoding(null));
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testFormatterWithAlternateEncoding() throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> Jaxb.Formatter.of(Person.class).withEncoding(null));
+
+        assertThat(Jaxb.Formatter.of(Person.class).withEncoding(StandardCharsets.ISO_8859_1).formatToString(Person.JOHN_DOE))
+                .isEqualTo(Person.CHARS.replace("UTF-8", "ISO-8859-1"));
+    }
+
+    @Test
+    public void testFormatterSafety() throws IOException {
+        List<Meta<IO.Supplier<Marshaller>>> factories = Meta.<IO.Supplier<Marshaller>>builder()
+                .valid("Ok", validMarshaller)
+                .invalid("Null", IO.Supplier.of(null))
+                .invalid("Throwing", IO.Supplier.throwing(IOError::new))
+                .invalid("Checked", validMarshaller.andThen(o -> new ForwardingMarshaller(o).onMarshal(JaxbListener.checked(JaxbError::new))))
+                .invalid("Unchecked", validMarshaller.andThen(o -> new ForwardingMarshaller(o).onMarshal(JaxbListener.unchecked(UncheckedError::new))))
+                .build();
+
+        for (boolean formatted : BOOLS) {
+            for (Charset encoding : ENCODINGS) {
+                for (Meta<IO.Supplier<Marshaller>> factory : factories) {
+
+                    Xml.Formatter<Person> formatter = Jaxb.Formatter
+                            .<Person>builder()
+                            .factory(factory.getTarget())
+                            .formatted(formatted)
+                            .encoding(encoding)
+                            .build();
+
+                    assertFormatterSafety(formatter, Meta.lookupExpectedException(factory), temp);
                 }
             }
         }

@@ -72,6 +72,7 @@ public class Sax {
         }
     }
 
+    @lombok.experimental.Wither
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class Parser<T> implements Xml.Parser<T> {
 
@@ -142,19 +143,19 @@ public class Sax {
 
         @Override
         public T parseFile(File source) throws IOException {
-            Xml.checkFile(source);
+            LegacyFiles.checkSource(source);
             return parse(newInputSource(source));
         }
 
         @Override
         public T parseReader(Reader resource) throws IOException {
-            Objects.requireNonNull(resource);
+            Objects.requireNonNull(resource, "resource");
             return parse(new InputSource(resource));
         }
 
         @Override
         public T parseStream(InputStream resource) throws IOException {
-            Objects.requireNonNull(resource);
+            Objects.requireNonNull(resource, "resource");
             return parse(new InputSource(resource));
         }
 
@@ -185,7 +186,7 @@ public class Sax {
      * @see SAXParser#parse(java.io.File, org.xml.sax.helpers.DefaultHandler)
      */
     InputSource newInputSource(File file) {
-        return new InputSource(Xml.getSystemId(file));
+        return new InputSource(Xml.toSystemId(file));
     }
 
     private final static SAXParserFactory DEFAULT_FACTORY = initFactory();
@@ -225,6 +226,6 @@ public class Sax {
 
     private File getFile(SAXParseException ex) {
         String result = ex.getSystemId();
-        return result != null && result.startsWith("file:/") ? Xml.getFile(result) : null;
+        return result != null && result.startsWith("file:/") ? Xml.fromSystemId(result) : null;
     }
 }

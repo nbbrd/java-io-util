@@ -21,13 +21,20 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.Reader;
+import java.io.Writer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.xml.stream.XMLEventReader;
+import javax.xml.stream.XMLEventWriter;
 import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import javax.xml.stream.XMLStreamWriter;
 
 /**
  *
@@ -76,21 +83,29 @@ public class Stax {
         }
     }
 
+    @FunctionalInterface
+    public interface OutputHandler<O, T> {
+
+        void format(@Nonnull T value, @Nonnull O output) throws Exception;
+    }
+
+    @lombok.experimental.Wither
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class StreamParser<T> implements Xml.Parser<T> {
 
         @Nonnull
         public static <T> StreamParser<T> flowOf(@Nonnull FlowHandler<XMLStreamReader, T> handler) {
-            return StreamParser.<T>builder().handler(handler).build();
+            return StreamParser.<T>builder().flow(handler).build();
         }
 
         @Nonnull
         public static <T> StreamParser<T> valueOf(@Nonnull ValueHandler<XMLStreamReader, T> handler) {
-            return StreamParser.<T>builder().handler(handler.asFlow()).build();
+            return flowOf(handler.asFlow());
         }
 
         public static class Builder<T> {
 
+            // default values
             Builder() {
                 this.handler = null;
                 this.factory = XMLInputFactory::newFactory;
@@ -101,6 +116,14 @@ public class Stax {
             public Builder<T> preventXXE(boolean preventXXE) {
                 this.ignoreXXE = !preventXXE;
                 return this;
+            }
+
+            public Builder<T> flow(FlowHandler<XMLStreamReader, T> handler) {
+                return handler(handler);
+            }
+
+            public Builder<T> value(ValueHandler<XMLStreamReader, T> handler) {
+                return handler(handler.asFlow());
             }
         }
 
@@ -114,39 +137,46 @@ public class Stax {
 
         @Override
         public T parseFile(File source) throws IOException {
-            Xml.checkFile(source);
-            InputStream resource = Xml.open(source);
-            return parse(o -> o.createXMLStreamReader(Xml.getSystemId(source), resource), resource);
+            LegacyFiles.checkSource(source);
+            InputStream resource = LegacyFiles.newInputStream(source);
+            return parse(o -> o.createXMLStreamReader(Xml.toSystemId(source), resource), resource);
         }
 
         @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {
-            Reader resource = Xml.open(source);
+            Objects.requireNonNull(source, "source");
+            Reader resource = Xml.checkResource(source.getWithIO(), "Missing Reader");
             return parse(o -> o.createXMLStreamReader(resource), resource);
         }
 
         @Override
         public T parseStream(IO.Supplier<? extends InputStream> source) throws IOException {
-            InputStream resource = Xml.open(source);
+            Objects.requireNonNull(source, "source");
+            InputStream resource = Xml.checkResource(source.getWithIO(), "Missing InputStream");
             return parse(o -> o.createXMLStreamReader(resource), resource);
         }
 
         @Override
         public T parseReader(Reader resource) throws IOException {
-            Objects.requireNonNull(resource);
-            return parse(o -> o.createXMLStreamReader(resource), IO.Runnable.noOp().asCloseable());
+            Objects.requireNonNull(resource, "resource");
+            return parse(o -> o.createXMLStreamReader(resource), NOTHING_TO_CLOSE);
         }
 
         @Override
         public T parseStream(InputStream resource) throws IOException {
-            Objects.requireNonNull(resource);
-            return parse(o -> o.createXMLStreamReader(resource), IO.Runnable.noOp().asCloseable());
+            Objects.requireNonNull(resource, "resource");
+            return parse(o -> o.createXMLStreamReader(resource), NOTHING_TO_CLOSE);
         }
 
         @Nonnull
         public T parse(@Nonnull XMLStreamReader input, @Nonnull Closeable onClose) throws IOException {
+            return doParse(handler, input, onClose);
+        }
+
+        private T parse(XFunction<XMLInputFactory, XMLStreamReader> supplier, Closeable onClose) throws IOException {
             try {
-                return handler.parse(input, onClose);
+                XMLStreamReader input = supplier.apply(getInputEngine(factory, ignoreXXE));
+                return parse(input, () -> closeBoth(input::close, onClose));
             } catch (XMLStreamException ex) {
                 IO.ensureClosed(ex, onClose);
                 throw toIOException(ex);
@@ -154,58 +184,26 @@ public class Stax {
                 IO.ensureClosed(ex, onClose);
                 throw ex;
             }
-        }
-
-        private T parse(XSupplier<XMLStreamReader> supplier, Closeable onClose) throws IOException {
-            try {
-                XMLStreamReader input = supplier.create(getEngine());
-                return parse(input, () -> closeBoth(input, onClose));
-            } catch (XMLStreamException ex) {
-                IO.ensureClosed(ex, onClose);
-                throw toIOException(ex);
-            } catch (Error | RuntimeException | IOException ex) {
-                IO.ensureClosed(ex, onClose);
-                throw ex;
-            }
-        }
-
-        private XMLInputFactory getEngine() throws IOException {
-            XMLInputFactory result = factory.getWithIO();
-            if (!ignoreXXE) {
-                preventXXE(result);
-            }
-            return result;
-        }
-
-        private static void closeBoth(XMLStreamReader input, Closeable onClose) throws IOException {
-            try {
-                input.close();
-            } catch (XMLStreamException ex) {
-                IO.ensureClosed(ex, onClose);
-                throw toIOException(ex);
-            } catch (Error | RuntimeException ex) {
-                IO.ensureClosed(ex, onClose);
-                throw ex;
-            }
-            onClose.close();
         }
     }
 
+    @lombok.experimental.Wither
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class EventParser<T> implements Xml.Parser<T> {
 
         @Nonnull
         public static <T> EventParser<T> flowOf(@Nonnull FlowHandler<XMLEventReader, T> handler) {
-            return EventParser.<T>builder().handler(handler).build();
+            return EventParser.<T>builder().flow(handler).build();
         }
 
         @Nonnull
         public static <T> EventParser<T> valueOf(@Nonnull ValueHandler<XMLEventReader, T> handler) {
-            return EventParser.<T>builder().handler(handler.asFlow()).build();
+            return flowOf(handler.asFlow());
         }
 
         public static class Builder<T> {
 
+            // default values
             Builder() {
                 this.handler = null;
                 this.factory = XMLInputFactory::newFactory;
@@ -216,6 +214,14 @@ public class Stax {
             public Builder<T> preventXXE(boolean preventXXE) {
                 this.ignoreXXE = !preventXXE;
                 return this;
+            }
+
+            public Builder<T> flow(FlowHandler<XMLEventReader, T> handler) {
+                return handler(handler);
+            }
+
+            public Builder<T> value(ValueHandler<XMLEventReader, T> handler) {
+                return handler(handler.asFlow());
             }
         }
 
@@ -229,51 +235,45 @@ public class Stax {
 
         @Override
         public T parseFile(File source) throws IOException {
-            Xml.checkFile(source);
-            InputStream resource = Xml.open(source);
-            return parse(o -> o.createXMLEventReader(Xml.getSystemId(source), resource), resource);
+            LegacyFiles.checkSource(source);
+            InputStream resource = LegacyFiles.newInputStream(source);
+            return parse(o -> o.createXMLEventReader(Xml.toSystemId(source), resource), resource);
         }
 
         @Override
         public T parseReader(IO.Supplier<? extends Reader> source) throws IOException {
-            Reader resource = Xml.open(source);
+            Objects.requireNonNull(source, "source");
+            Reader resource = Xml.checkResource(source.getWithIO(), "Missing Reader");
             return parse(o -> o.createXMLEventReader(resource), resource);
         }
 
         @Override
         public T parseStream(IO.Supplier<? extends InputStream> source) throws IOException {
-            InputStream resource = Xml.open(source);
+            Objects.requireNonNull(source, "source");
+            InputStream resource = Xml.checkResource(source.getWithIO(), "Missing InputStream");
             return parse(o -> o.createXMLEventReader(resource), resource);
         }
 
         @Override
         public T parseReader(Reader resource) throws IOException {
-            Objects.requireNonNull(resource);
-            return parse(o -> o.createXMLEventReader(resource), IO.Runnable.noOp().asCloseable());
+            Objects.requireNonNull(resource, "resource");
+            return parse(o -> o.createXMLEventReader(resource), NOTHING_TO_CLOSE);
         }
 
         @Override
         public T parseStream(InputStream resource) throws IOException {
-            Objects.requireNonNull(resource);
-            return parse(o -> o.createXMLEventReader(resource), IO.Runnable.noOp().asCloseable());
-        }
-
-        private T parse(XSupplier<XMLEventReader> supplier, Closeable onClose) throws IOException {
-            try {
-                XMLEventReader input = supplier.create(getEngine());
-                return parse(input, () -> closeBoth(input, onClose));
-            } catch (XMLStreamException ex) {
-                IO.ensureClosed(ex, onClose);
-                throw toIOException(ex);
-            } catch (Error | RuntimeException | IOException ex) {
-                IO.ensureClosed(ex, onClose);
-                throw ex;
-            }
+            Objects.requireNonNull(resource, "resource");
+            return parse(o -> o.createXMLEventReader(resource), NOTHING_TO_CLOSE);
         }
 
         private T parse(XMLEventReader input, Closeable onClose) throws IOException {
+            return doParse(handler, input, onClose);
+        }
+
+        private T parse(XFunction<XMLInputFactory, XMLEventReader> supplier, Closeable onClose) throws IOException {
             try {
-                return handler.parse(input, onClose);
+                XMLEventReader input = supplier.apply(getInputEngine(factory, ignoreXXE));
+                return parse(input, () -> closeBoth(input::close, onClose));
             } catch (XMLStreamException ex) {
                 IO.ensureClosed(ex, onClose);
                 throw toIOException(ex);
@@ -282,33 +282,241 @@ public class Stax {
                 throw ex;
             }
         }
+    }
 
-        private XMLInputFactory getEngine() throws IOException {
-            XMLInputFactory result = factory.getWithIO();
-            if (!ignoreXXE) {
-                preventXXE(result);
-            }
-            return result;
+    @lombok.experimental.Wither
+    @lombok.Builder(builderClassName = "Builder", toBuilder = true)
+    public static final class StreamFormatter<T> implements Xml.Formatter<T> {
+
+        @Nonnull
+        public static <T> StreamFormatter<T> valueOf(@Nonnull OutputHandler<XMLStreamWriter, T> handler) {
+            return StreamFormatter.<T>builder().handler(handler).build();
         }
 
-        private static void closeBoth(XMLEventReader input, Closeable onClose) throws IOException {
-            try {
-                input.close();
-            } catch (XMLStreamException ex) {
-                IO.ensureClosed(ex, onClose);
-                throw toIOException(ex);
-            } catch (Error | RuntimeException ex) {
-                IO.ensureClosed(ex, onClose);
-                throw ex;
+        public static class Builder<T> {
+
+            // default values
+            Builder() {
+                this.handler = null;
+                this.factory = XMLOutputFactory::newFactory;
+                this.encoding = StandardCharsets.UTF_8;
             }
-            onClose.close();
+        }
+
+        @lombok.NonNull
+        private final OutputHandler<XMLStreamWriter, T> handler;
+
+        @lombok.NonNull
+        private final IO.Supplier<? extends XMLOutputFactory> factory;
+
+        @lombok.NonNull
+        private final Charset encoding;
+
+        @Override
+        public void formatFile(T value, File target) throws IOException {
+            Objects.requireNonNull(value, "value");
+            LegacyFiles.checkTarget(target);
+            try (OutputStream resource = LegacyFiles.newOutputStream(target)) {
+                format(value, o -> o.createXMLStreamWriter(resource, encoding.name()));
+            }
+        }
+
+        @Override
+        public void formatWriter(T value, IO.Supplier<? extends Writer> target) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(target, "target");
+            try (Writer resource = Xml.checkResource(target.getWithIO(), "Missing Writer")) {
+                format(value, o -> o.createXMLStreamWriter(resource));
+            }
+        }
+
+        @Override
+        public void formatStream(T value, IO.Supplier<? extends OutputStream> target) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(target, "target");
+            try (OutputStream resource = Xml.checkResource(target.getWithIO(), "Missing OutputStream")) {
+                format(value, o -> o.createXMLStreamWriter(resource, encoding.name()));
+            }
+        }
+
+        @Override
+        public void formatWriter(T value, Writer resource) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(resource, "resource");
+            format(value, o -> o.createXMLStreamWriter(resource));
+        }
+
+        @Override
+        public void formatStream(T value, OutputStream resource) throws IOException {
+            Objects.requireNonNull(value);
+            Objects.requireNonNull(resource, "resource");
+            format(value, o -> o.createXMLStreamWriter(resource, encoding.name()));
+        }
+
+        private void format(T value, XFunction<XMLOutputFactory, XMLStreamWriter> supplier) throws IOException {
+            try {
+                XMLStreamWriter output = supplier.apply(getEngine());
+                doFormat(handler, value, output, () -> close(output::close));
+                output.close();
+            } catch (XMLStreamException ex) {
+                throw toIOException(ex);
+            }
+        }
+
+        private XMLOutputFactory getEngine() throws IOException {
+            XMLOutputFactory result = factory.getWithIO();
+            return result;
         }
     }
 
-    @FunctionalInterface
-    private interface XSupplier<T> {
+    @lombok.experimental.Wither
+    @lombok.Builder(builderClassName = "Builder", toBuilder = true)
+    public static final class EventFormatter<T> implements Xml.Formatter<T> {
 
-        T create(XMLInputFactory input) throws XMLStreamException;
+        @Nonnull
+        public static <T> EventFormatter<T> valueOf(@Nonnull OutputHandler<XMLEventWriter, T> handler) {
+            return EventFormatter.<T>builder().handler(handler).build();
+        }
+
+        public static class Builder<T> {
+
+            // default values
+            Builder() {
+                this.handler = null;
+                this.factory = XMLOutputFactory::newFactory;
+                this.encoding = StandardCharsets.UTF_8;
+            }
+        }
+
+        @lombok.NonNull
+        private final OutputHandler<XMLEventWriter, T> handler;
+
+        @lombok.NonNull
+        private final IO.Supplier<? extends XMLOutputFactory> factory;
+
+        @lombok.NonNull
+        private final Charset encoding;
+
+        @Override
+        public void formatFile(T value, File target) throws IOException {
+            Objects.requireNonNull(value, "value");
+            LegacyFiles.checkTarget(target);
+            try (OutputStream resource = LegacyFiles.newOutputStream(target)) {
+                format(value, o -> o.createXMLEventWriter(resource, encoding.name()));
+            }
+        }
+
+        @Override
+        public void formatWriter(T value, IO.Supplier<? extends Writer> target) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(target, "target");
+            try (Writer resource = Xml.checkResource(target.getWithIO(), "Missing Writer")) {
+                format(value, o -> o.createXMLEventWriter(resource));
+            }
+        }
+
+        @Override
+        public void formatStream(T value, IO.Supplier<? extends OutputStream> target) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(target, "target");
+            try (OutputStream resource = Xml.checkResource(target.getWithIO(), "Missing OutputStream")) {
+                format(value, o -> o.createXMLEventWriter(resource, encoding.name()));
+            }
+        }
+
+        @Override
+        public void formatWriter(T value, Writer resource) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(resource, "resource");
+            format(value, o -> o.createXMLEventWriter(resource));
+        }
+
+        @Override
+        public void formatStream(T value, OutputStream resource) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(resource, "resource");
+            format(value, o -> o.createXMLEventWriter(resource, encoding.name()));
+        }
+
+        private void format(T value, XFunction<XMLOutputFactory, XMLEventWriter> supplier) throws IOException {
+            try {
+                XMLEventWriter output = supplier.apply(getEngine());
+                doFormat(handler, value, output, () -> close(output::close));
+                output.close();
+            } catch (XMLStreamException ex) {
+                throw toIOException(ex);
+            }
+        }
+
+        private XMLOutputFactory getEngine() throws IOException {
+            XMLOutputFactory result = factory.getWithIO();
+            return result;
+        }
+    }
+
+    private XMLInputFactory getInputEngine(IO.Supplier<? extends XMLInputFactory> factory, boolean ignoreXXE) throws IOException {
+        XMLInputFactory result = factory.getWithIO();
+        if (!ignoreXXE) {
+            preventXXE(result);
+        }
+        return result;
+    }
+
+    private <T, INPUT> T doParse(FlowHandler<INPUT, T> handler, INPUT input, Closeable onClose) throws IOException {
+        try {
+            return handler.parse(input, onClose);
+        } catch (XMLStreamException ex) {
+            IO.ensureClosed(ex, onClose);
+            throw toIOException(ex);
+        } catch (Error | RuntimeException | IOException ex) {
+            IO.ensureClosed(ex, onClose);
+            throw ex;
+        }
+    }
+
+    private <T, OUTPUT> void doFormat(OutputHandler<OUTPUT, T> handler, T value, OUTPUT output, Closeable onClose) throws IOException {
+        try {
+            handler.format(value, output);
+        } catch (Exception ex) {
+            IO.ensureClosed(ex, onClose);
+            throw toIOException(ex);
+        } catch (Error ex) {
+            IO.ensureClosed(ex, onClose);
+            throw ex;
+        }
+    }
+
+    private void close(XRunnable first) throws IOException {
+        try {
+            first.run();
+        } catch (XMLStreamException ex) {
+            throw toIOException(ex);
+        }
+    }
+
+    private void closeBoth(XRunnable first, Closeable second) throws IOException {
+        try {
+            first.run();
+        } catch (XMLStreamException ex) {
+            IO.ensureClosed(ex, second);
+            throw toIOException(ex);
+        } catch (Error | RuntimeException ex) {
+            IO.ensureClosed(ex, second);
+            throw ex;
+        }
+        second.close();
+    }
+
+    @FunctionalInterface
+    private interface XRunnable {
+
+        void run() throws XMLStreamException;
+    }
+
+    @FunctionalInterface
+    private interface XFunction<T, R> {
+
+        R apply(T t) throws XMLStreamException;
     }
 
     private void setFeature(XMLInputFactory factory, String feature, boolean value) {
@@ -316,6 +524,16 @@ public class Stax {
                 && ((Boolean) factory.getProperty(feature)) != value) {
             factory.setProperty(feature, value);
         }
+    }
+
+    private IOException toIOException(Exception ex) {
+        if (ex instanceof XMLStreamException) {
+            return toIOException((XMLStreamException) ex);
+        }
+        if (ex instanceof IOException) {
+            return (IOException) ex;
+        }
+        return new Xml.WrappedException(ex);
     }
 
     IOException toIOException(XMLStreamException ex) {
@@ -331,6 +549,8 @@ public class Stax {
 
     private File getFile(XMLStreamException ex) {
         String result = ex.getLocation().getSystemId();
-        return result != null && result.startsWith("file:/") ? Xml.getFile(result) : null;
+        return result != null && result.startsWith("file:/") ? Xml.fromSystemId(result) : null;
     }
+
+    private final Closeable NOTHING_TO_CLOSE = IO.Runnable.noOp().asCloseable();
 }
