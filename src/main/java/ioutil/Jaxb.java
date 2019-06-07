@@ -25,7 +25,6 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
-import javax.annotation.Nonnull;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
@@ -34,6 +33,7 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.xml.sax.SAXParseException;
 
 /**
@@ -43,8 +43,8 @@ import org.xml.sax.SAXParseException;
 @lombok.experimental.UtilityClass
 public class Jaxb {
 
-    @Nonnull
-    public Unmarshaller createUnmarshaller(@Nonnull Class<?> type) throws IOException {
+    @NonNull
+    public Unmarshaller createUnmarshaller(@NonNull Class<?> type) throws IOException {
         Objects.requireNonNull(type);
         try {
             return JAXBContext.newInstance(type).createUnmarshaller();
@@ -53,8 +53,8 @@ public class Jaxb {
         }
     }
 
-    @Nonnull
-    public Unmarshaller createUnmarshaller(@Nonnull JAXBContext context) throws IOException {
+    @NonNull
+    public Unmarshaller createUnmarshaller(@NonNull JAXBContext context) throws IOException {
         Objects.requireNonNull(context);
         try {
             return context.createUnmarshaller();
@@ -63,8 +63,8 @@ public class Jaxb {
         }
     }
 
-    @Nonnull
-    public Marshaller createMarshaller(@Nonnull Class<?> type) throws IOException {
+    @NonNull
+    public Marshaller createMarshaller(@NonNull Class<?> type) throws IOException {
         Objects.requireNonNull(type);
         try {
             return JAXBContext.newInstance(type).createMarshaller();
@@ -73,8 +73,8 @@ public class Jaxb {
         }
     }
 
-    @Nonnull
-    public Marshaller createMarshaller(@Nonnull JAXBContext context) throws IOException {
+    @NonNull
+    public Marshaller createMarshaller(@NonNull JAXBContext context) throws IOException {
         Objects.requireNonNull(context);
         try {
             return context.createMarshaller();
@@ -87,14 +87,14 @@ public class Jaxb {
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class Parser<T> implements Xml.Parser<T> {
 
-        @Nonnull
-        public static <T> Parser<T> of(@Nonnull Class<T> type) throws IOException {
+        @NonNull
+        public static <T> Parser<T> of(@NonNull Class<T> type) throws IOException {
             Objects.requireNonNull(type);
             return Parser.<T>builder().factory(() -> createUnmarshaller(type)).build();
         }
 
-        @Nonnull
-        public static <T> Parser<T> of(@Nonnull JAXBContext context) throws IOException {
+        @NonNull
+        public static <T> Parser<T> of(@NonNull JAXBContext context) throws IOException {
             Objects.requireNonNull(context);
             return Parser.<T>builder().factory(() -> createUnmarshaller(context)).build();
         }
@@ -233,14 +233,14 @@ public class Jaxb {
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class Formatter<T> implements Xml.Formatter<T> {
 
-        @Nonnull
-        public static <T> Formatter<T> of(@Nonnull Class<T> type) throws IOException {
+        @NonNull
+        public static <T> Formatter<T> of(@NonNull Class<T> type) throws IOException {
             Objects.requireNonNull(type);
             return Formatter.<T>builder().factory(() -> createMarshaller(type)).build();
         }
 
-        @Nonnull
-        public static <T> Formatter<T> of(@Nonnull JAXBContext context) throws IOException {
+        @NonNull
+        public static <T> Formatter<T> of(@NonNull JAXBContext context) throws IOException {
             Objects.requireNonNull(context);
             return Formatter.<T>builder().factory(() -> createMarshaller(context)).build();
         }

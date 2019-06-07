@@ -31,7 +31,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import javax.annotation.Nonnull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * Set of utilities related to XML.
@@ -43,20 +43,20 @@ public class Xml {
 
     public interface Parser<T> {
 
-        @Nonnull
-        default T parseChars(@Nonnull CharSequence source) throws IOException {
+        @NonNull
+        default T parseChars(@NonNull CharSequence source) throws IOException {
             Objects.requireNonNull(source, "source");
             return parseReader(() -> new StringReader(source.toString()));
         }
 
-        @Nonnull
-        default T parseFile(@Nonnull File source) throws IOException {
+        @NonNull
+        default T parseFile(@NonNull File source) throws IOException {
             LegacyFiles.checkSource(source);
             return parseStream(() -> LegacyFiles.newInputStream(source));
         }
 
-        @Nonnull
-        default T parsePath(@Nonnull Path source) throws IOException {
+        @NonNull
+        default T parsePath(@NonNull Path source) throws IOException {
             Objects.requireNonNull(source, "source");
             Optional<File> file = IO.getFile(source);
             return file.isPresent()
@@ -64,51 +64,51 @@ public class Xml {
                     : parseReader(() -> Files.newBufferedReader(source));
         }
 
-        @Nonnull
-        default T parseResource(@Nonnull Class<?> type, @Nonnull String name) throws IOException {
+        @NonNull
+        default T parseResource(@NonNull Class<?> type, @NonNull String name) throws IOException {
             Objects.requireNonNull(type, "type");
             Objects.requireNonNull(name, "name");
             return parseStream(() -> checkResource(type.getResourceAsStream(name), "Missing resource '" + name + "' of '" + type.getName() + "'"));
         }
 
-        @Nonnull
-        default T parseReader(@Nonnull IO.Supplier<? extends Reader> source) throws IOException {
+        @NonNull
+        default T parseReader(IO.@NonNull Supplier<? extends Reader> source) throws IOException {
             Objects.requireNonNull(source, "source");
             try (Reader resource = checkResource(source.getWithIO(), "Missing Reader")) {
                 return parseReader(resource);
             }
         }
 
-        @Nonnull
-        default T parseStream(@Nonnull IO.Supplier<? extends InputStream> source) throws IOException {
+        @NonNull
+        default T parseStream(IO.@NonNull Supplier<? extends InputStream> source) throws IOException {
             Objects.requireNonNull(source, "source");
             try (InputStream resource = checkResource(source.getWithIO(), "Missing InputStream")) {
                 return parseStream(resource);
             }
         }
 
-        @Nonnull
-        T parseReader(@Nonnull Reader resource) throws IOException;
+        @NonNull
+        T parseReader(@NonNull Reader resource) throws IOException;
 
-        @Nonnull
-        T parseStream(@Nonnull InputStream resource) throws IOException;
+        @NonNull
+        T parseStream(@NonNull InputStream resource) throws IOException;
 
-        @Nonnull
-        default <V> Parser andThen(@Nonnull Function<? super T, ? extends V> after) {
+        @NonNull
+        default <V> Parser andThen(@NonNull Function<? super T, ? extends V> after) {
             return new AndThenParser<>(this, after);
         }
     }
 
     public interface Formatter<T> {
 
-        default String formatToString(@Nonnull T value) throws IOException {
+        default String formatToString(@NonNull T value) throws IOException {
             Objects.requireNonNull(value, "value");
             StringWriter writer = new StringWriter();
             formatWriter(value, writer);
             return writer.toString();
         }
 
-        default void formatChars(@Nonnull T value, @Nonnull Appendable target) throws IOException {
+        default void formatChars(@NonNull T value, @NonNull Appendable target) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
             StringWriter writer = new StringWriter();
@@ -116,13 +116,13 @@ public class Xml {
             target.append(writer.getBuffer());
         }
 
-        default void formatFile(@Nonnull T value, @Nonnull File target) throws IOException {
+        default void formatFile(@NonNull T value, @NonNull File target) throws IOException {
             Objects.requireNonNull(value, "value");
             LegacyFiles.checkTarget(target);
             formatStream(value, () -> LegacyFiles.newOutputStream(target));
         }
 
-        default void formatPath(@Nonnull T value, @Nonnull Path target) throws IOException {
+        default void formatPath(@NonNull T value, @NonNull Path target) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
             Optional<File> file = IO.getFile(target);
@@ -133,7 +133,7 @@ public class Xml {
             }
         }
 
-        default void formatWriter(@Nonnull T value, @Nonnull IO.Supplier<? extends Writer> target) throws IOException {
+        default void formatWriter(@NonNull T value, IO.@NonNull Supplier<? extends Writer> target) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
             try (Writer resource = checkResource(target.getWithIO(), "Missing Writer")) {
@@ -141,7 +141,7 @@ public class Xml {
             }
         }
 
-        default void formatStream(@Nonnull T value, @Nonnull IO.Supplier<? extends OutputStream> target) throws IOException {
+        default void formatStream(@NonNull T value, IO.@NonNull Supplier<? extends OutputStream> target) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
             try (OutputStream resource = checkResource(target.getWithIO(), "Missing OutputStream")) {
@@ -149,12 +149,12 @@ public class Xml {
             }
         }
 
-        void formatWriter(@Nonnull T value, @Nonnull Writer resource) throws IOException;
+        void formatWriter(@NonNull T value, @NonNull Writer resource) throws IOException;
 
-        void formatStream(@Nonnull T value, @Nonnull OutputStream resource) throws IOException;
+        void formatStream(@NonNull T value, @NonNull OutputStream resource) throws IOException;
 
-        @Nonnull
-        default <V> Formatter<V> compose(@Nonnull Function<? super V, ? extends T> before) {
+        @NonNull
+        default <V> Formatter<V> compose(@NonNull Function<? super V, ? extends T> before) {
             Objects.requireNonNull(before);
             return new ComposeFormatter<>(this, before);
         }
