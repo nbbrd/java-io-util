@@ -19,8 +19,6 @@ package ioutil;
 import static _test.sample.FormatAssertions.assertFormatterCompliance;
 import static _test.sample.ParseAssertions.assertParserCompliance;
 import _test.sample.Person;
-import static _test.sample.Person.CHARS;
-import static _test.sample.Person.FORMATTED_CHARS;
 import ioutil.LegacyFiles.BufferedFileInputStream;
 import java.io.EOFException;
 import java.io.IOException;
@@ -35,6 +33,8 @@ import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import static _test.sample.Person.JOHN_DOE_CHARS;
+import static _test.sample.Person.JOHN_DOE_FORMATTED_CHARS;
 
 /**
  *
@@ -129,10 +129,10 @@ public class XmlTest {
         }
 
         private static boolean isJohnDoe(String xml) {
-            if (xml.equals(CHARS)) {
+            if (xml.equals(JOHN_DOE_CHARS)) {
                 return true;
             }
-            if (xml.equals(FORMATTED_CHARS)) {
+            if (xml.equals(JOHN_DOE_FORMATTED_CHARS)) {
                 return true;
             }
             return false;
@@ -169,7 +169,7 @@ public class XmlTest {
                 throw new IOException();
             }
 
-            resource.append(CHARS);
+            resource.append(JOHN_DOE_CHARS);
         }
 
         @Override
@@ -181,7 +181,7 @@ public class XmlTest {
                 throw new IOException();
             }
 
-            resource.write(CHARS.getBytes(StandardCharsets.UTF_8));
+            resource.write(JOHN_DOE_CHARS.getBytes(StandardCharsets.UTF_8));
         }
     }
 }

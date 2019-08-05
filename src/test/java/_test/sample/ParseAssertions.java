@@ -57,7 +57,7 @@ public class ParseAssertions {
                 .isThrownBy(() -> p.parseChars(null))
                 .withMessageContaining("source");
 
-        assertThat(p.parseChars(CHARS))
+        assertThat(p.parseChars(JOHN_DOE_CHARS))
                 .isEqualTo(JOHN_DOE);
 
         assertThatIOException()
@@ -71,7 +71,7 @@ public class ParseAssertions {
                 .isThrownBy(() -> p.parseFile(null))
                 .withMessageContaining("source");
 
-        assertThat(p.parseFile(FILE))
+        assertThat(p.parseFile(JOHN_DOE_FILE))
                 .isEqualTo(JOHN_DOE);
 
         assertThatIOException()
@@ -96,7 +96,7 @@ public class ParseAssertions {
                 .isThrownBy(() -> p.parsePath(null))
                 .withMessageContaining("source");
 
-        assertThat(p.parsePath(PATH))
+        assertThat(p.parsePath(JOHN_DOE_PATH))
                 .isEqualTo(JOHN_DOE);
 
         assertThatIOException()
@@ -138,7 +138,7 @@ public class ParseAssertions {
                 .isThrownBy(() -> p.parseReader((IO.Supplier) null))
                 .withMessageContaining("source");
 
-        assertThat(p.parseReader(READER))
+        assertThat(p.parseReader(JOHN_DOE_READER))
                 .isEqualTo(JOHN_DOE);
 
         assertThatIOException()
@@ -157,7 +157,7 @@ public class ParseAssertions {
                 .isThrownBy(() -> p.parseStream((IO.Supplier) null))
                 .withMessageContaining("source");
 
-        assertThat(p.parseStream(INPUT_STREAM))
+        assertThat(p.parseStream(JOHN_DOE_STREAM))
                 .isEqualTo(JOHN_DOE);
 
         assertThatIOException()
@@ -176,7 +176,7 @@ public class ParseAssertions {
                 .isThrownBy(() -> p.parseReader((Reader) null))
                 .withMessageContaining("resource");
 
-        try (Reader resource = READER.getWithIO()) {
+        try (Reader resource = JOHN_DOE_READER.getWithIO()) {
             assertThat(p.parseReader(resource))
                     .isEqualTo(JOHN_DOE);
         }
@@ -188,7 +188,7 @@ public class ParseAssertions {
                 .isThrownBy(() -> p.parseStream((InputStream) null))
                 .withMessageContaining("resource");
 
-        try (InputStream resource = INPUT_STREAM.getWithIO()) {
+        try (InputStream resource = JOHN_DOE_STREAM.getWithIO()) {
             assertThat(p.parseStream(resource))
                     .isEqualTo(JOHN_DOE);
         }
@@ -239,25 +239,25 @@ public class ParseAssertions {
 
         Meta.<IO.Runnable>builder()
                 .group("Reader")
-                .code().doesNotRaiseExceptionWhen(() -> p.parseReader(counter.onReader(READER)))
+                .code().doesNotRaiseExceptionWhen(() -> p.parseReader(counter.onReader(JOHN_DOE_READER)))
                 .exception(IOException.class).as("Null").isThrownBy(() -> p.parseReader(IO.Supplier.of(null)))
                 .exception(SourceError.class).as("Throwing").isThrownBy(() -> p.parseReader(IO.Supplier.throwing(SourceError::new)))
                 .group("Stream")
-                .code().doesNotRaiseExceptionWhen(() -> p.parseStream(counter.onInputStream(INPUT_STREAM)))
+                .code().doesNotRaiseExceptionWhen(() -> p.parseStream(counter.onInputStream(JOHN_DOE_STREAM)))
                 .exception(IOException.class).as("Null").isThrownBy(() -> p.parseStream(IO.Supplier.of(null)))
                 .exception(SourceError.class).as("Throwing").isThrownBy(() -> p.parseStream(IO.Supplier.throwing(SourceError::new)))
                 .group("File")
-                .code().doesNotRaiseExceptionWhen(() -> p.parseFile(FILE))
+                .code().doesNotRaiseExceptionWhen(() -> p.parseFile(JOHN_DOE_FILE))
                 .exception(EOFException.class).as("Empty").isThrownBy(() -> p.parseFile(FILE_EMPTY))
                 .exception(NoSuchFileException.class).as("Missing").isThrownBy(() -> p.parseFile(FILE_MISSING))
                 .exception(AccessDeniedException.class).as("Dir").isThrownBy(() -> p.parseFile(FILE_DIR))
                 .group("Path")
-                .code().doesNotRaiseExceptionWhen(() -> p.parsePath(PATH))
+                .code().doesNotRaiseExceptionWhen(() -> p.parsePath(JOHN_DOE_PATH))
                 .exception(EOFException.class).as("Empty").isThrownBy(() -> p.parsePath(PATH_EMPTY))
                 .exception(NoSuchFileException.class).as("Missing").isThrownBy(() -> p.parsePath(PATH_MISSING))
                 .exception(AccessDeniedException.class).as("Dir").isThrownBy(() -> p.parsePath(PATH_DIR))
                 .group("Chars")
-                .code().doesNotRaiseExceptionWhen(() -> p.parseChars(CHARS))
+                .code().doesNotRaiseExceptionWhen(() -> p.parseChars(JOHN_DOE_CHARS))
                 .exception(EOFException.class).as("Empty").isThrownBy(() -> p.parseChars(CHARS_EMPTY))
                 .build()
                 .forEach(callable -> testSafeParse(counter, expectedException, callable));

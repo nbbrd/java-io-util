@@ -58,7 +58,7 @@ public class FormatAssertions {
                 .withMessageContaining("value");
 
         assertThat(p.formatToString(JOHN_DOE))
-                .isEqualTo(formatted ? FORMATTED_CHARS : CHARS);
+                .isEqualTo(formatted ? JOHN_DOE_FORMATTED_CHARS : JOHN_DOE_CHARS);
     }
 
     @SuppressWarnings("null")
@@ -73,7 +73,7 @@ public class FormatAssertions {
         StringBuilder appendable = new StringBuilder();
         p.formatChars(JOHN_DOE, appendable);
         assertThat(appendable.toString())
-                .isEqualTo(formatted ? FORMATTED_CHARS : CHARS);
+                .isEqualTo(formatted ? JOHN_DOE_FORMATTED_CHARS : JOHN_DOE_CHARS);
     }
 
     @SuppressWarnings("null")
@@ -95,7 +95,7 @@ public class FormatAssertions {
         assertThat(target).exists().isFile();
         assertThat(target)
                 .usingCharset(StandardCharsets.UTF_8)
-                .hasContent(formatted ? FORMATTED_CHARS : CHARS);
+                .hasContent(formatted ? JOHN_DOE_FORMATTED_CHARS : JOHN_DOE_CHARS);
 
         assertThatIOException()
                 .isThrownBy(() -> p.formatFile(JOHN_DOE, temp.newFolder()))
@@ -121,7 +121,7 @@ public class FormatAssertions {
         assertThat(target).exists().isReadable();
         assertThat(target)
                 .usingCharset(StandardCharsets.UTF_8)
-                .hasContent(formatted ? FORMATTED_CHARS : CHARS);
+                .hasContent(formatted ? JOHN_DOE_FORMATTED_CHARS : JOHN_DOE_CHARS);
 
         assertThatIOException()
                 .isThrownBy(() -> p.formatPath(JOHN_DOE, temp.newFolder().toPath()))
@@ -141,7 +141,7 @@ public class FormatAssertions {
         StringWriter writer = new StringWriter();
         p.formatWriter(JOHN_DOE, () -> writer);
         assertThat(writer.toString())
-                .isEqualTo(formatted ? FORMATTED_CHARS : CHARS);
+                .isEqualTo(formatted ? JOHN_DOE_FORMATTED_CHARS : JOHN_DOE_CHARS);
 
         assertThatIOException()
                 .isThrownBy(() -> p.formatWriter(JOHN_DOE, IO.Supplier.of(null)))
@@ -166,7 +166,7 @@ public class FormatAssertions {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         p.formatStream(JOHN_DOE, () -> stream);
         assertThat(stream.toString(StandardCharsets.UTF_8.name()))
-                .isEqualTo(formatted ? FORMATTED_CHARS : CHARS);
+                .isEqualTo(formatted ? JOHN_DOE_FORMATTED_CHARS : JOHN_DOE_CHARS);
 
         assertThatIOException()
                 .isThrownBy(() -> p.formatStream(JOHN_DOE, IO.Supplier.of(null)))
@@ -191,7 +191,7 @@ public class FormatAssertions {
         StringWriter resource = new StringWriter();
         p.formatWriter(JOHN_DOE, resource);
         assertThat(resource.toString())
-                .isEqualTo(formatted ? FORMATTED_CHARS : CHARS);
+                .isEqualTo(formatted ? JOHN_DOE_FORMATTED_CHARS : JOHN_DOE_CHARS);
     }
 
     @SuppressWarnings("null")
@@ -207,7 +207,7 @@ public class FormatAssertions {
         ByteArrayOutputStream resource = new ByteArrayOutputStream();
         p.formatStream(JOHN_DOE, resource);
         assertThat(resource.toString())
-                .isEqualTo(formatted ? FORMATTED_CHARS : CHARS);
+                .isEqualTo(formatted ? JOHN_DOE_FORMATTED_CHARS : JOHN_DOE_CHARS);
     }
 
     private static final class TargetError extends IOException {

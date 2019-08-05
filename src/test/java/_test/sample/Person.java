@@ -47,10 +47,10 @@ public class Person {
     public String firstName;
     public String lastName;
 
-    public static final File FILE;
-    public static final Path PATH;
-    public static final String CHARS;
-    public static final String FORMATTED_CHARS;
+    public static final File JOHN_DOE_FILE;
+    public static final Path JOHN_DOE_PATH;
+    public static final String JOHN_DOE_CHARS;
+    public static final String JOHN_DOE_FORMATTED_CHARS;
     public static final Person JOHN_DOE;
 
     public static final File FILE_EMPTY;
@@ -63,17 +63,17 @@ public class Person {
     public static final File FILE_DIR;
     public static final Path PATH_DIR;
 
-    public static final IO.Supplier<Reader> READER;
-    public static final IO.Supplier<InputStream> INPUT_STREAM;
+    public static final IO.Supplier<Reader> JOHN_DOE_READER;
+    public static final IO.Supplier<InputStream> JOHN_DOE_STREAM;
 
     public static final List<Boolean> BOOLS = Arrays.asList(false, true);
     public static final List<Charset> ENCODINGS = Arrays.asList(StandardCharsets.UTF_8, StandardCharsets.ISO_8859_1);
 
     static {
         try {
-            FILE = File.createTempFile("person", ".xml");
-            FILE.deleteOnExit();
-            PATH = FILE.toPath();
+            JOHN_DOE_FILE = File.createTempFile("person", ".xml");
+            JOHN_DOE_FILE.deleteOnExit();
+            JOHN_DOE_PATH = JOHN_DOE_FILE.toPath();
             JOHN_DOE = new Person();
             JOHN_DOE.firstName = "John";
             JOHN_DOE.lastName = "Doe";
@@ -81,14 +81,14 @@ public class Person {
             try (StringWriter w = new StringWriter()) {
                 marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, false);
                 marshaller.marshal(JOHN_DOE, w);
-                CHARS = w.toString();
+                JOHN_DOE_CHARS = w.toString();
             }
             try (StringWriter w = new StringWriter()) {
                 marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
                 marshaller.marshal(JOHN_DOE, w);
-                FORMATTED_CHARS = w.toString();
+                JOHN_DOE_FORMATTED_CHARS = w.toString();
             }
-            Files.write(PATH, CHARS.getBytes(StandardCharsets.UTF_8));
+            Files.write(JOHN_DOE_PATH, JOHN_DOE_CHARS.getBytes(StandardCharsets.UTF_8));
 
             FILE_EMPTY = File.createTempFile("empty", ".xml");
             FILE_EMPTY.deleteOnExit();
@@ -104,8 +104,8 @@ public class Person {
             FILE_DIR.deleteOnExit();
             PATH_DIR = FILE_DIR.toPath();
 
-            READER = () -> new StringReader(CHARS);
-            INPUT_STREAM = () -> new ByteArrayInputStream(CHARS.getBytes(StandardCharsets.UTF_8));
+            JOHN_DOE_READER = () -> new StringReader(JOHN_DOE_CHARS);
+            JOHN_DOE_STREAM = () -> new ByteArrayInputStream(JOHN_DOE_CHARS.getBytes(StandardCharsets.UTF_8));
         } catch (IOException | JAXBException ex) {
             throw new RuntimeException();
         }
