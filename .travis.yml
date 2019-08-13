@@ -11,7 +11,7 @@ matrix:
 
 env:
   global:
-    - DEPLOY_JDK=openjdk8
+    - DEPLOY_JDK=openjdk11
     - DEPLOY_REPO=nbbrd/java-io-util
 
 deploy:
@@ -38,6 +38,7 @@ deploy:
   - provider: releases
     api_key: "${GITHUB_KEY}"
     skip_cleanup: true
+    draft: true
     on:
       tags: true
       repo: "${DEPLOY_REPO}"
