@@ -4,7 +4,7 @@
     
     <groupId>be.nbb.rd</groupId>
     <artifactId>java-io-util</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.5-SNAPSHOT</version>
     <packaging>jar</packaging>
 
     <name>Java IO Utilities</name>
