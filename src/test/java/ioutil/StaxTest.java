@@ -205,7 +205,7 @@ public class StaxTest {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         Stax.StreamFormatter.valueOf(StaxTest::formatByStream).withEncoding(StandardCharsets.ISO_8859_1).formatStream(Person.JOHN_DOE, outputStream);
         assertThat(outputStream.toString(StandardCharsets.ISO_8859_1.name()))
-                .isEqualTo(Person.CHARS);
+                .isEqualTo(Person.JOHN_DOE_CHARS);
     }
 
     @Test
@@ -252,7 +252,7 @@ public class StaxTest {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         Stax.EventFormatter.valueOf(StaxTest::formatByEvent).withEncoding(StandardCharsets.ISO_8859_1).formatStream(Person.JOHN_DOE, outputStream);
         assertThat(outputStream.toString(StandardCharsets.ISO_8859_1.name()))
-                .isEqualTo(Person.CHARS);
+                .isEqualTo(Person.JOHN_DOE_CHARS);
     }
 
     @Test

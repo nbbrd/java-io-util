@@ -1,11 +1,17 @@
+dist: xenial
 language: java
 jdk:
-  - oraclejdk8
+  - openjdk8
   - openjdk11
+  - openjdk-ea
+
+matrix:
+  allow_failures:
+    - jdk: openjdk-ea
 
 env:
   global:
-    - DEPLOY_JDK=oraclejdk8
+    - DEPLOY_JDK=openjdk11
     - DEPLOY_REPO=nbbrd/java-io-util
 
 deploy:
@@ -32,6 +38,7 @@ deploy:
   - provider: releases
     api_key: "${GITHUB_KEY}"
     skip_cleanup: true
+    draft: true
     on:
       tags: true
       repo: "${DEPLOY_REPO}"

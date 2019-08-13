@@ -28,7 +28,7 @@ import java.util.function.BiConsumer;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipInputStream;
-import javax.annotation.Nonnull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * Set of utilities related to ZIP.
@@ -45,8 +45,7 @@ public class Zip {
      * @return a non-null loader
      * @throws IOException
      */
-    @Nonnull
-    public IO.ResourceLoader<String> loaderOf(@Nonnull File file) throws IOException {
+    public IO.@NonNull ResourceLoader<String> loaderOf(@NonNull File file) throws IOException {
         ZipFile data = new ZipFile(file);
         return IO.ResourceLoader.of(o -> getInputStream(data, o), data);
     }
@@ -59,8 +58,7 @@ public class Zip {
      * @return a non-null loader
      * @throws IOException
      */
-    @Nonnull
-    public IO.ResourceLoader<String> loaderCopyOf(@Nonnull InputStream inputStream, @Nonnull IO.Predicate<? super ZipEntry> filter) throws IOException {
+    public IO.@NonNull ResourceLoader<String> loaderCopyOf(@NonNull InputStream inputStream, IO.@NonNull Predicate<? super ZipEntry> filter) throws IOException {
         Map<String, byte[]> data = copyOf(inputStream, filter);
         return IO.ResourceLoader.of(o -> getInputStream(data, o));
     }

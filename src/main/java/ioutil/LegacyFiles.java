@@ -29,7 +29,7 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
 import java.nio.file.NoSuchFileException;
 import java.util.Objects;
-import javax.annotation.Nonnull;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  *
@@ -38,36 +38,36 @@ import javax.annotation.Nonnull;
 @lombok.experimental.UtilityClass
 class LegacyFiles {
 
-    @Nonnull
-    static InputStream newInputStream(@Nonnull File source) throws IOException {
+    @NonNull
+    static InputStream newInputStream(@NonNull File source) throws IOException {
         return new BufferedFileInputStream(source);
     }
 
-    @Nonnull
-    static OutputStream newOutputStream(@Nonnull File target) throws IOException {
+    @NonNull
+    static OutputStream newOutputStream(@NonNull File target) throws IOException {
         return new BufferedOutputStream(new FileOutputStream(target));
     }
 
-    static void checkSource(@Nonnull File source) throws FileSystemException {
+    static void checkSource(@NonNull File source) throws FileSystemException {
         Objects.requireNonNull(source, "source");
         checkExist(source);
         checkIsFile(source);
     }
 
-    static void checkTarget(@Nonnull File target) throws FileSystemException {
+    static void checkTarget(@NonNull File target) throws FileSystemException {
         Objects.requireNonNull(target, "target");
         if (target.exists()) {
             checkIsFile(target);
         }
     }
 
-    static void checkExist(@Nonnull File source) throws FileSystemException {
+    static void checkExist(@NonNull File source) throws FileSystemException {
         if (!source.exists()) {
             throw new NoSuchFileException(source.getPath());
         }
     }
 
-    static void checkIsFile(@Nonnull File source) throws FileSystemException {
+    static void checkIsFile(@NonNull File source) throws FileSystemException {
         if (!source.isFile()) {
             throw new AccessDeniedException(source.getPath());
         }

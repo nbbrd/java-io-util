@@ -27,7 +27,6 @@ import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Objects;
-import javax.annotation.Nonnull;
 import javax.xml.stream.XMLEventReader;
 import javax.xml.stream.XMLEventWriter;
 import javax.xml.stream.XMLInputFactory;
@@ -35,6 +34,7 @@ import javax.xml.stream.XMLOutputFactory;
 import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  *
@@ -50,7 +50,7 @@ public class Stax {
      * @see
      * https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLInputFactory_.28a_StAX_parser.29
      */
-    public void preventXXE(@Nonnull XMLInputFactory factory) {
+    public void preventXXE(@NonNull XMLInputFactory factory) {
         setFeature(factory, XMLInputFactory.SUPPORT_DTD, false);
         setFeature(factory, XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
     }
@@ -58,11 +58,11 @@ public class Stax {
     @FunctionalInterface
     public interface FlowHandler<I, T> {
 
-        @Nonnull
-        T parse(@Nonnull I input, @Nonnull Closeable onClose) throws IOException, XMLStreamException;
+        @NonNull
+        T parse(@NonNull I input, @NonNull Closeable onClose) throws IOException, XMLStreamException;
 
-        @Nonnull
-        static <I, T> FlowHandler<I, T> of(@Nonnull ValueHandler<I, T> handler) {
+        @NonNull
+        static <I, T> FlowHandler<I, T> of(@NonNull ValueHandler<I, T> handler) {
             return handler.asFlow();
         }
     }
@@ -70,10 +70,10 @@ public class Stax {
     @FunctionalInterface
     public interface ValueHandler<I, T> {
 
-        @Nonnull
-        T parse(@Nonnull I input) throws XMLStreamException;
+        @NonNull
+        T parse(@NonNull I input) throws XMLStreamException;
 
-        @Nonnull
+        @NonNull
         default FlowHandler<I, T> asFlow() {
             return (input, onClose) -> {
                 try (Closeable c = onClose) {
@@ -86,20 +86,20 @@ public class Stax {
     @FunctionalInterface
     public interface OutputHandler<O, T> {
 
-        void format(@Nonnull T value, @Nonnull O output) throws Exception;
+        void format(@NonNull T value, @NonNull O output) throws Exception;
     }
 
     @lombok.experimental.Wither
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class StreamParser<T> implements Xml.Parser<T> {
 
-        @Nonnull
-        public static <T> StreamParser<T> flowOf(@Nonnull FlowHandler<XMLStreamReader, T> handler) {
+        @NonNull
+        public static <T> StreamParser<T> flowOf(@NonNull FlowHandler<XMLStreamReader, T> handler) {
             return StreamParser.<T>builder().flow(handler).build();
         }
 
-        @Nonnull
-        public static <T> StreamParser<T> valueOf(@Nonnull ValueHandler<XMLStreamReader, T> handler) {
+        @NonNull
+        public static <T> StreamParser<T> valueOf(@NonNull ValueHandler<XMLStreamReader, T> handler) {
             return flowOf(handler.asFlow());
         }
 
@@ -168,8 +168,8 @@ public class Stax {
             return parse(o -> o.createXMLStreamReader(resource), NOTHING_TO_CLOSE);
         }
 
-        @Nonnull
-        public T parse(@Nonnull XMLStreamReader input, @Nonnull Closeable onClose) throws IOException {
+        @NonNull
+        public T parse(@NonNull XMLStreamReader input, @NonNull Closeable onClose) throws IOException {
             return doParse(handler, input, onClose);
         }
 
@@ -191,13 +191,13 @@ public class Stax {
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class EventParser<T> implements Xml.Parser<T> {
 
-        @Nonnull
-        public static <T> EventParser<T> flowOf(@Nonnull FlowHandler<XMLEventReader, T> handler) {
+        @NonNull
+        public static <T> EventParser<T> flowOf(@NonNull FlowHandler<XMLEventReader, T> handler) {
             return EventParser.<T>builder().flow(handler).build();
         }
 
-        @Nonnull
-        public static <T> EventParser<T> valueOf(@Nonnull ValueHandler<XMLEventReader, T> handler) {
+        @NonNull
+        public static <T> EventParser<T> valueOf(@NonNull ValueHandler<XMLEventReader, T> handler) {
             return flowOf(handler.asFlow());
         }
 
@@ -288,8 +288,8 @@ public class Stax {
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class StreamFormatter<T> implements Xml.Formatter<T> {
 
-        @Nonnull
-        public static <T> StreamFormatter<T> valueOf(@Nonnull OutputHandler<XMLStreamWriter, T> handler) {
+        @NonNull
+        public static <T> StreamFormatter<T> valueOf(@NonNull OutputHandler<XMLStreamWriter, T> handler) {
             return StreamFormatter.<T>builder().handler(handler).build();
         }
 
@@ -373,8 +373,8 @@ public class Stax {
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class EventFormatter<T> implements Xml.Formatter<T> {
 
-        @Nonnull
-        public static <T> EventFormatter<T> valueOf(@Nonnull OutputHandler<XMLEventWriter, T> handler) {
+        @NonNull
+        public static <T> EventFormatter<T> valueOf(@NonNull OutputHandler<XMLEventWriter, T> handler) {
             return EventFormatter.<T>builder().handler(handler).build();
         }
 

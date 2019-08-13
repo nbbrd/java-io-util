@@ -23,10 +23,10 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.util.Objects;
 import java.util.logging.Level;
-import javax.annotation.Nonnull;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.DTDHandler;
 import org.xml.sax.EntityResolver;
@@ -54,14 +54,14 @@ public class Sax {
      * @see
      * https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLReader
      */
-    public void preventXXE(@Nonnull XMLReader reader) {
+    public void preventXXE(@NonNull XMLReader reader) {
 //        setFeatureQuietly(reader, "http://apache.org/xml/features/disallow-doctype-decl", true);
         setFeatureQuietly(reader, "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
         setFeatureQuietly(reader, "http://xml.org/sax/features/external-general-entities", false);
         setFeatureQuietly(reader, "http://xml.org/sax/features/external-parameter-entities", false);
     }
 
-    @Nonnull
+    @NonNull
     public static XMLReader createReader() throws IOException {
         try {
             return DEFAULT_FACTORY.newSAXParser().getXMLReader();
@@ -76,8 +76,8 @@ public class Sax {
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class Parser<T> implements Xml.Parser<T> {
 
-        @Nonnull
-        public static <T> Parser<T> of(@Nonnull ContentHandler handler, @Nonnull IO.Supplier<? extends T> after) {
+        @NonNull
+        public static <T> Parser<T> of(@NonNull ContentHandler handler, IO.@NonNull Supplier<? extends T> after) {
             Parser.Builder<T> result = Parser.<T>builder().contentHandler(handler);
             if (handler instanceof DTDHandler) {
                 result.dtdHandler((DTDHandler) handler);
@@ -105,8 +105,8 @@ public class Sax {
             }
 
             @Deprecated
-            @Nonnull
-            public Builder<T> handler(@Nonnull ContentHandler handler) {
+            @NonNull
+            public Builder<T> handler(@NonNull ContentHandler handler) {
                 this.contentHandler = Objects.requireNonNull(handler);
                 return this;
             }
