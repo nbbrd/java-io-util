@@ -89,7 +89,7 @@ public class Stax {
         void format(@NonNull T value, @NonNull O output) throws Exception;
     }
 
-    @lombok.experimental.Wither
+    @lombok.With
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class StreamParser<T> implements Xml.Parser<T> {
 
@@ -103,18 +103,19 @@ public class Stax {
             return flowOf(handler.asFlow());
         }
 
-        public static class Builder<T> {
+        // Fix lombok.Builder.Default bug in NetBeans
+        @NonNull
+        public static <T> Builder<T> builder() {
+            return new Builder<T>()
+                    .factory(XMLInputFactory::newFactory)
+                    .ignoreXXE(false);
+        }
 
-            // default values
-            Builder() {
-                this.handler = null;
-                this.factory = XMLInputFactory::newFactory;
-                this.ignoreXXE = false;
-            }
+        public final static class Builder<T> {
 
             @Deprecated
             public Builder<T> preventXXE(boolean preventXXE) {
-                this.ignoreXXE = !preventXXE;
+                ignoreXXE = !preventXXE;
                 return this;
             }
 
@@ -187,7 +188,7 @@ public class Stax {
         }
     }
 
-    @lombok.experimental.Wither
+    @lombok.With
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class EventParser<T> implements Xml.Parser<T> {
 
@@ -201,18 +202,19 @@ public class Stax {
             return flowOf(handler.asFlow());
         }
 
-        public static class Builder<T> {
+        // Fix lombok.Builder.Default bug in NetBeans
+        @NonNull
+        public static <T> Builder<T> builder() {
+            return new Builder<T>()
+                    .factory(XMLInputFactory::newFactory)
+                    .ignoreXXE(false);
+        }
 
-            // default values
-            Builder() {
-                this.handler = null;
-                this.factory = XMLInputFactory::newFactory;
-                this.ignoreXXE = false;
-            }
+        public final static class Builder<T> {
 
             @Deprecated
             public Builder<T> preventXXE(boolean preventXXE) {
-                this.ignoreXXE = !preventXXE;
+                ignoreXXE = !preventXXE;
                 return this;
             }
 
@@ -284,7 +286,7 @@ public class Stax {
         }
     }
 
-    @lombok.experimental.Wither
+    @lombok.With
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class StreamFormatter<T> implements Xml.Formatter<T> {
 
@@ -293,14 +295,15 @@ public class Stax {
             return StreamFormatter.<T>builder().handler(handler).build();
         }
 
-        public static class Builder<T> {
+        // Fix lombok.Builder.Default bug in NetBeans
+        @NonNull
+        public static <T> Builder<T> builder() {
+            return new Builder<T>()
+                    .factory(XMLOutputFactory::newFactory)
+                    .encoding(StandardCharsets.UTF_8);
+        }
 
-            // default values
-            Builder() {
-                this.handler = null;
-                this.factory = XMLOutputFactory::newFactory;
-                this.encoding = StandardCharsets.UTF_8;
-            }
+        public final static class Builder<T> {
         }
 
         @lombok.NonNull
@@ -369,7 +372,7 @@ public class Stax {
         }
     }
 
-    @lombok.experimental.Wither
+    @lombok.With
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class EventFormatter<T> implements Xml.Formatter<T> {
 
@@ -378,14 +381,15 @@ public class Stax {
             return EventFormatter.<T>builder().handler(handler).build();
         }
 
-        public static class Builder<T> {
+        // Fix lombok.Builder.Default bug in NetBeans
+        @NonNull
+        public static <T> Builder<T> builder() {
+            return new Builder<T>()
+                    .factory(XMLOutputFactory::newFactory)
+                    .encoding(StandardCharsets.UTF_8);
+        }
 
-            // default values
-            Builder() {
-                this.handler = null;
-                this.factory = XMLOutputFactory::newFactory;
-                this.encoding = StandardCharsets.UTF_8;
-            }
+        public final static class Builder<T> {
         }
 
         @lombok.NonNull

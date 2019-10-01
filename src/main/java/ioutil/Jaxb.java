@@ -83,7 +83,7 @@ public class Jaxb {
         }
     }
 
-    @lombok.experimental.Wither
+    @lombok.With
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class Parser<T> implements Xml.Parser<T> {
 
@@ -99,18 +99,19 @@ public class Jaxb {
             return Parser.<T>builder().factory(() -> createUnmarshaller(context)).build();
         }
 
-        public static class Builder<T> {
+        // Fix lombok.Builder.Default bug in NetBeans
+        @NonNull
+        public static <T> Builder<T> builder() {
+            return new Builder<T>()
+                    .ignoreXXE(false)
+                    .xxeFactory(Parser::getStaxFactory);
+        }
 
-            // default values
-            Builder() {
-                this.factory = null;
-                this.ignoreXXE = false;
-                this.xxeFactory = Parser::getStaxFactory;
-            }
+        public final static class Builder<T> {
 
             @Deprecated
             public Builder<T> preventXXE(boolean preventXXE) {
-                this.ignoreXXE = !preventXXE;
+                ignoreXXE = !preventXXE;
                 return this;
             }
         }
@@ -229,7 +230,7 @@ public class Jaxb {
         }
     }
 
-    @lombok.experimental.Wither
+    @lombok.With
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class Formatter<T> implements Xml.Formatter<T> {
 
@@ -245,14 +246,15 @@ public class Jaxb {
             return Formatter.<T>builder().factory(() -> createMarshaller(context)).build();
         }
 
-        public static class Builder<T> {
+        // Fix lombok.Builder.Default bug in NetBeans
+        @NonNull
+        public static <T> Builder<T> builder() {
+            return new Builder<T>()
+                    .formatted(false)
+                    .encoding(StandardCharsets.UTF_8);
+        }
 
-            // default values
-            Builder() {
-                this.factory = null;
-                this.formatted = false;
-                this.encoding = StandardCharsets.UTF_8;
-            }
+        public final static class Builder<T> {
         }
 
         @lombok.NonNull

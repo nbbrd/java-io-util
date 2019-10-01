@@ -72,7 +72,7 @@ public class Sax {
         }
     }
 
-    @lombok.experimental.Wither
+    @lombok.With
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class Parser<T> implements Xml.Parser<T> {
 
@@ -91,29 +91,30 @@ public class Sax {
             return result.after(after).build();
         }
 
-        public static class Builder<T> {
+        // Fix lombok.Builder.Default bug in NetBeans
+        @NonNull
+        public static <T> Builder<T> builder() {
+            return new Builder<T>()
+                    .factory(Sax::createReader)
+                    .dtdHandler(DEFAULT_HANDLER)
+                    .entityResolver(DEFAULT_HANDLER)
+                    .errorHandler(DEFAULT_HANDLER)
+                    .before(IO.Runnable.noOp())
+                    .ignoreXXE(false);
+        }
 
-            Builder() {
-                this.factory = Sax::createReader;
-                this.contentHandler = null;
-                this.dtdHandler = DEFAULT_HANDLER;
-                this.entityResolver = DEFAULT_HANDLER;
-                this.errorHandler = DEFAULT_HANDLER;
-                this.before = IO.Runnable.noOp();
-                this.after = null;
-                this.ignoreXXE = false;
-            }
+        public final static class Builder<T> {
 
             @Deprecated
             @NonNull
             public Builder<T> handler(@NonNull ContentHandler handler) {
-                this.contentHandler = Objects.requireNonNull(handler);
+                contentHandler = Objects.requireNonNull(handler);
                 return this;
             }
 
             @Deprecated
             public Builder<T> preventXXE(boolean preventXXE) {
-                this.ignoreXXE = !preventXXE;
+                ignoreXXE = !preventXXE;
                 return this;
             }
         }
