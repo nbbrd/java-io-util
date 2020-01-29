@@ -1,0 +1,132 @@
+/*
+ * Copyright 2017 National Bank of Belgium
+ * 
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ * by the European Commission - subsequent versions of the EUPL (the "Licence");
+ * You may not use this work except in compliance with the Licence.
+ * You may obtain a copy of the Licence at:
+ * 
+ * http://ec.europa.eu/idabc/eupl
+ * 
+ * Unless required by applicable law or agreed to in writing, software 
+ * distributed under the Licence is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the Licence for the specific language governing permissions and 
+ * limitations under the Licence.
+ */
+package nbbrd.io;
+
+import _test.Error2;
+import _test.Error1;
+import com.google.common.jimfs.Configuration;
+import com.google.common.jimfs.Jimfs;
+import java.io.Closeable;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.FileSystem;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import nbbrd.io.function.IORunnable;
+import nbbrd.io.function.IORunnableTest;
+import static org.assertj.core.api.Assertions.*;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+/**
+ *
+ * @author Philippe Charles
+ */
+public class ResourceTest {
+
+    @Rule
+    public final TemporaryFolder temp = new TemporaryFolder();
+
+    @Test
+    @SuppressWarnings("null")
+    public void testGetFile() throws IOException {
+        assertThatNullPointerException().isThrownBy(() -> Resource.getFile(null));
+
+        File ok = temp.newFile();
+        assertThat(Resource.getFile(ok.toPath())).contains(ok);
+
+        try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
+            Path ko = fs.getPath("/").resolve("hello");
+            Files.createFile(ko);
+            assertThat(Resource.getFile(ko)).isEmpty();
+        }
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testGetResourceAsStream() throws IOException {
+        assertThatNullPointerException().isThrownBy(() -> Resource.getResourceAsStream(null, ""));
+        assertThatNullPointerException().isThrownBy(() -> Resource.getResourceAsStream(ResourceTest.class, null));
+
+        assertThat(Resource.getResourceAsStream(ResourceTest.class, "hello")).isEmpty();
+        try (InputStream stream = Resource.getResourceAsStream(ResourceTest.class, "/nbbrd/io/zip/test.zip").get()) {
+            assertThat(stream).isNotNull();
+        }
+    }
+
+    @Test
+    @SuppressWarnings("null")
+    public void testEnsureClosed() throws IOException {
+        assertThatNullPointerException().isThrownBy(() -> Resource.ensureClosed(null, IORunnable.noOp().asCloseable()));
+
+        assertThat(new IOException()).satisfies(o -> {
+            Resource.ensureClosed(o, IORunnable.noOp().asCloseable());
+            assertThat(o).hasNoSuppressedExceptions();
+        });
+
+        assertThat(new IOException()).satisfies(o -> {
+            Resource.ensureClosed(o, null);
+            assertThat(o).hasNoSuppressedExceptions();
+        });
+
+        assertThat(new IOException()).satisfies(o -> {
+            Resource.ensureClosed(o, IORunnableTest.throwing(Error1::new).asCloseable());
+            assertThat(o).hasSuppressedException(new Error1());
+        });
+    }
+
+    @Test
+    public void testCloseBoth() throws IOException {
+        Closeable error1 = IORunnableTest.throwing(Error1::new).asCloseable();
+        Closeable error2 = IORunnableTest.throwing(Error2::new).asCloseable();
+        Closeable noOp = IORunnable.noOp().asCloseable();
+
+        assertThatThrownBy(() -> Resource.closeBoth(error1, error2))
+                .isInstanceOf(Error1.class)
+                .hasSuppressedException(new Error2());
+
+        assertThatThrownBy(() -> Resource.closeBoth(error1, noOp))
+                .isInstanceOf(Error1.class)
+                .hasNoSuppressedExceptions();
+
+        assertThatThrownBy(() -> Resource.closeBoth(error1, null))
+                .isInstanceOf(Error1.class)
+                .hasNoSuppressedExceptions();
+
+        assertThatThrownBy(() -> Resource.closeBoth(noOp, error2))
+                .isInstanceOf(Error2.class)
+                .hasNoSuppressedExceptions();
+
+        assertThatCode(() -> Resource.closeBoth(noOp, noOp))
+                .doesNotThrowAnyException();
+
+        assertThatCode(() -> Resource.closeBoth(noOp, null))
+                .doesNotThrowAnyException();
+
+        assertThatThrownBy(() -> Resource.closeBoth(null, error2))
+                .isInstanceOf(Error2.class)
+                .hasNoSuppressedExceptions();
+
+        assertThatCode(() -> Resource.closeBoth(null, noOp))
+                .doesNotThrowAnyException();
+
+        assertThatCode(() -> Resource.closeBoth(null, null))
+                .doesNotThrowAnyException();
+    }
+}

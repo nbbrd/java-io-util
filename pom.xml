@@ -3,11 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
     
     <groupId>be.nbb.rd</groupId>
-    <artifactId>java-io-util</artifactId>
+    <artifactId>java-io-parent</artifactId>
     <version>0.0.5-SNAPSHOT</version>
-    <packaging>jar</packaging>
+    <packaging>pom</packaging>
 
-    <name>Java IO Utilities</name>
+    <name>java-io</name>
     <description>Common IO utilities</description>
     <url>https://github.com/nbbrd/java-io-util</url>
     
@@ -22,46 +22,43 @@
         </license>
     </licenses>
     
-    <dependencies>
-        <!-- annotations & processors -->
-        <dependency>
-            <groupId>org.checkerframework</groupId>
-            <artifactId>checker-qual</artifactId>
-            <version>3.1.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
-        </dependency>
+    <modules>
+        <module>java-io-base</module>
+        <module>java-io-xml</module>
+    </modules>
+	
+    <dependencyManagement>
+        <dependencies>
+            <!-- annotations & processors -->
+            <dependency>
+                <groupId>org.checkerframework</groupId>
+                <artifactId>checker-qual</artifactId>
+                <version>3.1.0</version>
+            </dependency>
         
-        <!-- test libraries -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.13</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>3.15.0</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.jimfs</groupId>
-            <artifactId>jimfs</artifactId>
-            <version>1.1</version>
-            <scope>test</scope>
-        </dependency>        
-        <dependency>
-            <groupId>com.github.tomakehurst</groupId>
-            <artifactId>wiremock-standalone</artifactId>
-            <version>2.25.1</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+            <!-- test libraries -->
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.13</version>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>3.15.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.jimfs</groupId>
+                <artifactId>jimfs</artifactId>
+                <version>1.1</version>
+            </dependency>        
+            <dependency>
+                <groupId>com.github.tomakehurst</groupId>
+                <artifactId>wiremock-standalone</artifactId>
+                <version>2.25.1</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     
     <profiles>
         <!-- Base build java8 -->
@@ -266,28 +263,6 @@
                     </plugin>
                 </plugins>
             </build>
-        </profile>
-
-        <!-- Fix missing Java EE Modules in JDK11 -->
-        <profile>
-            <id>fix-missing-modules-jdk11</id>
-            <activation>
-                <jdk>[11,)</jdk>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>javax.xml.bind</groupId>
-                    <artifactId>jaxb-api</artifactId>
-                    <version>2.4.0-b180830.0359</version>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.glassfish.jaxb</groupId>
-                    <artifactId>jaxb-runtime</artifactId>
-                    <version>2.4.0-b180830.0438</version>
-                    <scope>provided</scope>
-                </dependency>                
-            </dependencies>
         </profile>
 
         <!-- Optional checks -->
