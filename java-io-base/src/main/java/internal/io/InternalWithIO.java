@@ -69,6 +69,52 @@ public class InternalWithIO {
         }
     }
 
+    @lombok.RequiredArgsConstructor
+    public static final class FilteringIterator<E> implements IOIterator<E> {
+
+        @lombok.NonNull
+        private final IOIterator<E> delegate;
+
+        @lombok.NonNull
+        private final IOPredicate<? super E> filter;
+
+        private enum State {
+            COMPUTED, NOT_COMPUTED, DONE
+        };
+
+        private State state = State.NOT_COMPUTED;
+        private E current;
+
+        @Override
+        public boolean hasNextWithIO() throws IOException {
+            switch (state) {
+                case COMPUTED:
+                    return true;
+                case DONE:
+                    return false;
+                default:
+                    while (delegate.hasNextWithIO()) {
+                        current = delegate.nextWithIO();
+                        if (filter.testWithIO(current)) {
+                            state = State.COMPUTED;
+                            return true;
+                        }
+                    }
+                    state = State.DONE;
+                    return false;
+            }
+        }
+
+        @Override
+        public E nextWithIO() throws IOException, NoSuchElementException {
+            if (!hasNextWithIO()) {
+                throw new NoSuchElementException();
+            }
+            state = State.NOT_COMPUTED;
+            return current;
+        }
+    }
+
     public static final class EmptyIterator<E> implements IOIterator<E> {
 
         @Override
@@ -88,7 +134,7 @@ public class InternalWithIO {
         @lombok.NonNull
         private final E element;
 
-        private boolean first = false;
+        private boolean first = true;
 
         @Override
         public boolean hasNextWithIO() throws IOException {
@@ -217,6 +263,9 @@ public class InternalWithIO {
 
         @Override
         public E nextWithIO() throws IOException, NoSuchElementException {
+            if (!hasNextWithIO()) {
+                throw new NoSuchElementException();
+            }
             E result = nextValue;
             nextValue = next.applyWithIO(nextValue);
             return result;

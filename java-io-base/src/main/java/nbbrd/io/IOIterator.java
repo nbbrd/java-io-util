@@ -22,6 +22,9 @@ import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import java.util.Spliterators;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import nbbrd.io.function.IOConsumer;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOPredicate;
@@ -59,6 +62,16 @@ public interface IOIterator<E> {
     @NonNull
     default <Z> IOIterator<Z> map(@NonNull IOFunction<? super E, ? extends Z> function) {
         return new InternalWithIO.MappingIterator<>(this, function);
+    }
+
+    @NonNull
+    default IOIterator<E> filter(@NonNull IOPredicate<? super E> predicate) {
+        return new InternalWithIO.FilteringIterator<>(this, predicate);
+    }
+
+    @NonNull
+    default Stream<E> asStream() {
+        return StreamSupport.stream(Spliterators.spliteratorUnknownSize(asUnchecked(), 0), true);
     }
 
     @NonNull
