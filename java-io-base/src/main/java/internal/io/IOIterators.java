@@ -18,9 +18,13 @@ package internal.io;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Spliterators;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import nbbrd.io.IOIterator;
 import nbbrd.io.function.IOConsumer;
 import nbbrd.io.function.IOFunction;
@@ -32,90 +36,11 @@ import nbbrd.io.function.IOSupplier;
  * @author Philippe Charles
  */
 @lombok.experimental.UtilityClass
-public class InternalWithIO {
+public class IOIterators {
 
-    @lombok.RequiredArgsConstructor
-    public static final class MappingIterator<E, Z> implements IOIterator<Z> {
+    public enum Empty implements IOIterator<Object> {
 
-        @lombok.NonNull
-        private final IOIterator<E> delegate;
-
-        @lombok.NonNull
-        private final IOFunction<? super E, ? extends Z> function;
-
-        @Override
-        public boolean hasNextWithIO() throws IOException {
-            return delegate.hasNextWithIO();
-        }
-
-        @Override
-        public Z nextWithIO() throws IOException, NoSuchElementException {
-            return function.applyWithIO(delegate.nextWithIO());
-        }
-
-        @Override
-        public void removeWithIO() throws IOException {
-            delegate.removeWithIO();
-        }
-
-        @Override
-        public void forEachRemainingWithIO(IOConsumer<? super Z> action) throws IOException {
-            delegate.forEachRemainingWithIO(o -> action.acceptWithIO(function.applyWithIO(o)));
-        }
-
-        @Override
-        public <T> IOIterator<T> map(IOFunction<? super Z, ? extends T> function) {
-            return delegate.map(this.function.andThen(function));
-        }
-    }
-
-    @lombok.RequiredArgsConstructor
-    public static final class FilteringIterator<E> implements IOIterator<E> {
-
-        @lombok.NonNull
-        private final IOIterator<E> delegate;
-
-        @lombok.NonNull
-        private final IOPredicate<? super E> filter;
-
-        private enum State {
-            COMPUTED, NOT_COMPUTED, DONE
-        };
-
-        private State state = State.NOT_COMPUTED;
-        private E current;
-
-        @Override
-        public boolean hasNextWithIO() throws IOException {
-            switch (state) {
-                case COMPUTED:
-                    return true;
-                case DONE:
-                    return false;
-                default:
-                    while (delegate.hasNextWithIO()) {
-                        current = delegate.nextWithIO();
-                        if (filter.testWithIO(current)) {
-                            state = State.COMPUTED;
-                            return true;
-                        }
-                    }
-                    state = State.DONE;
-                    return false;
-            }
-        }
-
-        @Override
-        public E nextWithIO() throws IOException, NoSuchElementException {
-            if (!hasNextWithIO()) {
-                throw new NoSuchElementException();
-            }
-            state = State.NOT_COMPUTED;
-            return current;
-        }
-    }
-
-    public static final class EmptyIterator<E> implements IOIterator<E> {
+        INSTANCE;
 
         @Override
         public boolean hasNextWithIO() throws IOException {
@@ -123,13 +48,23 @@ public class InternalWithIO {
         }
 
         @Override
-        public E nextWithIO() throws IOException, NoSuchElementException {
+        public Object nextWithIO() throws IOException, NoSuchElementException {
             throw new NoSuchElementException();
+        }
+
+        @Override
+        public Stream<Object> asStream() {
+            return Stream.empty();
+        }
+
+        @Override
+        public Iterator<Object> asUnchecked() {
+            return Collections.emptyIterator();
         }
     }
 
     @lombok.RequiredArgsConstructor
-    public static final class SingletonIterator<E> implements IOIterator<E> {
+    public static final class Singleton<E> implements IOIterator<E> {
 
         @lombok.NonNull
         private final E element;
@@ -152,8 +87,9 @@ public class InternalWithIO {
     }
 
     @lombok.RequiredArgsConstructor
-    public static final class CheckedIterator<E> implements IOIterator<E> {
+    public static final class Checked<E> implements IOIterator<E> {
 
+        @lombok.Getter
         @lombok.NonNull
         private final Iterator<E> delegate;
 
@@ -192,11 +128,22 @@ public class InternalWithIO {
                 throw ex.getCause();
             }
         }
+
+        @Override
+        public Stream<E> asStream() {
+            return StreamSupport.stream(Spliterators.spliteratorUnknownSize(delegate, 0), false);
+        }
+
+        @Override
+        public Iterator<E> asUnchecked() {
+            return delegate;
+        }
     }
 
     @lombok.RequiredArgsConstructor
-    public static final class UncheckedIterator<E> implements Iterator<E> {
+    public static final class Unchecked<E> implements Iterator<E> {
 
+        @lombok.Getter
         @lombok.NonNull
         private final IOIterator<E> delegate;
 
@@ -238,7 +185,7 @@ public class InternalWithIO {
     }
 
     @lombok.RequiredArgsConstructor
-    public static final class FuncIterator<E> implements IOIterator<E> {
+    public static final class Functional<E> implements IOIterator<E> {
 
         @lombok.NonNull
         private final IOSupplier<E> seed;

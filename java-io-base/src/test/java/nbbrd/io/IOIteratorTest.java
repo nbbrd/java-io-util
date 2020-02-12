@@ -22,10 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
-import nbbrd.io.function.IOFunction;
 import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
 
@@ -45,9 +43,6 @@ public class IOIteratorTest {
                 .isThrownBy(sample.get()::removeWithIO);
 
         assertContent(sample);
-        assertContent(() -> sample.get().map(String::toUpperCase));
-        assertContent(() -> sample.get().filter(Objects::nonNull));
-        assertContent(() -> sample.get().filter(Objects::isNull));
     }
 
     @Test
@@ -60,9 +55,6 @@ public class IOIteratorTest {
                 .isThrownBy(sample.get()::removeWithIO);
 
         assertContent(sample, "hello");
-        assertContent(() -> sample.get().map(String::toUpperCase), "HELLO");
-        assertContent(() -> sample.get().filter(Objects::nonNull), "hello");
-        assertContent(() -> sample.get().filter(Objects::isNull));
     }
 
     @Test
@@ -72,8 +64,6 @@ public class IOIteratorTest {
         assertApi(sample);
 
         assertContent(sample, 1, 2, 3);
-        assertContent(() -> sample.get().map(String::valueOf), "1", "2", "3");
-        assertContent(() -> sample.get().filter(i -> i % 2 == 0), 2);
     }
 
     @Test
@@ -91,8 +81,6 @@ public class IOIteratorTest {
                 .isThrownBy(sample.get()::removeWithIO);
 
         assertContent(sample, 0, 1, 2);
-        assertContent(() -> sample.get().map(String::valueOf), "0", "1", "2");
-        assertContent(() -> sample.get().filter(i -> i % 2 == 0), 0, 2);
     }
 
     @Test
@@ -105,8 +93,6 @@ public class IOIteratorTest {
                 .isThrownBy(sample.get()::removeWithIO);
 
         assertContent(sample, 0, 1, 2);
-        assertContent(() -> sample.get().map(String::valueOf), "0", "1", "2");
-        assertContent(() -> sample.get().filter(i -> i % 2 == 0), 0, 2);
     }
 
     private static <E> void assertApi(Supplier<IOIterator<E>> iterable) throws IOException {
@@ -118,8 +104,6 @@ public class IOIteratorTest {
     private static <E> void assertNPE(Supplier<IOIterator<E>> iterable) {
         IOIterator<?> iterator = iterable.get();
         assertThatNullPointerException().isThrownBy(() -> iterator.forEachRemainingWithIO(null));
-        assertThatNullPointerException().isThrownBy(() -> iterator.filter(null));
-        assertThatNullPointerException().isThrownBy(() -> iterator.map(null));
     }
 
     private static <E> void assertIteratorBehavior(Supplier<IOIterator<E>> iterable) throws IOException {
@@ -139,18 +123,6 @@ public class IOIteratorTest {
         assertThat(iterable.get().asUnchecked())
                 .toIterable()
                 .containsExactly(content);
-
-        assertThat(iterable.get().map(IOFunction.identity()).asUnchecked())
-                .toIterable()
-                .containsExactly(content);
-
-        assertThat(iterable.get().filter(o -> true).asUnchecked())
-                .toIterable()
-                .containsExactly(content);
-
-        assertThat(iterable.get().filter(o -> false).asUnchecked())
-                .toIterable()
-                .isEmpty();
 
         assertThat(iterable.get().asStream())
                 .containsExactly(content);
