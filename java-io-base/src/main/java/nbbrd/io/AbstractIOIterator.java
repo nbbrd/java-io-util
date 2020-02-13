@@ -18,6 +18,7 @@ package nbbrd.io;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  *
@@ -26,6 +27,7 @@ import java.util.NoSuchElementException;
  */
 public abstract class AbstractIOIterator<E> implements IOIterator<E> {
 
+    @Nullable
     abstract protected E get() throws IOException;
 
     abstract protected boolean moveNext() throws IOException;

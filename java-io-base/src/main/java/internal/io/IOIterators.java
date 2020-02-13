@@ -30,6 +30,7 @@ import nbbrd.io.function.IOConsumer;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOPredicate;
 import nbbrd.io.function.IOSupplier;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  *
@@ -66,7 +67,7 @@ public class IOIterators {
     @lombok.RequiredArgsConstructor
     public static final class Singleton<E> implements IOIterator<E> {
 
-        @lombok.NonNull
+        @Nullable
         private final E element;
 
         private boolean first = true;

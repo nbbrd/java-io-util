@@ -24,9 +24,12 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import nbbrd.io.function.IOConsumer;
 import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IORunnableTest;
 import static org.assertj.core.api.Assertions.*;
@@ -128,5 +131,16 @@ public class ResourceTest {
 
         assertThatCode(() -> Resource.closeBoth(null, null))
                 .doesNotThrowAnyException();
+    }
+
+    @Test
+    public void testProcess() throws IOException, URISyntaxException {
+        URL url = ResourceTest.class.getResource("/nbbrd/io/zip/test.zip");
+
+        assertThatNullPointerException().isThrownBy(() -> Resource.process(null, IOConsumer.noOp()));
+        assertThatNullPointerException().isThrownBy(() -> Resource.process(url.toURI(), null));
+
+        Resource.process(url.toURI(), o -> assertThat(o).exists());
+        Resource.process(Object.class.getResource("Object.class").toURI(), o -> assertThat(o.endsWith("Object.class")));
     }
 }

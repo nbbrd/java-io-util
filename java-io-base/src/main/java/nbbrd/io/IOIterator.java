@@ -17,7 +17,7 @@
 package nbbrd.io;
 
 import internal.io.IOIterators;
-import internal.io.function.JdkWithIO;
+import internal.io.JdkWithIO;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;

@@ -21,9 +21,16 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.Objects;
 import java.util.Optional;
+import nbbrd.io.function.IOConsumer;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IORunnable;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -136,6 +143,24 @@ public class Resource {
         }
         if (second != null) {
             second.close();
+        }
+    }
+
+    /**
+     * Process a classpath resource as a Path.
+     *
+     * @param uri
+     * @param action
+     * @throws IOException
+     * @see https://stackoverflow.com/a/36021165
+     */
+    public void process(@NonNull URI uri, @NonNull IOConsumer<? super Path> action) throws IOException {
+        try {
+            action.acceptWithIO(Paths.get(uri));
+        } catch (FileSystemNotFoundException ex) {
+            try (FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap())) {
+                action.acceptWithIO(fs.provider().getPath(uri));
+            }
         }
     }
 }

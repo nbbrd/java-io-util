@@ -16,14 +16,24 @@
  */
 package nbbrd.io;
 
+import _test.IOIteratorAssertions;
+import _test.IOIteratorFactory;
+import _test.IteratorFactory;
 import com.google.common.collect.Iterators;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
+import nbbrd.io.function.IOConsumer;
+import nbbrd.io.function.IOFunction;
+import nbbrd.io.function.IOPredicate;
+import nbbrd.io.function.IORunnable;
+import nbbrd.io.function.IOSupplier;
 import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
 
@@ -37,121 +47,200 @@ public class IOIteratorTest {
     public void testEmpty() throws IOException {
         Supplier<IOIterator<String>> sample = IOIterator::empty;
 
-        assertApi(sample);
+        IOIteratorAssertions.assertApi(sample);
 
         assertThatExceptionOfType(UnsupportedOperationException.class)
                 .isThrownBy(sample.get()::removeWithIO);
 
-        assertContent(sample);
+        IOIteratorAssertions.assertContent(sample);
     }
 
     @Test
     public void testSingleton() throws IOException {
         Supplier<IOIterator<String>> sample = () -> IOIterator.singleton("hello");
 
-        assertApi(sample);
+        IOIteratorAssertions.assertApi(sample);
 
         assertThatExceptionOfType(UnsupportedOperationException.class)
                 .isThrownBy(sample.get()::removeWithIO);
 
-        assertContent(sample, "hello");
+        IOIteratorAssertions.assertContent(sample, "hello");
+    }
+
+    @Test
+    public void testSingletonNull() throws IOException {
+        Supplier<IOIterator<String>> sample = () -> IOIterator.singleton(null);
+
+        IOIteratorAssertions.assertApi(sample);
+
+        assertThatExceptionOfType(UnsupportedOperationException.class)
+                .isThrownBy(sample.get()::removeWithIO);
+
+        IOIteratorAssertions.assertContent(sample, (String) null);
     }
 
     @Test
     public void testChecked() throws IOException {
+        assertThatNullPointerException().isThrownBy(() -> IOIterator.checked(null));
+
         Supplier<IOIterator<Integer>> sample = () -> IOIterator.checked(Iterators.forArray(1, 2, 3));
 
-        assertApi(sample);
+        IOIteratorAssertions.assertApi(sample);
 
-        assertContent(sample, 1, 2, 3);
+        IOIteratorAssertions.assertContent(sample, 1, 2, 3);
+
+        IOIteratorAssertions.assertContent(() -> IOIterator.checked(Collections.emptyIterator()));
+
+        IOIterator<Integer> original = IOIterator.iterate(() -> 0, i -> i < 3, i -> i + 1);
+        assertThat(IOIterator.checked(IOIterator.unchecked(original)))
+                .isSameAs(original);
+
+        IteratorFactory<Integer> source = new IteratorFactory<>(() -> 0, i -> i < 3, i -> i + 1, IORunnable.noOp().asUnchecked());
+
+        List<IOConsumer<IOIterator<?>>> consumers = new ArrayList<>();
+        consumers.add(IOIteratorFactory::drainForEach);
+        consumers.add(IOIteratorFactory::drainNext);
+        consumers.forEach(x -> {
+            assertThatCode(() -> x.acceptWithIO(IOIterator.checked(source.get())))
+                    .doesNotThrowAnyException();
+
+            assertThatExceptionOfType(XRuntime.class)
+                    .isThrownBy(() -> x.acceptWithIO(IOIterator.checked(source.withHasNext(XRuntime::test).get())));
+
+            assertThatExceptionOfType(XRuntime.class)
+                    .isThrownBy(() -> x.acceptWithIO(IOIterator.checked(source.withNext(XRuntime::apply).get())));
+
+            assertThatExceptionOfType(XRuntime.class)
+                    .isThrownBy(() -> x.acceptWithIO(IOIterator.checked(source.withRemove(XRuntime::run).get())));
+
+            assertThatIOException()
+                    .isThrownBy(() -> x.acceptWithIO(IOIterator.checked(source.withHasNext(XIO::test).get())))
+                    .isInstanceOf(XIO.class);
+
+            assertThatIOException()
+                    .isThrownBy(() -> x.acceptWithIO(IOIterator.checked(source.withNext(XIO::apply).get())))
+                    .isInstanceOf(XIO.class);
+
+            assertThatIOException()
+                    .isThrownBy(() -> x.acceptWithIO(IOIterator.checked(source.withRemove(XIO::run).get())))
+                    .isInstanceOf(XIO.class);
+        });
     }
 
     @Test
     public void testUnchecked() throws IOException {
+        assertThatNullPointerException().isThrownBy(() -> IOIterator.unchecked(null));
 
+        assertThat(IOIterator.unchecked(IOIterator.empty()))
+                .toIterable()
+                .isEmpty();
+
+        Iterator<Integer> original = Iterators.forArray(1, 2, 3);
+        assertThat(IOIterator.unchecked(IOIterator.checked(original)))
+                .isSameAs(original);
+
+        IOIteratorFactory<Integer> source = new IOIteratorFactory<>(() -> 0, i -> i < 3, i -> i + 1, IORunnable.noOp());
+
+        List<Consumer<Iterator<?>>> consumers = new ArrayList<>();
+        consumers.add(IteratorFactory::drainForEach);
+        consumers.add(IteratorFactory::drainNext);
+        consumers.forEach(x -> {
+            assertThatCode(() -> x.accept(IOIterator.unchecked(source.getWithIO())))
+                    .doesNotThrowAnyException();
+
+            assertThatExceptionOfType(XRuntime.class)
+                    .isThrownBy(() -> x.accept(IOIterator.unchecked(source.withHasNext(XRuntime::test).getWithIO())));
+
+            assertThatExceptionOfType(XRuntime.class)
+                    .isThrownBy(() -> x.accept(IOIterator.unchecked(source.withNext(XRuntime::apply).getWithIO())));
+
+            assertThatExceptionOfType(XRuntime.class)
+                    .isThrownBy(() -> x.accept(IOIterator.unchecked(source.withRemove(XRuntime::run).getWithIO())));
+
+            assertThatExceptionOfType(UncheckedIOException.class)
+                    .isThrownBy(() -> x.accept(IOIterator.unchecked(source.withHasNext(XIO::testWithIO).getWithIO())))
+                    .withCauseExactlyInstanceOf(XIO.class);
+
+            assertThatExceptionOfType(UncheckedIOException.class)
+                    .isThrownBy(() -> x.accept(IOIterator.unchecked(source.withNext(XIO::applyWithIO).getWithIO())))
+                    .withCauseExactlyInstanceOf(XIO.class);
+
+            assertThatExceptionOfType(UncheckedIOException.class)
+                    .isThrownBy(() -> x.accept(IOIterator.unchecked(source.withRemove(XIO::runWithIO).getWithIO())))
+                    .withCauseExactlyInstanceOf(XIO.class);
+        });
     }
 
     @Test
     public void testIterate() throws IOException {
+        assertThatNullPointerException().isThrownBy(() -> IOIterator.iterate(null, IOPredicate.of(true), IOFunction.identity()));
+        assertThatNullPointerException().isThrownBy(() -> IOIterator.iterate(IOSupplier.of(""), null, IOFunction.identity()));
+        assertThatNullPointerException().isThrownBy(() -> IOIterator.iterate(IOSupplier.of(""), IOPredicate.of(true), null));
+
         Supplier<IOIterator<Integer>> sample = () -> IOIterator.iterate(() -> 0, i -> i < 3, i -> i + 1);
 
-        assertApi(sample);
+        IOIteratorAssertions.assertApi(sample);
 
         assertThatExceptionOfType(UnsupportedOperationException.class)
                 .isThrownBy(sample.get()::removeWithIO);
 
-        assertContent(sample, 0, 1, 2);
+        IOIteratorAssertions.assertContent(sample, 0, 1, 2);
     }
 
     @Test
     public void testGenerateWhile() throws IOException {
+        assertThatNullPointerException().isThrownBy(() -> IOIterator.generateWhile(null, IOPredicate.of(true)));
+        assertThatNullPointerException().isThrownBy(() -> IOIterator.generateWhile(IOSupplier.of(""), null));
+
         Supplier<IOIterator<Integer>> sample = () -> IOIterator.generateWhile(new AtomicInteger(0)::getAndIncrement, i -> i < 3);
 
-        assertApi(sample);
+        IOIteratorAssertions.assertApi(sample);
 
         assertThatExceptionOfType(UnsupportedOperationException.class)
                 .isThrownBy(sample.get()::removeWithIO);
 
-        assertContent(sample, 0, 1, 2);
+        IOIteratorAssertions.assertContent(sample, 0, 1, 2);
     }
 
-    private static <E> void assertApi(Supplier<IOIterator<E>> iterable) throws IOException {
-        assertNPE(iterable);
-        assertIteratorBehavior(iterable);
-    }
+    private static final class XRuntime extends RuntimeException {
 
-    @SuppressWarnings("null")
-    private static <E> void assertNPE(Supplier<IOIterator<E>> iterable) {
-        IOIterator<?> iterator = iterable.get();
-        assertThatNullPointerException().isThrownBy(() -> iterator.forEachRemainingWithIO(null));
-    }
+        static <T> boolean test(T t) {
+            throw new XRuntime();
+        }
 
-    private static <E> void assertIteratorBehavior(Supplier<IOIterator<E>> iterable) throws IOException {
-        IOIterator<E> iterator = iterable.get();
-        exhaust(iterator);
+        static <T> T apply(T t) {
+            throw new XRuntime();
+        }
 
-        assertThatCode(iterator::hasNextWithIO)
-                .as("Subsequent calls to hasNextWithIO have no effects")
-                .doesNotThrowAnyException();
-
-        assertThatExceptionOfType(NoSuchElementException.class)
-                .as("Iterator should throw NoSuchElementException if no more elements")
-                .isThrownBy(iterator::nextWithIO);
-    }
-
-    private static <E> void assertContent(Supplier<IOIterator<E>> iterable, E... content) throws IOException {
-        assertThat(iterable.get().asUnchecked())
-                .toIterable()
-                .containsExactly(content);
-
-        assertThat(iterable.get().asStream())
-                .containsExactly(content);
-
-        assertThat(remainingToList(iterable.get()))
-                .containsExactly(content);
-
-        if (content.length > 0) {
-            IOIterator<E> iter1 = iterable.get();
-            for (E element : content) {
-                assertThat(iter1.nextWithIO()).isEqualTo(element);
-            }
-
-            IOIterator<E> iter2 = iterable.get();
-            iter2.nextWithIO();
-            assertThat(remainingToList(iter2))
-                    .containsExactly(Arrays.copyOfRange(content, 1, content.length));
+        static void run() {
+            throw new XRuntime();
         }
     }
 
-    private static void exhaust(IOIterator<?> iterator) throws NoSuchElementException, IOException {
-        while (iterator.hasNextWithIO()) {
-            iterator.nextWithIO();
-        }
-    }
+    private static final class XIO extends IOException {
 
-    private static <E> List<E> remainingToList(IOIterator<E> iterator) throws IOException {
-        List<E> result = new ArrayList<>();
-        iterator.forEachRemainingWithIO(result::add);
-        return result;
+        static <T> boolean test(T t) {
+            throw new UncheckedIOException(new XIO());
+        }
+
+        static <T> T apply(T t) {
+            throw new UncheckedIOException(new XIO());
+        }
+
+        static void run() {
+            throw new UncheckedIOException(new XIO());
+        }
+
+        static <T> boolean testWithIO(T t) throws XIO {
+            throw new XIO();
+        }
+
+        static <T> T applyWithIO(T t) throws XIO {
+            throw new XIO();
+        }
+
+        static void runWithIO() throws XIO {
+            throw new XIO();
+        }
     }
 }

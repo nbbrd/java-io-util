@@ -16,12 +16,10 @@
  */
 package nbbrd.io.function;
 
-import internal.io.function.JdkWithIO;
+import internal.io.JdkWithIO;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Objects;
-import java.util.function.Supplier;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
