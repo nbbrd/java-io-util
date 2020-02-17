@@ -1,9 +1,9 @@
 package _test;
 
 import java.util.Iterator;
-import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 
 /**
  *
@@ -21,7 +21,7 @@ public class IteratorFactory<E> implements Supplier<Iterator<E>> {
     private Predicate<? super E> hasNext;
 
     @lombok.NonNull
-    private Function<E, E> next;
+    private UnaryOperator<E> next;
 
     @lombok.NonNull
     private Runnable remove;

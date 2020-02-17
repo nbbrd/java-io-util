@@ -27,9 +27,9 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import nbbrd.io.IOIterator;
 import nbbrd.io.function.IOConsumer;
-import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOPredicate;
 import nbbrd.io.function.IOSupplier;
+import nbbrd.io.function.IOUnaryOperator;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
@@ -195,7 +195,7 @@ public class IOIterators {
         private final IOPredicate<? super E> hasNext;
 
         @lombok.NonNull
-        private final IOFunction<E, E> next;
+        private final IOUnaryOperator<E> next;
 
         private boolean seeded = false;
         private E nextValue = null;

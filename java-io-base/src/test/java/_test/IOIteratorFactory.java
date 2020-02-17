@@ -3,10 +3,10 @@ package _test;
 import java.io.IOException;
 import java.util.NoSuchElementException;
 import nbbrd.io.IOIterator;
-import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOPredicate;
 import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IOSupplier;
+import nbbrd.io.function.IOUnaryOperator;
 
 /**
  *
@@ -24,7 +24,7 @@ public class IOIteratorFactory<E> implements IOSupplier<IOIterator<E>> {
     private IOPredicate<? super E> hasNext;
 
     @lombok.NonNull
-    private IOFunction<E, E> next;
+    private IOUnaryOperator<E> next;
 
     @lombok.NonNull
     private IORunnable remove;

@@ -26,9 +26,9 @@ import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 import nbbrd.io.function.IOConsumer;
-import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOPredicate;
 import nbbrd.io.function.IOSupplier;
+import nbbrd.io.function.IOUnaryOperator;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -94,7 +94,7 @@ public interface IOIterator<E> {
     }
 
     @NonNull
-    static <E> IOIterator<E> iterate(@NonNull IOSupplier<E> seed, @NonNull IOPredicate<? super E> hasNext, @NonNull IOFunction<E, E> next) {
+    static <E> IOIterator<E> iterate(@NonNull IOSupplier<E> seed, @NonNull IOPredicate<? super E> hasNext, @NonNull IOUnaryOperator<E> next) {
         return new IOIterators.Functional<>(seed, hasNext, next);
     }
 

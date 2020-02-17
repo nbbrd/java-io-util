@@ -30,10 +30,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import nbbrd.io.function.IOConsumer;
-import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOPredicate;
 import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IOSupplier;
+import nbbrd.io.function.IOUnaryOperator;
 import static org.assertj.core.api.Assertions.*;
 import org.junit.Test;
 
@@ -173,8 +173,8 @@ public class IOIteratorTest {
 
     @Test
     public void testIterate() throws IOException {
-        assertThatNullPointerException().isThrownBy(() -> IOIterator.iterate(null, IOPredicate.of(true), IOFunction.identity()));
-        assertThatNullPointerException().isThrownBy(() -> IOIterator.iterate(IOSupplier.of(""), null, IOFunction.identity()));
+        assertThatNullPointerException().isThrownBy(() -> IOIterator.iterate(null, IOPredicate.of(true), IOUnaryOperator.identity()));
+        assertThatNullPointerException().isThrownBy(() -> IOIterator.iterate(IOSupplier.of(""), null, IOUnaryOperator.identity()));
         assertThatNullPointerException().isThrownBy(() -> IOIterator.iterate(IOSupplier.of(""), IOPredicate.of(true), null));
 
         Supplier<IOIterator<Integer>> sample = () -> IOIterator.iterate(() -> 0, i -> i < 3, i -> i + 1);
