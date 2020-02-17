@@ -3,11 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
     
     <groupId>be.nbb.rd</groupId>
-    <artifactId>java-io-util</artifactId>
-    <version>0.0.4</version>
-    <packaging>jar</packaging>
+    <artifactId>java-io-parent</artifactId>
+    <version>0.0.5</version>
+    <packaging>pom</packaging>
 
-    <name>Java IO Utilities</name>
+    <name>java-io</name>
     <description>Common IO utilities</description>
     <url>https://github.com/nbbrd/java-io-util</url>
     
@@ -22,46 +22,43 @@
         </license>
     </licenses>
     
-    <dependencies>
-        <!-- annotations & processors -->
-        <dependency>
-            <groupId>org.checkerframework</groupId>
-            <artifactId>checker-qual</artifactId>
-            <version>2.10.0</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <scope>provided</scope>
-        </dependency>
+    <modules>
+        <module>java-io-base</module>
+        <module>java-io-xml</module>
+    </modules>
+	
+    <dependencyManagement>
+        <dependencies>
+            <!-- annotations & processors -->
+            <dependency>
+                <groupId>org.checkerframework</groupId>
+                <artifactId>checker-qual</artifactId>
+                <version>3.1.1</version>
+            </dependency>
         
-        <!-- test libraries -->
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.12</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.assertj</groupId>
-            <artifactId>assertj-core</artifactId>
-            <version>3.13.2</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.google.jimfs</groupId>
-            <artifactId>jimfs</artifactId>
-            <version>1.1</version>
-            <scope>test</scope>
-        </dependency>        
-        <dependency>
-            <groupId>com.github.tomakehurst</groupId>
-            <artifactId>wiremock-standalone</artifactId>
-            <version>2.24.1</version>
-            <scope>test</scope>
-        </dependency>
-    </dependencies>
+            <!-- test libraries -->
+            <dependency>
+                <groupId>junit</groupId>
+                <artifactId>junit</artifactId>
+                <version>4.13</version>
+            </dependency>
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>3.15.0</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.jimfs</groupId>
+                <artifactId>jimfs</artifactId>
+                <version>1.1</version>
+            </dependency>        
+            <dependency>
+                <groupId>com.github.tomakehurst</groupId>
+                <artifactId>wiremock-standalone</artifactId>
+                <version>2.26.0</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     
     <profiles>
         <!-- Base build java8 -->
@@ -87,7 +84,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
-                        <version>3.1.2</version>
+                        <version>3.2.0</version>
                     </plugin>
                 </plugins>
             </build>
@@ -102,7 +99,7 @@
                 </property>
             </activation>
             <properties>
-                <lombok.version>1.18.8</lombok.version>
+                <lombok.version>1.18.12</lombok.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -202,40 +199,57 @@
             </build>
         </profile>
 
-        <!-- Fix missing Java EE Modules in JDK11 -->
+        <!-- Enforce dependency rules -->
         <profile>
-            <id>fix-missing-modules-jdk11</id>
+            <id>enforce-dependency-rules</id>
             <activation>
-                <jdk>[11,)</jdk>
+                <property>
+                    <name>!skipEnforceDependencyRules</name>
+                </property>
             </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>javax.xml.bind</groupId>
-                    <artifactId>jaxb-api</artifactId>
-                    <version>2.4.0-b180830.0359</version>
-                    <scope>provided</scope>
-                </dependency>
-                <dependency>
-                    <groupId>org.glassfish.jaxb</groupId>
-                    <artifactId>jaxb-runtime</artifactId>
-                    <version>2.4.0-b180830.0438</version>
-                    <scope>provided</scope>
-                </dependency>                
-            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <version>3.0.0-M3</version>
+                        <executions>
+                            <execution>
+                                <id>enforce</id>
+                                <configuration>
+                                    <rules>
+                                        <requireMavenVersion>
+                                            <version>3.3.9</version>
+                                        </requireMavenVersion>
+                                        <DependencyConvergence/>
+                                    </rules>
+                                </configuration>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
         </profile>
 
-        <!-- Optional checks -->
+        <!-- Enforce modern API -->
         <profile>
-            <id>optional-checks</id>
+            <id>enforce-modern-api</id>
+            <activation>
+                <property>
+                    <name>!skipEnforceModernAPI</name>
+                </property>
+            </activation>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>org.gaul</groupId>
                         <artifactId>modernizer-maven-plugin</artifactId>
-                        <version>1.8.0</version>
+                        <version>2.0.0</version>
                         <configuration>
                             <javaVersion>1.8</javaVersion>
-                            <!--<failOnViolations>false</failOnViolations>-->
                         </configuration>
                         <executions>
                             <execution>
@@ -247,10 +261,19 @@
                             </execution>
                         </executions>
                     </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Optional checks -->
+        <profile>
+            <id>optional-checks</id>
+            <build>
+                <plugins>
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId> 
-                        <version>0.8.4</version> 
+                        <version>0.8.5</version> 
                         <executions> 
                             <execution> 
                                 <goals> 
@@ -289,7 +312,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.2.1</version>
                         <executions>
                             <execution>
                                 <phase>verify</phase>
@@ -322,7 +345,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.1.0</version>
+                        <version>3.2.1</version>
                         <executions>
                             <execution>
                                 <phase>verify</phase>
