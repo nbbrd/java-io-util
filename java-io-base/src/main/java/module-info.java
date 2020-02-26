@@ -22,5 +22,6 @@ module nbbrd.io.base {
 
     exports nbbrd.io;
     exports nbbrd.io.function;
+    exports nbbrd.io.text;
     exports nbbrd.io.zip;
 }
