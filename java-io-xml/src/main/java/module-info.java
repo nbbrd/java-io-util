@@ -21,7 +21,8 @@ module nbbrd.io.xml {
     requires static lombok;
 
     requires java.logging;
-    requires nbbrd.io.base;
+    requires transitive nbbrd.io.base;
+    requires transitive java.xml;
     requires static java.xml.bind;
 
     exports nbbrd.io.xml;

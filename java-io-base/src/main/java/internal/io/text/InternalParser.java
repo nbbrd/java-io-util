@@ -211,21 +211,15 @@ public class InternalParser {
      * object from it.</p>
      *
      * <pre>
-     *   LocaleUtils.toLocale("en")         = new Locale("en", "")
-     *   LocaleUtils.toLocale("en_GB")      = new Locale("en", "GB")
-     *   LocaleUtils.toLocale("en_GB_xxx")  = new Locale("en", "GB", "xxx")   (#)
+     *   parseLocale("en")         = new Locale("en", "")
+     *   parseLocale("en_GB")      = new Locale("en", "GB")
+     *   parseLocale("en_GB_xxx")  = new Locale("en", "GB", "xxx")   (#)
      * </pre>
      *
      * <p>
-     * (#) The behaviour of the JDK variant constructor changed between JDK1.3
-     * and JDK1.4. In JDK1.3, the constructor upper cases the variant, in
-     * JDK1.4, it doesn't. Thus, the result from getVariant() may vary depending
-     * on your JDK.</p>
-     *
-     * <p>
-     * This method validates the input strictly. The language code must be
-     * lowercase. The country code must be uppercase. The separator must be an
-     * underscore. The length must be correct. </p>
+     * This method validates the input leniently. The language and country codes can be uppercase or lowercase. 
+     * The separator can be an underscore or and hyphen. The length must be correct.
+     * </p>
      *
      * @param input the locale String to convert, null returns null
      * @return a Locale, null if invalid locale format
@@ -236,38 +230,47 @@ public class InternalParser {
         if (input == null) {
             return null;
         }
+        if (input.length() == 0) {
+            return Locale.ROOT;
+        }
         String str = input.toString();
         int len = str.length();
         if (len != 2 && len != 5 && len < 7) {
             return null;
         }
-        char ch0 = str.charAt(0);
-        char ch1 = str.charAt(1);
-        if (ch0 < 'a' || ch0 > 'z' || ch1 < 'a' || ch1 > 'z') {
+        if (!isLocaleLetter(str.charAt(0)) || !isLocaleLetter(str.charAt(1))) {
             return null;
         }
         if (len == 2) {
             return new Locale(str, "");
         } else {
-            if (str.charAt(2) != '_') {
+            if (!isLocaleSeparator(str.charAt(2))) {
                 return null;
             }
             char ch3 = str.charAt(3);
-            if (ch3 == '_') {
+            if (isLocaleSeparator(ch3)) {
                 return new Locale(str.substring(0, 2), "", str.substring(4));
             }
             char ch4 = str.charAt(4);
-            if (ch3 < 'A' || ch3 > 'Z' || ch4 < 'A' || ch4 > 'Z') {
+            if (!isLocaleLetter(ch3) || !isLocaleLetter(ch4)) {
                 return null;
             }
             if (len == 5) {
                 return new Locale(str.substring(0, 2), str.substring(3, 5));
             } else {
-                if (str.charAt(5) != '_') {
+                if (!isLocaleSeparator(str.charAt(5))) {
                     return null;
                 }
                 return new Locale(str.substring(0, 2), str.substring(3, 5), str.substring(6));
             }
         }
+    }
+    
+    private boolean isLocaleLetter(char c) {
+        return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
+    }
+    
+    private boolean isLocaleSeparator(char c) {
+        return c == '_' || c == '-';
     }
 }

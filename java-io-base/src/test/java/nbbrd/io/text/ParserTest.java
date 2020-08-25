@@ -201,13 +201,28 @@ public class ParserTest {
         assertThat(onLocale().parse("fr_BE_WIN"))
                 .extracting(Locale::getLanguage, Locale::getCountry, Locale::getVariant)
                 .containsExactly("fr", "BE", "WIN");
+
+        assertThat(onLocale().parse(""))
+                .isEqualTo(Locale.ROOT);
+
+        assertThat(onLocale().parse("en"))
+                .isEqualTo(Locale.ENGLISH);
+
+        assertThat(onLocale().parse("en_US"))
+                .isEqualTo(Locale.US);
+
+        assertThat(onLocale().parse("en-US"))
+                .isEqualTo(Locale.US);
+
+        assertThat(onLocale().parse("EN-us"))
+                .isEqualTo(Locale.US);
     }
 
     @SuppressWarnings("null")
     private static <T> void assertCompliance(Parser<T> p, CharSequence input) {
         assertThatCode(() -> p.parse(null)).doesNotThrowAnyException();
         assertThatCode(() -> p.parseValue(null)).doesNotThrowAnyException();
-        
+
         assertThatNullPointerException().isThrownBy(() -> p.andThen(null));
         assertThatNullPointerException().isThrownBy(() -> p.orElse(null));
 
