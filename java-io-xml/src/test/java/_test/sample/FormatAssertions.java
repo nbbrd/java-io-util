@@ -1,42 +1,40 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package _test.sample;
 
 import _test.Meta;
 import _test.ResourceCounter;
-import static _test.sample.Person.*;
-import java.io.File;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import static org.assertj.core.api.Assertions.*;
+import nbbrd.io.function.IORunnable;
+import nbbrd.io.function.IOSupplier;
 import nbbrd.io.xml.Xml;
-import java.io.ByteArrayOutputStream;
-import java.io.OutputStream;
-import java.io.StringWriter;
-import java.io.Writer;
+import org.junit.rules.TemporaryFolder;
+
+import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import nbbrd.io.function.IORunnable;
-import nbbrd.io.function.IOSupplier;
-import org.junit.rules.TemporaryFolder;
+
+import static _test.sample.Person.ENCODINGS;
+import static _test.sample.Person.JOHN_DOE;
+import static org.assertj.core.api.Assertions.*;
 
 /**
- *
  * @author Philippe Charles
  */
 public class FormatAssertions {
@@ -45,11 +43,15 @@ public class FormatAssertions {
         testFormatToString(p, formatted);
         testFormatChars(p, formatted);
         testFormatFile(p, formatted, temp);
+        testFormatFileCharset(p, formatted, temp);
         testFormatPath(p, formatted, temp);
+        testFormatPathCharset(p, formatted, temp);
         testFormatWriterFromSupplier(p, formatted);
         testFormatStreamFromSupplier(p, formatted);
+        testFormatStreamFromSupplierCharset(p, formatted);
         testFormatWriter(p, formatted);
         testFormatStream(p, formatted);
+        testFormatStreamCharset(p, formatted);
     }
 
     @SuppressWarnings("null")
@@ -59,7 +61,7 @@ public class FormatAssertions {
                 .withMessageContaining("value");
 
         assertThat(p.formatToString(JOHN_DOE))
-                .isEqualTo(formatted ? JOHN_DOE_FORMATTED_CHARS : JOHN_DOE_CHARS);
+                .isEqualTo(Person.getString(StandardCharsets.UTF_8, formatted));
     }
 
     @SuppressWarnings("null")
@@ -74,7 +76,7 @@ public class FormatAssertions {
         StringBuilder appendable = new StringBuilder();
         p.formatChars(JOHN_DOE, appendable);
         assertThat(appendable.toString())
-                .isEqualTo(formatted ? JOHN_DOE_FORMATTED_CHARS : JOHN_DOE_CHARS);
+                .isEqualTo(Person.getString(StandardCharsets.UTF_8, formatted));
     }
 
     @SuppressWarnings("null")
@@ -96,11 +98,44 @@ public class FormatAssertions {
         assertThat(target).exists().isFile();
         assertThat(target)
                 .usingCharset(StandardCharsets.UTF_8)
-                .hasContent(formatted ? JOHN_DOE_FORMATTED_CHARS : JOHN_DOE_CHARS);
+                .hasContent(Person.getString(StandardCharsets.UTF_8, formatted));
 
         assertThatIOException()
                 .isThrownBy(() -> p.formatFile(JOHN_DOE, temp.newFolder()))
                 .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @SuppressWarnings("null")
+    private static void testFormatFileCharset(Xml.Formatter<Person> p, boolean formatted, TemporaryFolder temp) throws IOException {
+        File target = temp.newFile();
+        target.delete();
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.formatFile(null, target, StandardCharsets.UTF_8))
+                .withMessageContaining("value");
+        assertThat(target).doesNotExist();
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.formatFile(JOHN_DOE, null, StandardCharsets.UTF_8))
+                .withMessageContaining("target");
+        assertThat(target).doesNotExist();
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.formatFile(JOHN_DOE, target, null))
+                .withMessageContaining("encoding");
+        assertThat(target).doesNotExist();
+
+        assertThatIOException()
+                .isThrownBy(() -> p.formatFile(JOHN_DOE, temp.newFolder(), StandardCharsets.UTF_8))
+                .isInstanceOf(AccessDeniedException.class);
+
+        for (Charset encoding : ENCODINGS) {
+            p.formatFile(JOHN_DOE, target, encoding);
+            assertThat(target).exists().isFile();
+            assertThat(target)
+                    .usingCharset(encoding)
+                    .hasContent(Person.getString(encoding, formatted));
+        }
     }
 
     @SuppressWarnings("null")
@@ -122,11 +157,44 @@ public class FormatAssertions {
         assertThat(target).exists().isReadable();
         assertThat(target)
                 .usingCharset(StandardCharsets.UTF_8)
-                .hasContent(formatted ? JOHN_DOE_FORMATTED_CHARS : JOHN_DOE_CHARS);
+                .hasContent(Person.getString(StandardCharsets.UTF_8, formatted));
 
         assertThatIOException()
                 .isThrownBy(() -> p.formatPath(JOHN_DOE, temp.newFolder().toPath()))
                 .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @SuppressWarnings("null")
+    private static void testFormatPathCharset(Xml.Formatter<Person> p, boolean formatted, TemporaryFolder temp) throws IOException {
+        Path target = temp.newFile().toPath();
+        Files.delete(target);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.formatPath(null, target, StandardCharsets.UTF_8))
+                .withMessageContaining("value");
+        assertThat(target).doesNotExist();
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.formatPath(JOHN_DOE, null, StandardCharsets.UTF_8))
+                .withMessageContaining("target");
+        assertThat(target).doesNotExist();
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.formatPath(JOHN_DOE, target, null))
+                .withMessageContaining("encoding");
+        assertThat(target).doesNotExist();
+
+        assertThatIOException()
+                .isThrownBy(() -> p.formatPath(JOHN_DOE, temp.newFolder().toPath(), StandardCharsets.UTF_8))
+                .isInstanceOf(AccessDeniedException.class);
+
+        for (Charset encoding : ENCODINGS) {
+            p.formatPath(JOHN_DOE, target, encoding);
+            assertThat(target).exists().isReadable();
+            assertThat(target)
+                    .usingCharset(encoding)
+                    .hasContent(Person.getString(encoding, formatted));
+        }
     }
 
     @SuppressWarnings("null")
@@ -142,7 +210,7 @@ public class FormatAssertions {
         StringWriter writer = new StringWriter();
         p.formatWriter(JOHN_DOE, () -> writer);
         assertThat(writer.toString())
-                .isEqualTo(formatted ? JOHN_DOE_FORMATTED_CHARS : JOHN_DOE_CHARS);
+                .isEqualTo(Person.getString(StandardCharsets.UTF_8, formatted));
 
         assertThatIOException()
                 .isThrownBy(() -> p.formatWriter(JOHN_DOE, IOSupplier.of(null)))
@@ -167,7 +235,7 @@ public class FormatAssertions {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         p.formatStream(JOHN_DOE, () -> stream);
         assertThat(stream.toString(StandardCharsets.UTF_8.name()))
-                .isEqualTo(formatted ? JOHN_DOE_FORMATTED_CHARS : JOHN_DOE_CHARS);
+                .isEqualTo(Person.getString(StandardCharsets.UTF_8, formatted));
 
         assertThatIOException()
                 .isThrownBy(() -> p.formatStream(JOHN_DOE, IOSupplier.of(null)))
@@ -177,6 +245,37 @@ public class FormatAssertions {
         assertThatIOException()
                 .isThrownBy(() -> p.formatStream(JOHN_DOE, targetErrorSupplier()))
                 .isInstanceOf(TargetError.class);
+    }
+
+    @SuppressWarnings("null")
+    private static void testFormatStreamFromSupplierCharset(Xml.Formatter<Person> p, boolean formatted) throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.formatStream(null, ByteArrayOutputStream::new, StandardCharsets.UTF_8))
+                .withMessageContaining("value");
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.formatStream(JOHN_DOE, (IOSupplier) null, StandardCharsets.UTF_8))
+                .withMessageContaining("target");
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.formatStream(JOHN_DOE, ByteArrayOutputStream::new, null))
+                .withMessageContaining("encoding");
+
+        assertThatIOException()
+                .isThrownBy(() -> p.formatStream(JOHN_DOE, IOSupplier.of(null), StandardCharsets.UTF_8))
+                .isInstanceOf(IOException.class)
+                .withMessageContaining("Missing OutputStream");
+
+        assertThatIOException()
+                .isThrownBy(() -> p.formatStream(JOHN_DOE, targetErrorSupplier(), StandardCharsets.UTF_8))
+                .isInstanceOf(TargetError.class);
+
+        for (Charset encoding : ENCODINGS) {
+            ByteArrayOutputStream stream = new ByteArrayOutputStream();
+            p.formatStream(JOHN_DOE, () -> stream, encoding);
+            assertThat(stream.toString(encoding.name()))
+                    .isEqualTo(Person.getString(encoding, formatted));
+        }
     }
 
     @SuppressWarnings("null")
@@ -192,7 +291,7 @@ public class FormatAssertions {
         StringWriter resource = new StringWriter();
         p.formatWriter(JOHN_DOE, resource);
         assertThat(resource.toString())
-                .isEqualTo(formatted ? JOHN_DOE_FORMATTED_CHARS : JOHN_DOE_CHARS);
+                .isEqualTo(Person.getString(StandardCharsets.UTF_8, formatted));
     }
 
     @SuppressWarnings("null")
@@ -208,7 +307,29 @@ public class FormatAssertions {
         ByteArrayOutputStream resource = new ByteArrayOutputStream();
         p.formatStream(JOHN_DOE, resource);
         assertThat(resource.toString())
-                .isEqualTo(formatted ? JOHN_DOE_FORMATTED_CHARS : JOHN_DOE_CHARS);
+                .isEqualTo(Person.getString(StandardCharsets.UTF_8, formatted));
+    }
+
+    @SuppressWarnings("null")
+    private static void testFormatStreamCharset(Xml.Formatter<Person> p, boolean formatted) throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.formatStream(null, new ByteArrayOutputStream(), StandardCharsets.UTF_8))
+                .withMessageContaining("value");
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.formatStream(JOHN_DOE, (OutputStream) null, StandardCharsets.UTF_8))
+                .withMessageContaining("resource");
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.formatStream(JOHN_DOE, new ByteArrayOutputStream(), null))
+                .withMessageContaining("encoding");
+
+        for (Charset encoding : ENCODINGS) {
+            ByteArrayOutputStream resource = new ByteArrayOutputStream();
+            p.formatStream(JOHN_DOE, resource, encoding);
+            assertThat(resource.toString(encoding.name()))
+                    .isEqualTo(Person.getString(encoding, formatted));
+        }
     }
 
     private static final class TargetError extends IOException {

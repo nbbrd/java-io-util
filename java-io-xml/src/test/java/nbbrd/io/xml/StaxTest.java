@@ -1,61 +1,50 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package nbbrd.io.xml;
 
+import _test.*;
 import _test.sample.ParseAssertions;
-import _test.ResourceCounter;
 import _test.sample.Person;
-import java.io.IOException;
-import java.util.List;
-import java.util.function.Supplier;
-import javax.xml.stream.XMLEventReader;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamConstants;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
+import nbbrd.io.function.IOSupplier;
+import org.junit.Rule;
+import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
+
+import javax.xml.stream.*;
 import javax.xml.stream.events.Characters;
 import javax.xml.stream.events.StartElement;
-import static org.assertj.core.api.Assertions.*;
-import org.junit.Test;
-import _test.ForwardingXMLInputFactory;
-import _test.ForwardingXMLOutputFactory;
-import _test.StaxListener;
-import _test.Meta;
+import javax.xml.stream.events.XMLEvent;
+import java.io.ByteArrayOutputStream;
+import java.io.Closeable;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.function.Supplier;
+
 import static _test.sample.FormatAssertions.assertFormatterCompliance;
 import static _test.sample.FormatAssertions.assertFormatterSafety;
 import static _test.sample.ParseAssertions.assertParserCompliance;
 import static _test.sample.ParseAssertions.assertParserSafety;
 import static _test.sample.Person.BOOLS;
 import static _test.sample.Person.ENCODINGS;
-import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import javax.xml.stream.XMLEventFactory;
-import javax.xml.stream.XMLEventWriter;
-import javax.xml.stream.XMLOutputFactory;
-import javax.xml.stream.XMLStreamWriter;
-import javax.xml.stream.events.XMLEvent;
-import nbbrd.io.function.IOSupplier;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
+import static org.assertj.core.api.Assertions.*;
 
 /**
- *
  * @author Philippe Charles
  */
 public class StaxTest {
@@ -166,9 +155,9 @@ public class StaxTest {
     @SuppressWarnings("null")
     public void testStreamFormatterFactories() throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> Stax.StreamFormatter.valueOf(null));
+                .isThrownBy(() -> Stax.StreamFormatter.of(null));
 
-        assertFormatterCompliance(Stax.StreamFormatter.valueOf(StaxTest::formatByStream), false, temp);
+        assertFormatterCompliance(Stax.StreamFormatter.of(StaxTest::formatByStream), false, temp);
     }
 
     @Test
@@ -176,7 +165,7 @@ public class StaxTest {
     public void testStreamFormatterBuilder() throws IOException {
         assertFormatterCompliance(
                 Stax.StreamFormatter.<Person>builder()
-                        .handler(StaxTest::formatByStream)
+                        .handler2(StaxTest::formatByStream)
                         .factory(XMLOutputFactory::newFactory)
                         .build(),
                 false, temp);
@@ -185,7 +174,7 @@ public class StaxTest {
     @Test
     @SuppressWarnings("null")
     public void testStreamFormatterWither() throws IOException {
-        Stax.StreamFormatter<Person> formatter = Stax.StreamFormatter.valueOf(StaxTest::formatByStream);
+        Stax.StreamFormatter<Person> formatter = Stax.StreamFormatter.of(StaxTest::formatByStream);
 
         assertThatNullPointerException()
                 .isThrownBy(() -> formatter.withEncoding(null));
@@ -201,21 +190,21 @@ public class StaxTest {
     @SuppressWarnings("null")
     public void testStreamFormatterWithAlternateEncoding() throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> Stax.StreamFormatter.valueOf(StaxTest::formatByStream).withEncoding(null));
+                .isThrownBy(() -> Stax.StreamFormatter.of(StaxTest::formatByStream).withEncoding(null));
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        Stax.StreamFormatter.valueOf(StaxTest::formatByStream).withEncoding(StandardCharsets.ISO_8859_1).formatStream(Person.JOHN_DOE, outputStream);
+        Stax.StreamFormatter.of(StaxTest::formatByStream).withEncoding(StandardCharsets.ISO_8859_1).formatStream(Person.JOHN_DOE, outputStream);
         assertThat(outputStream.toString(StandardCharsets.ISO_8859_1.name()))
-                .isEqualTo(Person.JOHN_DOE_CHARS);
+                .isEqualTo(Person.getString(StandardCharsets.ISO_8859_1, false));
     }
 
     @Test
     @SuppressWarnings("null")
     public void testEventFormatterFactories() throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> Stax.EventFormatter.valueOf(null));
+                .isThrownBy(() -> Stax.EventFormatter.of(null));
 
-        assertFormatterCompliance(Stax.EventFormatter.valueOf(StaxTest::formatByEvent), false, temp);
+        assertFormatterCompliance(Stax.EventFormatter.of(StaxTest::formatByEvent), false, temp);
     }
 
     @Test
@@ -223,7 +212,7 @@ public class StaxTest {
     public void testEventFormatterBuilder() throws IOException {
         assertFormatterCompliance(
                 Stax.EventFormatter.<Person>builder()
-                        .handler(StaxTest::formatByEvent)
+                        .handler2(StaxTest::formatByEvent)
                         .factory(XMLOutputFactory::newFactory)
                         .build(),
                 false, temp);
@@ -232,7 +221,7 @@ public class StaxTest {
     @Test
     @SuppressWarnings("null")
     public void testEventFormatterWither() throws IOException {
-        Stax.EventFormatter<Person> formatter = Stax.EventFormatter.valueOf(StaxTest::formatByEvent);
+        Stax.EventFormatter<Person> formatter = Stax.EventFormatter.of(StaxTest::formatByEvent);
 
         assertThatNullPointerException()
                 .isThrownBy(() -> formatter.withEncoding(null));
@@ -248,12 +237,12 @@ public class StaxTest {
     @SuppressWarnings("null")
     public void testEventFormatterWithAlternateEncoding() throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> Stax.EventFormatter.valueOf(StaxTest::formatByEvent).withEncoding(null));
+                .isThrownBy(() -> Stax.EventFormatter.of(StaxTest::formatByEvent).withEncoding(null));
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        Stax.EventFormatter.valueOf(StaxTest::formatByEvent).withEncoding(StandardCharsets.ISO_8859_1).formatStream(Person.JOHN_DOE, outputStream);
+        Stax.EventFormatter.of(StaxTest::formatByEvent).withEncoding(StandardCharsets.ISO_8859_1).formatStream(Person.JOHN_DOE, outputStream);
         assertThat(outputStream.toString(StandardCharsets.ISO_8859_1.name()))
-                .isEqualTo(Person.JOHN_DOE_CHARS);
+                .isEqualTo(Person.getString(StandardCharsets.ISO_8859_1, false));
     }
 
     @Test
@@ -326,13 +315,13 @@ public class StaxTest {
                 .invalid("Unchecked", counter.onXMLOutputFactory(validOutputFactory).andThen(o -> new ForwardingXMLOutputFactory(o).onCreate(StaxListener.unchecked(UncheckedError::new))))
                 .build();
 
-        List<Meta<Stax.OutputHandler<XMLStreamWriter, Person>>> streamHandlers = Meta.<Stax.OutputHandler<XMLStreamWriter, Person>>builder()
+        List<Meta<Stax.OutputHandler2<XMLStreamWriter, Person>>> streamHandlers = Meta.<Stax.OutputHandler2<XMLStreamWriter, Person>>builder()
                 .valid("Ok", StaxTest::formatByStream)
                 .invalid("Checked", checkedOutput(StaxError::new))
                 .invalid("Unchecked", uncheckedOutput(UncheckedError::new))
                 .build();
 
-        List<Meta<Stax.OutputHandler<XMLEventWriter, Person>>> eventHandlers = Meta.<Stax.OutputHandler<XMLEventWriter, Person>>builder()
+        List<Meta<Stax.OutputHandler2<XMLEventWriter, Person>>> eventHandlers = Meta.<Stax.OutputHandler2<XMLEventWriter, Person>>builder()
                 .valid("Ok", StaxTest::formatByEvent)
                 .invalid("Checked", checkedOutput(StaxError::new))
                 .invalid("Unchecked", uncheckedOutput(UncheckedError::new))
@@ -340,11 +329,11 @@ public class StaxTest {
 
         for (Charset encoding : ENCODINGS) {
             for (Meta<IOSupplier<XMLOutputFactory>> factory : factories) {
-                for (Meta<Stax.OutputHandler<XMLStreamWriter, Person>> handler : streamHandlers) {
+                for (Meta<Stax.OutputHandler2<XMLStreamWriter, Person>> handler : streamHandlers) {
 
                     Xml.Formatter<Person> formatter = Stax.StreamFormatter
                             .<Person>builder()
-                            .handler(handler.getTarget())
+                            .handler2(handler.getTarget())
                             .factory(factory.getTarget())
                             .encoding(encoding)
                             .build();
@@ -354,11 +343,11 @@ public class StaxTest {
                     assertThat(counter.getCount()).isLessThanOrEqualTo(0);
                     assertThat(counter.getMax()).isLessThanOrEqualTo(1);
                 }
-                for (Meta<Stax.OutputHandler<XMLEventWriter, Person>> handler : eventHandlers) {
+                for (Meta<Stax.OutputHandler2<XMLEventWriter, Person>> handler : eventHandlers) {
 
                     Xml.Formatter<Person> formatter = Stax.EventFormatter
                             .<Person>builder()
-                            .handler(handler.getTarget())
+                            .handler2(handler.getTarget())
                             .factory(factory.getTarget())
                             .encoding(encoding)
                             .build();
@@ -438,8 +427,8 @@ public class StaxTest {
         return result;
     }
 
-    private static void formatByStream(Person person, XMLStreamWriter w) throws XMLStreamException {
-        w.writeProcessingInstruction("xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"");
+    private static void formatByStream(Person person, XMLStreamWriter w, Charset encoding) throws XMLStreamException {
+        w.writeProcessingInstruction("xml version=\"1.0\" encoding=\"" + encoding.name() + "\" standalone=\"yes\"");
         {
             w.writeStartElement("person");
             {
@@ -456,9 +445,9 @@ public class StaxTest {
         }
     }
 
-    private static void formatByEvent(Person person, XMLEventWriter w) throws XMLStreamException {
+    private static void formatByEvent(Person person, XMLEventWriter w, Charset encoding) throws XMLStreamException {
         XMLEventFactory factory = XMLEventFactory.newInstance();
-        w.add(factory.createProcessingInstruction("xml version=\"1.0\" encoding=\"UTF-8\"", "standalone=\"yes\""));
+        w.add(factory.createProcessingInstruction("xml version=\"1.0\" encoding=\"" + encoding.name() + "\"", "standalone=\"yes\""));
         {
             w.add(factory.createStartElement("", "", "person"));
             {
@@ -492,14 +481,14 @@ public class StaxTest {
         };
     }
 
-    private <O, T> Stax.OutputHandler<O, T> checkedOutput(Supplier<? extends XMLStreamException> x) {
-        return (value, o) -> {
+    private <O, T> Stax.OutputHandler2<O, T> checkedOutput(Supplier<? extends XMLStreamException> x) {
+        return (value, o, encoding) -> {
             throw x.get();
         };
     }
 
-    private <O, T> Stax.OutputHandler<O, T> uncheckedOutput(Supplier<? extends RuntimeException> x) {
-        return (value, o) -> {
+    private <O, T> Stax.OutputHandler2<O, T> uncheckedOutput(Supplier<? extends RuntimeException> x) {
+        return (value, o, encoding) -> {
             throw x.get();
         };
 

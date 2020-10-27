@@ -1,39 +1,39 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package nbbrd.io.xml;
 
-import internal.io.xml.LegacyFiles;
-import java.io.Closeable;
+import internal.io.text.AndThenTextParser;
+import internal.io.text.ComposeTextFormatter;
+import internal.io.text.LegacyFiles;
+import nbbrd.io.Resource;
+import nbbrd.io.function.IOSupplier;
+import nbbrd.io.text.TextFormatter;
+import nbbrd.io.text.TextParser;
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
-import nbbrd.io.Resource;
-import nbbrd.io.function.IOSupplier;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * Set of utilities related to XML.
@@ -43,13 +43,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 @lombok.experimental.UtilityClass
 public class Xml {
 
-    public interface Parser<T> {
-
-        @NonNull
-        default T parseChars(@NonNull CharSequence source) throws IOException {
-            Objects.requireNonNull(source, "source");
-            return parseReader(() -> new StringReader(source.toString()));
-        }
+    public interface Parser<T> extends TextParser<T> {
 
         @NonNull
         default T parseFile(@NonNull File source) throws IOException {
@@ -70,27 +64,16 @@ public class Xml {
         default T parseResource(@NonNull Class<?> type, @NonNull String name) throws IOException {
             Objects.requireNonNull(type, "type");
             Objects.requireNonNull(name, "name");
-            return parseStream(() -> checkResource(type.getResourceAsStream(name), "Missing resource '" + name + "' of '" + type.getName() + "'"));
-        }
-
-        @NonNull
-        default T parseReader(IOSupplier<? extends Reader> source) throws IOException {
-            Objects.requireNonNull(source, "source");
-            try (Reader resource = checkResource(source.getWithIO(), "Missing Reader")) {
-                return parseReader(resource);
-            }
+            return parseStream(() -> LegacyFiles.checkResource(type.getResourceAsStream(name), "Missing resource '" + name + "' of '" + type.getName() + "'"));
         }
 
         @NonNull
         default T parseStream(IOSupplier<? extends InputStream> source) throws IOException {
             Objects.requireNonNull(source, "source");
-            try (InputStream resource = checkResource(source.getWithIO(), "Missing InputStream")) {
+            try (InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream")) {
                 return parseStream(resource);
             }
         }
-
-        @NonNull
-        T parseReader(@NonNull Reader resource) throws IOException;
 
         @NonNull
         T parseStream(@NonNull InputStream resource) throws IOException;
@@ -101,22 +84,7 @@ public class Xml {
         }
     }
 
-    public interface Formatter<T> {
-
-        default String formatToString(@NonNull T value) throws IOException {
-            Objects.requireNonNull(value, "value");
-            StringWriter writer = new StringWriter();
-            formatWriter(value, writer);
-            return writer.toString();
-        }
-
-        default void formatChars(@NonNull T value, @NonNull Appendable target) throws IOException {
-            Objects.requireNonNull(value, "value");
-            Objects.requireNonNull(target, "target");
-            StringWriter writer = new StringWriter();
-            formatWriter(value, writer);
-            target.append(writer.getBuffer());
-        }
+    public interface Formatter<T> extends TextFormatter<T> {
 
         default void formatFile(@NonNull T value, @NonNull File target) throws IOException {
             Objects.requireNonNull(value, "value");
@@ -135,23 +103,13 @@ public class Xml {
             }
         }
 
-        default void formatWriter(@NonNull T value, IOSupplier<? extends Writer> target) throws IOException {
-            Objects.requireNonNull(value, "value");
-            Objects.requireNonNull(target, "target");
-            try (Writer resource = checkResource(target.getWithIO(), "Missing Writer")) {
-                formatWriter(value, resource);
-            }
-        }
-
         default void formatStream(@NonNull T value, IOSupplier<? extends OutputStream> target) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
-            try (OutputStream resource = checkResource(target.getWithIO(), "Missing OutputStream")) {
+            try (OutputStream resource = LegacyFiles.checkResource(target.getWithIO(), "Missing OutputStream")) {
                 formatStream(value, resource);
             }
         }
-
-        void formatWriter(@NonNull T value, @NonNull Writer resource) throws IOException;
 
         void formatStream(@NonNull T value, @NonNull OutputStream resource) throws IOException;
 
@@ -162,118 +120,66 @@ public class Xml {
         }
     }
 
-    static <T extends Closeable> T checkResource(T resource, String message) throws IOException {
-        if (resource == null) {
-            throw new IOException(message);
-        }
-        return resource;
-    }
+    private static final class AndThenParser<T, V> extends AndThenTextParser<T, V> implements Parser<V> {
 
-    @lombok.AllArgsConstructor
-    private static final class AndThenParser<T, V> implements Parser<V> {
-
-        @lombok.NonNull
-        private final Parser<T> parser;
-
-        @lombok.NonNull
-        private final Function<? super T, ? extends V> after;
-
-        @Override
-        public V parseChars(CharSequence source) throws IOException {
-            return after.apply(parser.parseChars(source));
+        AndThenParser(Parser<T> parser, Function<? super T, ? extends V> after) {
+            super(parser, after);
         }
 
         @Override
         public V parseFile(File source) throws IOException {
-            return after.apply(parser.parseFile(source));
+            return after.apply(((Parser<T>) parser).parseFile(source));
         }
 
         @Override
         public V parsePath(Path source) throws IOException {
-            return after.apply(parser.parsePath(source));
+            return after.apply(((Parser<T>) parser).parsePath(source));
         }
 
         @Override
         public V parseResource(Class<?> type, String name) throws IOException {
-            return after.apply(parser.parseResource(type, name));
-        }
-
-        @Override
-        public V parseReader(IOSupplier<? extends Reader> source) throws IOException {
-            return after.apply(parser.parseReader(source));
+            return after.apply(((Parser<T>) parser).parseResource(type, name));
         }
 
         @Override
         public V parseStream(IOSupplier<? extends InputStream> source) throws IOException {
-            return after.apply(parser.parseStream(source));
-        }
-
-        @Override
-        public V parseReader(Reader resource) throws IOException {
-            return after.apply(parser.parseReader(resource));
+            return after.apply(((Parser<T>) parser).parseStream(source));
         }
 
         @Override
         public V parseStream(InputStream resource) throws IOException {
-            return after.apply(parser.parseStream(resource));
+            return after.apply(((Parser<T>) parser).parseStream(resource));
         }
     }
 
-    @lombok.AllArgsConstructor
-    private static final class ComposeFormatter<V, T> implements Formatter<V> {
+    private static final class ComposeFormatter<V, T> extends ComposeTextFormatter<V, T> implements Formatter<V> {
 
-        @lombok.NonNull
-        private final Formatter<T> formatter;
-
-        @lombok.NonNull
-        private final Function<? super V, ? extends T> before;
-
-        @Override
-        public String formatToString(V value) throws IOException {
-            Objects.requireNonNull(value, "value");
-            return formatter.formatToString(before.apply(value));
-        }
-
-        @Override
-        public void formatChars(V value, Appendable target) throws IOException {
-            Objects.requireNonNull(value, "value");
-            formatter.formatChars(before.apply(value), target);
+        ComposeFormatter(Formatter<T> formatter, Function<? super V, ? extends T> before) {
+            super(formatter, before);
         }
 
         @Override
         public void formatFile(V value, File target) throws IOException {
             Objects.requireNonNull(value, "value");
-            formatter.formatFile(before.apply(value), target);
+            ((Formatter<T>) formatter).formatFile(before.apply(value), target);
         }
 
         @Override
         public void formatPath(V value, Path target) throws IOException {
             Objects.requireNonNull(value, "value");
-            formatter.formatPath(before.apply(value), target);
-        }
-
-        @Override
-        public void formatWriter(V value, IOSupplier<? extends Writer> target) throws IOException {
-            Objects.requireNonNull(value, "value");
-            formatter.formatWriter(before.apply(value), target);
+            ((Formatter<T>) formatter).formatPath(before.apply(value), target);
         }
 
         @Override
         public void formatStream(V value, IOSupplier<? extends OutputStream> target) throws IOException {
             Objects.requireNonNull(value, "value");
-            formatter.formatStream(before.apply(value), target);
-        }
-
-        @Override
-        public void formatWriter(V value, Writer resource) throws IOException {
-            Objects.requireNonNull(value, "value");
-            formatter.formatWriter(before.apply(value), resource);
+            ((Formatter<T>) formatter).formatStream(before.apply(value), target);
         }
 
         @Override
         public void formatStream(V value, OutputStream resource) throws IOException {
             Objects.requireNonNull(value, "value");
-            formatter.formatStream(before.apply(value), resource);
+            ((Formatter<T>) formatter).formatStream(before.apply(value), resource);
         }
     }
 }
