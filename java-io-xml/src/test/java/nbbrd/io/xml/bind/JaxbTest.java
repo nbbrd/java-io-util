@@ -240,7 +240,7 @@ public class JaxbTest {
                 .isThrownBy(() -> Jaxb.Formatter.of(Person.class).withEncoding(null));
 
         assertThat(Jaxb.Formatter.of(Person.class).withEncoding(StandardCharsets.ISO_8859_1).formatToString(Person.JOHN_DOE))
-                .isEqualTo(Person.JOHN_DOE_CHARS.replace("UTF-8", "ISO-8859-1"));
+                .isEqualTo(Person.getString(StandardCharsets.UTF_8, false).replace("UTF-8", "ISO-8859-1"));
     }
 
     @Test

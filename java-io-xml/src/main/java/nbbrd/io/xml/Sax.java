@@ -1,50 +1,38 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package nbbrd.io.xml;
 
-import internal.io.xml.LegacyFiles;
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
-import java.util.Objects;
-import java.util.logging.Level;
-import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
+import internal.io.text.LegacyFiles;
 import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IOSupplier;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.xml.sax.ContentHandler;
-import org.xml.sax.DTDHandler;
-import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.SAXNotRecognizedException;
-import org.xml.sax.SAXNotSupportedException;
-import org.xml.sax.SAXParseException;
-import org.xml.sax.XMLReader;
+import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.util.Objects;
+import java.util.logging.Level;
+
 /**
- *
  * @author Philippe Charles
  */
 @lombok.experimental.UtilityClass
@@ -55,8 +43,7 @@ public class Sax {
      * Prevents XXE vulnerability by disabling features.
      *
      * @param reader non-null reader
-     * @see
-     * https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLReader
+     * @see https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLReader
      */
     public void preventXXE(@NonNull XMLReader reader) {
 //        setFeatureQuietly(reader, "http://apache.org/xml/features/disallow-doctype-decl", true);
@@ -132,12 +119,20 @@ public class Sax {
         @lombok.NonNull
         private final IOSupplier<? extends T> after;
 
+        @lombok.Getter
         private final boolean ignoreXXE;
 
         @Override
         public T parseFile(File source) throws IOException {
             LegacyFiles.checkSource(source);
             return parse(newInputSource(source));
+        }
+
+        @Override
+        public T parseFile(File source, Charset encoding) throws IOException {
+            LegacyFiles.checkSource(source);
+            Objects.requireNonNull(encoding, "encoding");
+            return parse(newInputSource(source, encoding));
         }
 
         @Override
@@ -150,6 +145,15 @@ public class Sax {
         public T parseStream(InputStream resource) throws IOException {
             Objects.requireNonNull(resource, "resource");
             return parse(new InputSource(resource));
+        }
+
+        @Override
+        public T parseStream(InputStream resource, Charset encoding) throws IOException {
+            Objects.requireNonNull(resource, "resource");
+            Objects.requireNonNull(encoding, "encoding");
+            InputSource input = new InputSource(resource);
+            input.setEncoding(encoding.name());
+            return parse(input);
         }
 
         private T parse(InputSource input) throws IOException {
@@ -180,6 +184,20 @@ public class Sax {
      */
     public InputSource newInputSource(File file) {
         return new InputSource(LegacyFiles.toSystemId(file));
+    }
+
+    /**
+     * Creates a new InputSource from a file.
+     *
+     * @param file
+     * @param encoding
+     * @return
+     * @see SAXParser#parse(java.io.File, org.xml.sax.helpers.DefaultHandler)
+     */
+    public InputSource newInputSource(File file, Charset encoding) {
+        InputSource result = new InputSource(LegacyFiles.toSystemId(file));
+        result.setEncoding(encoding.name());
+        return result;
     }
 
     private final static SAXParserFactory DEFAULT_FACTORY = initFactory();

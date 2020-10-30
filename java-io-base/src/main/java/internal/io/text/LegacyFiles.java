@@ -14,17 +14,9 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package internal.io.xml;
+package internal.io.text;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URI;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
@@ -98,5 +90,12 @@ public class LegacyFiles {
         } catch (IllegalArgumentException ex) {
             return null;
         }
+    }
+
+    public static <T extends Closeable> T checkResource(T resource, String message) throws IOException {
+        if (resource == null) {
+            throw new IOException(message);
+        }
+        return resource;
     }
 }

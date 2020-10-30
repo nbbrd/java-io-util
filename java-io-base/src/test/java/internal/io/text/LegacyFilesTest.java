@@ -14,9 +14,9 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package nbbrd.io.xml;
+package internal.io.text;
 
-import internal.io.xml.LegacyFiles;
+import internal.io.text.LegacyFiles;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;

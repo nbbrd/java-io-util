@@ -1,39 +1,22 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package nbbrd.io.xml.bind;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Reader;
-import java.io.Writer;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.Objects;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.bind.PropertyException;
-import javax.xml.bind.Unmarshaller;
-import javax.xml.stream.XMLInputFactory;
-import javax.xml.stream.XMLStreamException;
-import javax.xml.stream.XMLStreamReader;
-import internal.io.xml.LegacyFiles;
+import internal.io.text.LegacyFiles;
 import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.xml.Sax;
@@ -42,8 +25,16 @@ import nbbrd.io.xml.Xml;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.xml.sax.SAXParseException;
 
+import javax.xml.bind.*;
+import javax.xml.stream.XMLInputFactory;
+import javax.xml.stream.XMLStreamException;
+import javax.xml.stream.XMLStreamReader;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
+
 /**
- *
  * @author Philippe Charles
  */
 @lombok.experimental.UtilityClass
@@ -120,6 +111,7 @@ public class Jaxb {
         @lombok.NonNull
         private final IOSupplier<? extends Unmarshaller> factory;
 
+        @lombok.Getter
         private final boolean ignoreXXE;
 
         @lombok.NonNull
@@ -133,6 +125,17 @@ public class Jaxb {
             return !ignoreXXE
                     ? parseFileXXE(engine, source, xxeFactory.getWithIO())
                     : parseFile(engine, source);
+        }
+
+        @Override
+        public T parseFile(File source, Charset encoding) throws IOException {
+            LegacyFiles.checkSource(source);
+            Objects.requireNonNull(encoding, "encoding");
+            Unmarshaller engine = factory.getWithIO();
+
+            return !ignoreXXE
+                    ? parseFileXXE(engine, source, xxeFactory.getWithIO())
+                    : parseFile(engine, source, encoding);
         }
 
         @Override
@@ -155,6 +158,17 @@ public class Jaxb {
                     : parseStream(engine, resource);
         }
 
+        @Override
+        public T parseStream(InputStream resource, Charset encoding) throws IOException {
+            Objects.requireNonNull(resource, "resource");
+            Objects.requireNonNull(encoding, "encoding");
+            Unmarshaller engine = factory.getWithIO();
+
+            return !ignoreXXE
+                    ? parseStreamXXE(engine, resource, xxeFactory.getWithIO())
+                    : parseStream(engine, resource);
+        }
+
         private static XMLInputFactory getStaxFactory() {
             XMLInputFactory result = XMLInputFactory.newFactory();
             Stax.preventXXE(result);
@@ -164,6 +178,14 @@ public class Jaxb {
         private static <T> T parseFile(Unmarshaller engine, File source) throws IOException {
             try {
                 return (T) engine.unmarshal(Sax.newInputSource(source));
+            } catch (JAXBException ex) {
+                throw toIOException(ex);
+            }
+        }
+
+        private static <T> T parseFile(Unmarshaller engine, File source, Charset encoding) throws IOException {
+            try {
+                return (T) engine.unmarshal(Sax.newInputSource(source, encoding));
             } catch (JAXBException ex) {
                 throw toIOException(ex);
             }
@@ -261,17 +283,23 @@ public class Jaxb {
         @lombok.NonNull
         private final IOSupplier<? extends Marshaller> factory;
 
+        @lombok.Getter
         private final boolean formatted;
 
         @lombok.NonNull
         private final Charset encoding;
 
         @Override
+        public Charset getDefaultEncoding() {
+            return encoding;
+        }
+
+        @Override
         public void formatFile(T value, File target) throws IOException {
             Objects.requireNonNull(value, "value");
             LegacyFiles.checkTarget(target);
             try {
-                getEngine().marshal(value, target);
+                getEngine(getDefaultEncoding()).marshal(value, target);
             } catch (JAXBException ex) {
                 throw toIOException(ex);
             }
@@ -282,7 +310,7 @@ public class Jaxb {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(resource, "resource");
             try {
-                getEngine().marshal(value, resource);
+                getEngine(getDefaultEncoding()).marshal(value, resource);
             } catch (JAXBException ex) {
                 throw toIOException(ex);
             }
@@ -293,16 +321,28 @@ public class Jaxb {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(resource, "resource");
             try {
-                getEngine().marshal(value, resource);
+                getEngine(getDefaultEncoding()).marshal(value, resource);
             } catch (JAXBException ex) {
                 throw toIOException(ex);
             }
         }
 
-        private Marshaller getEngine() throws PropertyException, IOException {
+        @Override
+        public void formatStream(T value, OutputStream resource, Charset encoding) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(resource, "resource");
+            Objects.requireNonNull(encoding, "encoding");
+            try {
+                getEngine(encoding).marshal(value, resource);
+            } catch (JAXBException ex) {
+                throw toIOException(ex);
+            }
+        }
+
+        private Marshaller getEngine(Charset selectedEncoding) throws PropertyException, IOException {
             Marshaller result = factory.getWithIO();
             result.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, formatted);
-            result.setProperty(Marshaller.JAXB_ENCODING, encoding.name());
+            result.setProperty(Marshaller.JAXB_ENCODING, selectedEncoding.name());
             return result;
         }
     }

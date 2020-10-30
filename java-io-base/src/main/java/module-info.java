@@ -24,4 +24,6 @@ module nbbrd.io.base {
     exports nbbrd.io.function;
     exports nbbrd.io.text;
     exports nbbrd.io.zip;
+
+    exports internal.io.text to nbbrd.io.xml;
 }
