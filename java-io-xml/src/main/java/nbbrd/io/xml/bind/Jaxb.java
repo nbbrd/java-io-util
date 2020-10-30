@@ -111,6 +111,7 @@ public class Jaxb {
         @lombok.NonNull
         private final IOSupplier<? extends Unmarshaller> factory;
 
+        @lombok.Getter
         private final boolean ignoreXXE;
 
         @lombok.NonNull
@@ -282,18 +283,23 @@ public class Jaxb {
         @lombok.NonNull
         private final IOSupplier<? extends Marshaller> factory;
 
+        @lombok.Getter
         private final boolean formatted;
 
-        @Deprecated
         @lombok.NonNull
         private final Charset encoding;
+
+        @Override
+        public Charset getDefaultEncoding() {
+            return encoding;
+        }
 
         @Override
         public void formatFile(T value, File target) throws IOException {
             Objects.requireNonNull(value, "value");
             LegacyFiles.checkTarget(target);
             try {
-                getEngine(encoding).marshal(value, target);
+                getEngine(getDefaultEncoding()).marshal(value, target);
             } catch (JAXBException ex) {
                 throw toIOException(ex);
             }
@@ -304,7 +310,7 @@ public class Jaxb {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(resource, "resource");
             try {
-                getEngine(encoding).marshal(value, resource);
+                getEngine(getDefaultEncoding()).marshal(value, resource);
             } catch (JAXBException ex) {
                 throw toIOException(ex);
             }
@@ -315,7 +321,7 @@ public class Jaxb {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(resource, "resource");
             try {
-                getEngine(encoding).marshal(value, resource);
+                getEngine(getDefaultEncoding()).marshal(value, resource);
             } catch (JAXBException ex) {
                 throw toIOException(ex);
             }

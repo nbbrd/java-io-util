@@ -119,6 +119,7 @@ public class Sax {
         @lombok.NonNull
         private final IOSupplier<? extends T> after;
 
+        @lombok.Getter
         private final boolean ignoreXXE;
 
         @Override

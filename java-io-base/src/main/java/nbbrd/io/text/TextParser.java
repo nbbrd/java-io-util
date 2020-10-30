@@ -1,7 +1,7 @@
 package nbbrd.io.text;
 
-import internal.io.text.LegacyFiles;
 import internal.io.text.AndThenTextParser;
+import internal.io.text.LegacyFiles;
 import nbbrd.io.Resource;
 import nbbrd.io.function.IOSupplier;
 import org.checkerframework.checker.nullness.qual.NonNull;

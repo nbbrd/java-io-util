@@ -97,6 +97,11 @@ public class XmlTest {
         private final T johnDoe;
 
         @Override
+        public boolean isIgnoreXXE() {
+            return false;
+        }
+
+        @Override
         public T parseReader(Reader resource) throws IOException {
             Objects.requireNonNull(resource, "resource");
             String xml = readtoString(resource);
@@ -178,6 +183,16 @@ public class XmlTest {
         private final T johnDoe;
 
         @Override
+        public boolean isFormatted() {
+            return false;
+        }
+
+        @Override
+        public Charset getDefaultEncoding() {
+            return StandardCharsets.UTF_8;
+        }
+
+        @Override
         public void formatWriter(T value, Writer resource) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(resource, "resource");
@@ -186,7 +201,7 @@ public class XmlTest {
                 throw new IOException();
             }
 
-            resource.append(Person.getString(StandardCharsets.UTF_8, false));
+            resource.append(Person.getString(getDefaultEncoding(), isFormatted()));
         }
 
         @Override
@@ -198,7 +213,7 @@ public class XmlTest {
                 throw new IOException();
             }
 
-            resource.write(Person.getString(StandardCharsets.UTF_8, false).getBytes(StandardCharsets.UTF_8));
+            resource.write(Person.getString(getDefaultEncoding(), isFormatted()).getBytes(getDefaultEncoding()));
         }
 
         @Override
@@ -211,7 +226,7 @@ public class XmlTest {
                 throw new IOException();
             }
 
-            resource.write(Person.getString(encoding, false).getBytes(encoding));
+            resource.write(Person.getString(encoding, isFormatted()).getBytes(encoding));
         }
     }
 }

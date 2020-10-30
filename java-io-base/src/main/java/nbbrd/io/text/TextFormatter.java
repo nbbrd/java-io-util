@@ -74,7 +74,6 @@ public interface TextFormatter<T> {
 
     @NonNull
     default <V> TextFormatter<V> compose(@NonNull Function<? super V, ? extends T> before) {
-        Objects.requireNonNull(before);
         return new ComposeTextFormatter<>(this, before);
     }
 }
