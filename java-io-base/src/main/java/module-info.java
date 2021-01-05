@@ -19,6 +19,7 @@ module nbbrd.io.base {
 
     requires static org.checkerframework.checker.qual;
     requires static lombok;
+    requires static nbbrd.design;
 
     exports nbbrd.io;
     exports nbbrd.io.function;

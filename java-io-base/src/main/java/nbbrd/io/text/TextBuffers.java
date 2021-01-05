@@ -1,11 +1,12 @@
 package nbbrd.io.text;
 
 import lombok.AccessLevel;
+import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.BlockSizer;
+import org.checkerframework.checker.index.qual.NonNegative;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.channels.Channels;
 import java.nio.channels.ReadableByteChannel;
 import java.nio.channels.WritableByteChannel;
@@ -22,19 +23,23 @@ public final class TextBuffers {
 
     public static final TextBuffers UNKNOWN = new TextBuffers(-1, -1, -1);
 
-    public static TextBuffers of(Path file, CharsetDecoder decoder) throws IOException {
+    @StaticFactoryMethod
+    public static @NonNull TextBuffers of(@NonNull Path file, @NonNull CharsetDecoder decoder) throws IOException {
         return make(BlockSizer.INSTANCE.get().getBlockSize(file), decoder.averageCharsPerByte());
     }
 
-    public static TextBuffers of(Path file, CharsetEncoder encoder) throws IOException {
+    @StaticFactoryMethod
+    public static @NonNull TextBuffers of(@NonNull Path file, @NonNull CharsetEncoder encoder) throws IOException {
         return make(BlockSizer.INSTANCE.get().getBlockSize(file), 1f / encoder.averageBytesPerChar());
     }
 
-    public static TextBuffers of(InputStream stream, CharsetDecoder decoder) throws IOException {
+    @StaticFactoryMethod
+    public static @NonNull TextBuffers of(@NonNull InputStream stream, @NonNull CharsetDecoder decoder) throws IOException {
         return make(BlockSizer.INSTANCE.get().getBlockSize(stream), decoder.averageCharsPerByte());
     }
 
-    public static TextBuffers of(OutputStream stream, CharsetEncoder encoder) throws IOException {
+    @StaticFactoryMethod
+    public static @NonNull TextBuffers of(@NonNull OutputStream stream, @NonNull CharsetEncoder encoder) throws IOException {
         Objects.requireNonNull(stream);
         return make(BlockSizer.INSTANCE.get().getBlockSize(stream), 1f / encoder.averageBytesPerChar());
     }
@@ -53,19 +58,21 @@ public final class TextBuffers {
     private final int bytes;
     private final int chars;
 
+    @NonNegative
     public int getCharBufferSize() {
         return chars > 0 ? chars : DEFAULT_CHAR_BUFFER_SIZE;
     }
 
+    @NonNegative
     public int getChannelMinBufferCap() {
         return bytes > 0 ? bytes : IMPL_DEPENDENT_MIN_BUFFER_CAP;
     }
 
-    public java.io.Reader newCharReader(ReadableByteChannel channel, CharsetDecoder decoder) {
+    public @NonNull Reader newCharReader(@NonNull ReadableByteChannel channel, @NonNull CharsetDecoder decoder) {
         return Channels.newReader(channel, decoder, getChannelMinBufferCap());
     }
 
-    public java.io.Writer newCharWriter(WritableByteChannel channel, CharsetEncoder encoder) {
+    public @NonNull Writer newCharWriter(@NonNull WritableByteChannel channel, @NonNull CharsetEncoder encoder) {
         return Channels.newWriter(channel, encoder, getChannelMinBufferCap());
     }
 
