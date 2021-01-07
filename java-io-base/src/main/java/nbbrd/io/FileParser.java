@@ -49,8 +49,7 @@ public interface FileParser<T> {
     @NonNull
     T parseStream(@NonNull InputStream resource) throws IOException;
 
-    @NonNull
-    default <V> FileParser andThen(@NonNull Function<? super T, ? extends V> after) {
+    default <V> @NonNull FileParser andThen(@NonNull Function<? super T, ? extends V> after) {
         return new AndThenFileParser<>(this, after);
     }
 }

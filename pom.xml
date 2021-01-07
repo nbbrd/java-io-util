@@ -100,7 +100,7 @@
             </activation>
             <properties>
                 <lombok.version>1.18.16</lombok.version>
-                <java-design.version>1.1.1</java-design.version>
+                <java-design.version>1.1.2</java-design.version>
             </properties>
             <dependencyManagement>
                 <dependencies>

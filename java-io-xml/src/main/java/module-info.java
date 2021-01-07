@@ -19,6 +19,7 @@ module nbbrd.io.xml {
 
     requires static org.checkerframework.checker.qual;
     requires static lombok;
+    requires static nbbrd.design;
 
     requires java.logging;
     requires transitive nbbrd.io.base;

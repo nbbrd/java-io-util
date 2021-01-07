@@ -72,8 +72,7 @@ public interface TextFormatter<T> {
 
     void formatStream(@NonNull T value, @NonNull OutputStream resource, @NonNull Charset encoding) throws IOException;
 
-    @NonNull
-    default <V> TextFormatter<V> compose(@NonNull Function<? super V, ? extends T> before) {
+    default <V> @NonNull TextFormatter<V> compose(@NonNull Function<? super V, ? extends T> before) {
         return new ComposeTextFormatter<>(this, before);
     }
 }

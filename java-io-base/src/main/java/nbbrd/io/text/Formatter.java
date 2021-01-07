@@ -1,22 +1,26 @@
 /*
-* Copyright 2013 National Bank of Belgium
-*
-* Licensed under the EUPL, Version 1.1 or – as soon they will be approved 
-* by the European Commission - subsequent versions of the EUPL (the "Licence");
-* You may not use this work except in compliance with the Licence.
-* You may obtain a copy of the Licence at:
-*
-* http://ec.europa.eu/idabc/eupl
-*
-* Unless required by applicable law or agreed to in writing, software 
-* distributed under the Licence is distributed on an "AS IS" basis,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the Licence for the specific language governing permissions and 
-* limitations under the Licence.
+ * Copyright 2013 National Bank of Belgium
+ *
+ * Licensed under the EUPL, Version 1.1 or – as soon they will be approved
+ * by the European Commission - subsequent versions of the EUPL (the "Licence");
+ * You may not use this work except in compliance with the Licence.
+ * You may obtain a copy of the Licence at:
+ *
+ * http://ec.europa.eu/idabc/eupl
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the Licence is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the Licence for the specific language governing permissions and
+ * limitations under the Licence.
  */
 package nbbrd.io.text;
 
 import internal.io.text.InternalFormatter;
+import nbbrd.design.StaticFactoryMethod;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.io.File;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
@@ -29,8 +33,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Defines a class that creates a {@link CharSequence} from an object.<br> For
@@ -41,8 +43,8 @@ import org.checkerframework.checker.nullness.qual.Nullable;
  * create a "null value" from a formatter, you should use the NullObject
  * pattern.
  *
- * @author Philippe Charles
  * @param <T> The type of the object to be formatted
+ * @author Philippe Charles
  * @see Parser
  */
 @FunctionalInterface
@@ -54,8 +56,7 @@ public interface Formatter<T> {
      * @param value the input used to create the CharSequence
      * @return a new CharSequence if possible, {@code null} otherwise
      */
-    @Nullable
-    CharSequence format(@Nullable T value);
+    @Nullable CharSequence format(@Nullable T value);
 
     /**
      * Format an object into a String.
@@ -63,8 +64,7 @@ public interface Formatter<T> {
      * @param value the input used to create the String
      * @return a new String if possible, {@code null} otherwise
      */
-    @Nullable
-    default String formatAsString(@Nullable T value) {
+    default @Nullable String formatAsString(@Nullable T value) {
         CharSequence result = format(value);
         return result != null ? result.toString() : null;
     }
@@ -78,8 +78,7 @@ public interface Formatter<T> {
      * @param value the input used to create the CharSequence
      * @return a never-null {@link Optional}
      */
-    @NonNull
-    default Optional<CharSequence> formatValue(@Nullable T value) {
+    default @NonNull Optional<CharSequence> formatValue(@Nullable T value) {
         return Optional.ofNullable(format(value));
     }
 
@@ -92,8 +91,7 @@ public interface Formatter<T> {
      * @param value the input used to create the String
      * @return a never-null {@link Optional}
      */
-    @NonNull
-    default Optional<String> formatValueAsString(@Nullable T value) {
+    default @NonNull Optional<String> formatValueAsString(@Nullable T value) {
         return Optional.ofNullable(formatAsString(value));
     }
 
@@ -105,102 +103,101 @@ public interface Formatter<T> {
      * @param before
      * @return a never-null formatter
      */
-    @NonNull
-    default <Y> Formatter<Y> compose(@NonNull Function<? super Y, ? extends T> before) {
+    default <Y> @NonNull Formatter<Y> compose(@NonNull Function<? super Y, ? extends T> before) {
         Objects.requireNonNull(before);
         return o -> format(before.apply(o));
     }
 
-    @NonNull
-    static <T extends TemporalAccessor> Formatter<T> onDateTimeFormatter(@NonNull DateTimeFormatter formatter) {
+    @StaticFactoryMethod
+    static <T extends TemporalAccessor> @NonNull Formatter<T> onDateTimeFormatter(@NonNull DateTimeFormatter formatter) {
         Objects.requireNonNull(formatter);
         return o -> InternalFormatter.formatTemporalAccessor(formatter, o);
     }
 
-    @NonNull
-    static Formatter<Date> onDateFormat(@NonNull DateFormat dateFormat) {
+    @StaticFactoryMethod
+    static @NonNull Formatter<Date> onDateFormat(@NonNull DateFormat dateFormat) {
         Objects.requireNonNull(dateFormat);
         return o -> InternalFormatter.formatDate(dateFormat, o);
     }
 
-    @NonNull
-    static Formatter<Number> onNumberFormat(@NonNull NumberFormat numberFormat) {
+    @StaticFactoryMethod
+    static @NonNull Formatter<Number> onNumberFormat(@NonNull NumberFormat numberFormat) {
         Objects.requireNonNull(numberFormat);
         return o -> InternalFormatter.formatNumber(numberFormat, o);
     }
 
-    @NonNull
-    static <T> Formatter<T> onConstant(@Nullable CharSequence instance) {
+    @StaticFactoryMethod
+    static <T> @NonNull Formatter<T> onConstant(@Nullable CharSequence instance) {
         return o -> InternalFormatter.formatConstant(instance, o);
     }
 
-    @NonNull
-    static <T> Formatter<T> onNull() {
+    @StaticFactoryMethod
+    static <T> @NonNull Formatter<T> onNull() {
         return InternalFormatter::formatNull;
     }
 
-    @NonNull
-    static Formatter<File> onFile() {
+    @StaticFactoryMethod
+    static @NonNull Formatter<File> onFile() {
         return InternalFormatter::formatFile;
     }
 
-    @NonNull
-    static Formatter<Integer> onInteger() {
+    @StaticFactoryMethod
+    static @NonNull Formatter<Integer> onInteger() {
         return InternalFormatter::formatInteger;
     }
 
-    @NonNull
-    static Formatter<Long> onLong() {
+    @StaticFactoryMethod
+    static @NonNull Formatter<Long> onLong() {
         return InternalFormatter::formatLong;
     }
 
-    @NonNull
-    static Formatter<Double> onDouble() {
+    @StaticFactoryMethod
+    static @NonNull Formatter<Double> onDouble() {
         return InternalFormatter::formatDouble;
     }
 
-    @NonNull
-    static Formatter<Boolean> onBoolean() {
+    @StaticFactoryMethod
+    static @NonNull Formatter<Boolean> onBoolean() {
         return InternalFormatter::formatBoolean;
     }
 
-    @NonNull
-    static Formatter<Character> onCharacter() {
+    @StaticFactoryMethod
+    static @NonNull Formatter<Character> onCharacter() {
         return InternalFormatter::formatCharacter;
     }
 
-    @NonNull
-    static Formatter<Charset> onCharset() {
+    @StaticFactoryMethod
+    static @NonNull Formatter<Charset> onCharset() {
         return InternalFormatter::formatCharset;
     }
 
-    @NonNull
-    static <T extends Enum<T>> Formatter<T> onEnum() {
+    @StaticFactoryMethod
+    static @NonNull <T extends Enum<T>> Formatter<T> onEnum() {
         return InternalFormatter::formatEnum;
     }
 
-    @NonNull
-    static Formatter<String> onString() {
+    @StaticFactoryMethod
+    static @NonNull Formatter<String> onString() {
         return InternalFormatter::formatString;
     }
 
-    @NonNull
-    static Formatter<Object> onObjectToString() {
+    @StaticFactoryMethod
+    static @NonNull Formatter<Object> onObjectToString() {
         return InternalFormatter::formatObjectToString;
     }
 
-    @NonNull
-    static Formatter<double[]> onDoubleArray() {
+    @StaticFactoryMethod
+    static @NonNull Formatter<double[]> onDoubleArray() {
         return InternalFormatter::formatDoubleArray;
     }
 
-    @NonNull
-    static Formatter<String[]> onStringArray() {
+    @StaticFactoryMethod
+    static @NonNull Formatter<String[]> onStringArray() {
         return InternalFormatter::formatStringArray;
     }
 
-    @NonNull
-    static Formatter<List<String>> onStringList(@NonNull Function<Stream<CharSequence>, String> joiner) {
+    @StaticFactoryMethod
+    static @NonNull Formatter<List<String>> onStringList(@NonNull Function<Stream<CharSequence>, String> joiner) {
         Objects.requireNonNull(joiner);
         return o -> InternalFormatter.formatStringList(joiner, o);
     }

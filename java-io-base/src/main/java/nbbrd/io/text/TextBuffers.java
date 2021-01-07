@@ -58,13 +58,11 @@ public final class TextBuffers {
     private final int bytes;
     private final int chars;
 
-    @NonNegative
-    public int getCharBufferSize() {
+    public @NonNegative int getCharBufferSize() {
         return chars > 0 ? chars : DEFAULT_CHAR_BUFFER_SIZE;
     }
 
-    @NonNegative
-    public int getChannelMinBufferCap() {
+    public @NonNegative int getChannelMinBufferCap() {
         return bytes > 0 ? bytes : IMPL_DEPENDENT_MIN_BUFFER_CAP;
     }
 

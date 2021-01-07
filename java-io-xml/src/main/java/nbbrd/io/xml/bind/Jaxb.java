@@ -17,6 +17,7 @@
 package nbbrd.io.xml.bind;
 
 import internal.io.text.LegacyFiles;
+import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.xml.Sax;
@@ -84,14 +85,14 @@ public class Jaxb {
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class Parser<T> implements Xml.Parser<T> {
 
-        @NonNull
-        public static <T> Parser<T> of(@NonNull Class<T> type) throws IOException {
+        @StaticFactoryMethod
+        public static <T> @NonNull Parser<T> of(@NonNull Class<T> type) throws IOException {
             Objects.requireNonNull(type);
             return Parser.<T>builder().factory(() -> createUnmarshaller(type)).build();
         }
 
-        @NonNull
-        public static <T> Parser<T> of(@NonNull JAXBContext context) throws IOException {
+        @StaticFactoryMethod
+        public static <T> @NonNull Parser<T> of(@NonNull JAXBContext context) throws IOException {
             Objects.requireNonNull(context);
             return Parser.<T>builder().factory(() -> createUnmarshaller(context)).build();
         }
@@ -257,14 +258,14 @@ public class Jaxb {
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class Formatter<T> implements Xml.Formatter<T> {
 
-        @NonNull
-        public static <T> Formatter<T> of(@NonNull Class<T> type) throws IOException {
+        @StaticFactoryMethod
+        public static <T> @NonNull Formatter<T> of(@NonNull Class<T> type) throws IOException {
             Objects.requireNonNull(type);
             return Formatter.<T>builder().factory(() -> createMarshaller(type)).build();
         }
 
-        @NonNull
-        public static <T> Formatter<T> of(@NonNull JAXBContext context) throws IOException {
+        @StaticFactoryMethod
+        public static <T> @NonNull Formatter<T> of(@NonNull JAXBContext context) throws IOException {
             Objects.requireNonNull(context);
             return Formatter.<T>builder().factory(() -> createMarshaller(context)).build();
         }

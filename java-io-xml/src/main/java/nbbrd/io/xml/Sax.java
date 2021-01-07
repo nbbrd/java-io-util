@@ -17,6 +17,7 @@
 package nbbrd.io.xml;
 
 import internal.io.text.LegacyFiles;
+import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IOSupplier;
@@ -67,8 +68,8 @@ public class Sax {
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class Parser<T> implements Xml.Parser<T> {
 
-        @NonNull
-        public static <T> Parser<T> of(@NonNull ContentHandler handler, IOSupplier<? extends T> after) {
+        @StaticFactoryMethod
+        public static <T> @NonNull Parser<T> of(@NonNull ContentHandler handler, IOSupplier<? extends T> after) {
             Parser.Builder<T> result = Parser.<T>builder().contentHandler(handler);
             if (handler instanceof DTDHandler) {
                 result.dtdHandler((DTDHandler) handler);

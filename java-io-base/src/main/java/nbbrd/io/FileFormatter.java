@@ -43,8 +43,7 @@ public interface FileFormatter<T> {
 
     void formatStream(@NonNull T value, @NonNull OutputStream resource) throws IOException;
 
-    @NonNull
-    default <V> FileFormatter<V> compose(@NonNull Function<? super V, ? extends T> before) {
+    default <V> @NonNull FileFormatter<V> compose(@NonNull Function<? super V, ? extends T> before) {
         return new ComposeFileFormatter<>(this, before);
     }
 }
