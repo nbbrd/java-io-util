@@ -4,7 +4,7 @@
     
     <groupId>be.nbb.rd</groupId>
     <artifactId>java-io-parent</artifactId>
-    <version>0.0.8</version>
+    <version>0.0.9</version>
     <packaging>pom</packaging>
 
     <name>java-io</name>
@@ -33,7 +33,7 @@
             <dependency>
                 <groupId>org.checkerframework</groupId>
                 <artifactId>checker-qual</artifactId>
-                <version>3.7.0</version>
+                <version>3.9.0</version>
             </dependency>
         
             <!-- test libraries -->
@@ -45,12 +45,12 @@
             <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
-                <version>3.18.0</version>
+                <version>3.18.1</version>
             </dependency>
             <dependency>
                 <groupId>com.google.jimfs</groupId>
                 <artifactId>jimfs</artifactId>
-                <version>1.1</version>
+                <version>1.2</version>
             </dependency>        
             <dependency>
                 <groupId>com.github.tomakehurst</groupId>
@@ -100,6 +100,7 @@
             </activation>
             <properties>
                 <lombok.version>1.18.16</lombok.version>
+                <java-design.version>1.1.2</java-design.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -107,6 +108,16 @@
                         <groupId>org.projectlombok</groupId>
                         <artifactId>lombok</artifactId>
                         <version>${lombok.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>be.nbb.rd</groupId>
+                        <artifactId>java-design-annotation</artifactId>
+                        <version>${java-design.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>be.nbb.rd</groupId>
+                        <artifactId>java-design-processor</artifactId>
+                        <version>${java-design.version}</version>
                     </dependency>
                 </dependencies>
             </dependencyManagement>
@@ -121,6 +132,11 @@
                                     <groupId>org.projectlombok</groupId>
                                     <artifactId>lombok</artifactId>
                                     <version>${lombok.version}</version>
+                                </path>
+                                <path>
+                                    <groupId>be.nbb.rd</groupId>
+                                    <artifactId>java-design-processor</artifactId>
+                                    <version>${java-design.version}</version>
                                 </path>
                             </annotationProcessorPaths>
                         </configuration>
@@ -368,4 +384,14 @@
             </build>
         </profile>
     </profiles>
+
+    <repositories>
+        <repository>
+            <id>oss-jfrog-artifactory-releases</id>
+            <url>https://oss.jfrog.org/artifactory/oss-release-local</url>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>

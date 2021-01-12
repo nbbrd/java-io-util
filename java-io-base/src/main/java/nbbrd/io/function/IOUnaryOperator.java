@@ -1,26 +1,29 @@
 /*
  * Copyright 2020 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package nbbrd.io.function;
+
+import internal.io.JdkWithIO;
+import nbbrd.design.StaticFactoryMethod;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * Represents an operation on a single operand that produces a result of the
@@ -32,9 +35,8 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 @FunctionalInterface
 public interface IOUnaryOperator<T> extends IOFunction<T, T> {
 
-    @NonNull
     @Override
-    default UnaryOperator<T> asUnchecked() {
+    default @NonNull UnaryOperator<T> asUnchecked() {
         return (T t) -> {
             try {
                 return applyWithIO(t);
@@ -44,13 +46,12 @@ public interface IOUnaryOperator<T> extends IOFunction<T, T> {
         };
     }
 
-    @NonNull
-    static <T> UnaryOperator<T> unchecked(@NonNull IOUnaryOperator<T> o) {
+    static <T> @NonNull UnaryOperator<T> unchecked(@NonNull IOUnaryOperator<T> o) {
         return o.asUnchecked();
     }
 
-    @NonNull
-    static <T> IOUnaryOperator<T> checked(@NonNull UnaryOperator<T> func) {
+    @StaticFactoryMethod
+    static <T> @NonNull IOUnaryOperator<T> checked(@NonNull UnaryOperator<T> func) {
         Objects.requireNonNull(func);
         return (o) -> {
             try {
@@ -67,7 +68,9 @@ public interface IOUnaryOperator<T> extends IOFunction<T, T> {
      * @param <T> the type of the input and output of the operator
      * @return a unary operator that always returns its input argument
      */
-    static <T> IOUnaryOperator<T> identity() {
+    @JdkWithIO
+    @StaticFactoryMethod
+    static <T> @NonNull IOUnaryOperator<T> identity() {
         return t -> t;
     }
 }

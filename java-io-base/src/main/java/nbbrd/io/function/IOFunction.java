@@ -1,28 +1,30 @@
 /*
  * Copyright 2020 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package nbbrd.io.function;
 
 import internal.io.JdkWithIO;
+import nbbrd.design.StaticFactoryMethod;
+import org.checkerframework.checker.nullness.qual.NonNull;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Objects;
 import java.util.function.Function;
-import org.checkerframework.checker.nullness.qual.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  * Represents a function that accepts one argument and produces a result.
@@ -38,7 +40,7 @@ public interface IOFunction<T, R> {
      *
      * @param t the function argument
      * @return the function result
-     * @throws java.io.IOException
+     * @throws java.io.IOException if an I/O error occurs
      */
     @JdkWithIO
     R applyWithIO(T t) throws IOException;
@@ -49,18 +51,16 @@ public interface IOFunction<T, R> {
      * evaluation of either function throws an exception, it is relayed to the
      * caller of the composed function.
      *
-     * @param <V> the type of input to the {@code before} function, and to the
-     * composed function
+     * @param <V>    the type of input to the {@code before} function, and to the
+     *               composed function
      * @param before the function to apply before this function is applied
      * @return a composed function that first applies the {@code before}
      * function and then applies this function
      * @throws NullPointerException if before is null
-     *
-     * @see #andThen(FunctionWithIO)
+     * @see #andThen(IOFunction)
      */
     @JdkWithIO
-    @NonNull
-    default <V> IOFunction<V, R> compose(@NonNull IOFunction<? super V, ? extends T> before) {
+    default <V> @NonNull IOFunction<V, R> compose(@NonNull IOFunction<? super V, ? extends T> before) {
         Objects.requireNonNull(before);
         return (V v) -> applyWithIO(before.applyWithIO(v));
     }
@@ -71,24 +71,21 @@ public interface IOFunction<T, R> {
      * evaluation of either function throws an exception, it is relayed to the
      * caller of the composed function.
      *
-     * @param <V> the type of output of the {@code after} function, and of the
-     * composed function
+     * @param <V>   the type of output of the {@code after} function, and of the
+     *              composed function
      * @param after the function to apply after this function is applied
      * @return a composed function that first applies this function and then
      * applies the {@code after} function
      * @throws NullPointerException if after is null
-     *
-     * @see #compose(FunctionWithIO)
+     * @see #compose(IOFunction)
      */
     @JdkWithIO
-    @NonNull
-    default <V> IOFunction<T, V> andThen(@NonNull IOFunction<? super R, ? extends V> after) {
+    default <V> @NonNull IOFunction<T, V> andThen(@NonNull IOFunction<? super R, ? extends V> after) {
         Objects.requireNonNull(after);
         return (T t) -> after.applyWithIO(applyWithIO(t));
     }
 
-    @NonNull
-    default Function<T, R> asUnchecked() {
+    default @NonNull Function<T, R> asUnchecked() {
         return (T t) -> {
             try {
                 return applyWithIO(t);
@@ -98,13 +95,12 @@ public interface IOFunction<T, R> {
         };
     }
 
-    @NonNull
-    static <T, R> Function<T, R> unchecked(@NonNull IOFunction<T, R> o) {
+    static <T, R> @NonNull Function<T, R> unchecked(@NonNull IOFunction<T, R> o) {
         return o.asUnchecked();
     }
 
-    @NonNull
-    static <T, R> IOFunction<T, R> checked(@NonNull Function<T, R> func) {
+    @StaticFactoryMethod
+    static <T, R> @NonNull IOFunction<T, R> checked(@NonNull Function<T, R> func) {
         Objects.requireNonNull(func);
         return (o) -> {
             try {
@@ -122,14 +118,14 @@ public interface IOFunction<T, R> {
      * @return a function that always returns its input argument
      */
     @JdkWithIO
-    @NonNull
-    static <T> IOFunction<T, T> identity() {
+    @StaticFactoryMethod
+    static <T> @NonNull IOFunction<T, T> identity() {
         return (t) -> t;
     }
 
-    @NonNull
+    @StaticFactoryMethod
     @SuppressWarnings(value = "null")
-    static <T, R> IOFunction<T, R> of(@Nullable R r) {
+    static <T, R> @NonNull IOFunction<T, R> of(@Nullable R r) {
         return (o) -> r;
     }
 }

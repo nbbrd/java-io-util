@@ -1,22 +1,23 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package nbbrd.io.xml;
 
 import internal.io.text.LegacyFiles;
+import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.Resource;
 import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IORunnable;
@@ -30,7 +31,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.Objects;
 
 /**
- *
  * @author Philippe Charles
  */
 @lombok.experimental.UtilityClass
@@ -40,8 +40,7 @@ public class Stax {
      * Prevents XXE vulnerability by disabling features.
      *
      * @param factory non-null factory
-     * @see
-     * https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLInputFactory_.28a_StAX_parser.29
+     * @see https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLInputFactory_.28a_StAX_parser.29
      */
     public void preventXXE(@NonNull XMLInputFactory factory) {
         setFeature(factory, XMLInputFactory.SUPPORT_DTD, false);
@@ -54,8 +53,8 @@ public class Stax {
         @NonNull
         T parse(@NonNull I input, @NonNull Closeable onClose) throws IOException, XMLStreamException;
 
-        @NonNull
-        static <I, T> FlowHandler<I, T> of(@NonNull ValueHandler<I, T> handler) {
+        @StaticFactoryMethod
+        static <I, T> @NonNull FlowHandler<I, T> of(@NonNull ValueHandler<I, T> handler) {
             return handler.asFlow();
         }
     }
@@ -97,13 +96,13 @@ public class Stax {
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class StreamParser<T> implements Xml.Parser<T> {
 
-        @NonNull
-        public static <T> StreamParser<T> flowOf(@NonNull FlowHandler<XMLStreamReader, T> handler) {
+        @StaticFactoryMethod
+        public static <T> @NonNull StreamParser<T> flowOf(@NonNull FlowHandler<XMLStreamReader, T> handler) {
             return StreamParser.<T>builder().flow(handler).build();
         }
 
-        @NonNull
-        public static <T> StreamParser<T> valueOf(@NonNull ValueHandler<XMLStreamReader, T> handler) {
+        @StaticFactoryMethod
+        public static <T> @NonNull StreamParser<T> valueOf(@NonNull ValueHandler<XMLStreamReader, T> handler) {
             return flowOf(handler.asFlow());
         }
 
@@ -206,13 +205,13 @@ public class Stax {
     @lombok.Builder(builderClassName = "Builder", toBuilder = true)
     public static final class EventParser<T> implements Xml.Parser<T> {
 
-        @NonNull
-        public static <T> EventParser<T> flowOf(@NonNull FlowHandler<XMLEventReader, T> handler) {
+        @StaticFactoryMethod
+        public static <T> @NonNull EventParser<T> flowOf(@NonNull FlowHandler<XMLEventReader, T> handler) {
             return EventParser.<T>builder().flow(handler).build();
         }
 
-        @NonNull
-        public static <T> EventParser<T> valueOf(@NonNull ValueHandler<XMLEventReader, T> handler) {
+        @StaticFactoryMethod
+        public static <T> @NonNull EventParser<T> valueOf(@NonNull ValueHandler<XMLEventReader, T> handler) {
             return flowOf(handler.asFlow());
         }
 
@@ -315,13 +314,13 @@ public class Stax {
     public static final class StreamFormatter<T> implements Xml.Formatter<T> {
 
         @Deprecated
-        @NonNull
-        public static <T> StreamFormatter<T> valueOf(@NonNull OutputHandler<XMLStreamWriter, T> handler) {
+        @StaticFactoryMethod
+        public static <T> @NonNull StreamFormatter<T> valueOf(@NonNull OutputHandler<XMLStreamWriter, T> handler) {
             return of(handler.withEncoding());
         }
 
-        @NonNull
-        public static <T> StreamFormatter<T> of(@NonNull OutputHandler2<XMLStreamWriter, T> handler2) {
+        @StaticFactoryMethod
+        public static <T> @NonNull StreamFormatter<T> of(@NonNull OutputHandler2<XMLStreamWriter, T> handler2) {
             return StreamFormatter.<T>builder().handler2(handler2).build();
         }
 
@@ -435,13 +434,13 @@ public class Stax {
     public static final class EventFormatter<T> implements Xml.Formatter<T> {
 
         @Deprecated
-        @NonNull
-        public static <T> EventFormatter<T> valueOf(@NonNull OutputHandler<XMLEventWriter, T> handler) {
+        @StaticFactoryMethod
+        public static <T> @NonNull EventFormatter<T> valueOf(@NonNull OutputHandler<XMLEventWriter, T> handler) {
             return of(handler.withEncoding());
         }
 
-        @NonNull
-        public static <T> EventFormatter<T> of(@NonNull OutputHandler2<XMLEventWriter, T> handler2) {
+        @StaticFactoryMethod
+        public static <T> @NonNull EventFormatter<T> of(@NonNull OutputHandler2<XMLEventWriter, T> handler2) {
             return EventFormatter.<T>builder().handler2(handler2).build();
         }
 

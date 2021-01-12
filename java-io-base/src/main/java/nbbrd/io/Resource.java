@@ -1,43 +1,37 @@
 /*
  * Copyright 2020 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package nbbrd.io;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URI;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Collections;
-import java.util.Objects;
-import java.util.Optional;
+import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.function.IOConsumer;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IORunnable;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.io.*;
+import java.net.URI;
+import java.nio.file.FileSystem;
+import java.nio.file.*;
+import java.util.Collections;
+import java.util.Objects;
+import java.util.Optional;
+
 /**
- *
  * @author Philippe Charles
  */
 @lombok.experimental.UtilityClass
@@ -48,13 +42,13 @@ public class Resource {
         @NonNull
         InputStream load(@NonNull K key) throws IOException, IllegalStateException;
 
-        @NonNull
-        static <K> Loader<K> of(@NonNull IOFunction<? super K, ? extends InputStream> loader) {
+        @StaticFactoryMethod
+        static <K> @NonNull Loader<K> of(@NonNull IOFunction<? super K, ? extends InputStream> loader) {
             return of(loader, IORunnable.noOp().asCloseable());
         }
 
-        @NonNull
-        static <K> Loader<K> of(@NonNull IOFunction<? super K, ? extends InputStream> loader, @NonNull Closeable closer) {
+        @StaticFactoryMethod
+        static <K> @NonNull Loader<K> of(@NonNull IOFunction<? super K, ? extends InputStream> loader, @NonNull Closeable closer) {
             Objects.requireNonNull(loader);
             Objects.requireNonNull(closer);
             return new Loader<K>() {

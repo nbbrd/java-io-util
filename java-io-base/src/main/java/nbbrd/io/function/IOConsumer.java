@@ -1,27 +1,29 @@
 /*
  * Copyright 2020 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package nbbrd.io.function;
 
 import internal.io.JdkWithIO;
+import nbbrd.design.StaticFactoryMethod;
+import org.checkerframework.checker.nullness.qual.NonNull;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Objects;
 import java.util.function.Consumer;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 /**
  * Represents an operation that accepts a single input argument and returns no
@@ -37,7 +39,7 @@ public interface IOConsumer<T> {
      * Performs this operation on the given argument.
      *
      * @param t the input argument
-     * @throws java.io.IOException
+     * @throws java.io.IOException if an I/O error occurs
      */
     @JdkWithIO
     void acceptWithIO(T t) throws IOException;
@@ -55,8 +57,7 @@ public interface IOConsumer<T> {
      * @throws NullPointerException if {@code after} is null
      */
     @JdkWithIO
-    @NonNull
-    default IOConsumer<T> andThen(@NonNull IOConsumer<? super T> after) {
+    default @NonNull IOConsumer<T> andThen(@NonNull IOConsumer<? super T> after) {
         Objects.requireNonNull(after);
         return (T t) -> {
             acceptWithIO(t);
@@ -64,8 +65,7 @@ public interface IOConsumer<T> {
         };
     }
 
-    @NonNull
-    default Consumer<T> asUnchecked() {
+    default @NonNull Consumer<T> asUnchecked() {
         return (T t) -> {
             try {
                 acceptWithIO(t);
@@ -75,13 +75,12 @@ public interface IOConsumer<T> {
         };
     }
 
-    @NonNull
-    static <T> Consumer<T> unchecked(@NonNull IOConsumer<T> o) {
+    static <T> @NonNull Consumer<T> unchecked(@NonNull IOConsumer<T> o) {
         return o.asUnchecked();
     }
 
-    @NonNull
-    static <T> IOConsumer<T> checked(@NonNull Consumer<T> consumer) {
+    @StaticFactoryMethod
+    static <T> @NonNull IOConsumer<T> checked(@NonNull Consumer<T> consumer) {
         return (o) -> {
             try {
                 consumer.accept(o);
@@ -91,8 +90,8 @@ public interface IOConsumer<T> {
         };
     }
 
-    @NonNull
-    static <T> IOConsumer<T> noOp() {
+    @StaticFactoryMethod
+    static <T> @NonNull IOConsumer<T> noOp() {
         return (o) -> {
         };
     }
