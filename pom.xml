@@ -25,6 +25,7 @@
     <modules>
         <module>java-io-base</module>
         <module>java-io-xml</module>
+        <module>java-io-win</module>
     </modules>
 	
     <dependencyManagement>
