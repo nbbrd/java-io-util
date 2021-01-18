@@ -20,6 +20,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.stream.Collectors;
 
 /**
  * @author Philippe Charles
@@ -28,11 +29,21 @@ import java.nio.charset.Charset;
 public class ProcessReader {
 
     public static @NonNull BufferedReader newReader(@NonNull String... args) throws IOException {
-        return newReader(new ProcessBuilder(args).start());
+        return newReader(new ProcessBuilder(args).redirectError(ProcessBuilder.Redirect.INHERIT).start());
     }
 
     public static @NonNull BufferedReader newReader(@NonNull Process process) throws IOException {
         return new BufferedReader(new InputStreamReader(new ProcessInputStream(process), Charset.defaultCharset()));
+    }
+
+    public static @NonNull String readToString(@NonNull String... args) throws IOException {
+        return readToString(new ProcessBuilder(args).redirectError(ProcessBuilder.Redirect.INHERIT).start());
+    }
+
+    public static @NonNull String readToString(@NonNull Process process) throws IOException {
+        try (BufferedReader reader = newReader(process)) {
+            return reader.lines().collect(Collectors.joining(System.lineSeparator()));
+        }
     }
 
     private static final class ProcessInputStream extends InputStream {

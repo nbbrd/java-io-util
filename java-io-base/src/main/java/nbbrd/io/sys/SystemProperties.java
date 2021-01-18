@@ -22,10 +22,14 @@ public final class SystemProperties {
 
     public static final String FILE_SEPARATOR = "file.separator";
     public static final String JAVA_CLASS_PATH = "java.class.path";
+    public static final String JAVA_CLASS_VERSION = "java.class.version";
     public static final String JAVA_HOME = "java.home";
+    public static final String JAVA_LIBRARY_PATH = "java.library.path";
     public static final String JAVA_VENDOR = "java.vendor";
     public static final String JAVA_VENDOR_URL = "java.vendor.url";
     public static final String JAVA_VERSION = "java.version";
+    public static final String JAVA_IO_TMPDIR = "java.io.tmpdir";
+    public static final String JAVA_COMPILER = "java.compiler";
     public static final String LINE_SEPARATOR = "line.separator";
     public static final String OS_ARCH = "os.arch";
     public static final String OS_NAME = "os.name";
@@ -34,6 +38,15 @@ public final class SystemProperties {
     public static final String USER_DIR = "user.dir";
     public static final String USER_HOME = "user.home";
     public static final String USER_NAME = "user.name";
+    public static final String JAVA_VM_SPECIFICATION_VERSION = "java.vm.specification.version";
+    public static final String JAVA_VM_SPECIFICATION_VENDOR = "java.vm.specification.vendor";
+    public static final String JAVA_VM_SPECIFICATION_NAME = "java.vm.specification.name";
+    public static final String JAVA_VM_VERSION = "java.vm.version";
+    public static final String JAVA_VM_VENDOR = "java.vm.vendor";
+    public static final String JAVA_VM_NAME = "java.vm.name";
+    public static final String JAVA_SPECIFICATION_VERSION = "java.specification.version";
+    public static final String JAVA_SPECIFICATION_VENDOR = "java.specification.vendor";
+    public static final String JAVA_SPECIFICATION_NAME = "java.specification.name";
 
     public static final SystemProperties DEFAULT = of(System.getProperties(), FileSystems.getDefault());
 
@@ -63,6 +76,10 @@ public final class SystemProperties {
         return asPaths(get(JAVA_CLASS_PATH));
     }
 
+    public @Nullable String getJavaClassVersion() {
+        return get(JAVA_CLASS_VERSION);
+    }
+
     /**
      * Installation directory for Java Runtime Environment (JRE)
      *
@@ -70,6 +87,10 @@ public final class SystemProperties {
      */
     public @Nullable Path getJavaHome() {
         return asPath(get(JAVA_HOME));
+    }
+
+    public @NonNull List<Path> getJavaLibraryPath() {
+        return asPaths(get(JAVA_LIBRARY_PATH));
     }
 
     /**
@@ -97,6 +118,14 @@ public final class SystemProperties {
      */
     public @Nullable String getJavaVersion() {
         return get(JAVA_VERSION);
+    }
+
+    public @Nullable Path getJavaIoTmpdir() {
+        return asPath(get(JAVA_IO_TMPDIR));
+    }
+
+    public @Nullable String getJavaCompiler() {
+        return get(JAVA_COMPILER);
     }
 
     /**
@@ -169,6 +198,42 @@ public final class SystemProperties {
      */
     public @Nullable String getUserName() {
         return get(USER_NAME);
+    }
+
+    public @Nullable String getJavaVmSpecificationVersion() {
+        return get(JAVA_VM_SPECIFICATION_VERSION);
+    }
+
+    public @Nullable String getJavaVmSpecificationVendor() {
+        return get(JAVA_VM_SPECIFICATION_VENDOR);
+    }
+
+    public @Nullable String getJavaVmSpecificationName() {
+        return get(JAVA_VM_SPECIFICATION_NAME);
+    }
+
+    public @Nullable String getJavaVmVersion() {
+        return get(JAVA_VM_VERSION);
+    }
+
+    public @Nullable String getJavaVmVendor() {
+        return get(JAVA_VM_VENDOR);
+    }
+
+    public @Nullable String getJavaVmName() {
+        return get(JAVA_VM_NAME);
+    }
+
+    public @Nullable String getJavaSpecificationVersion() {
+        return get(JAVA_SPECIFICATION_VERSION);
+    }
+
+    public @Nullable String getJavaSpecificationVendor() {
+        return get(JAVA_SPECIFICATION_VENDOR);
+    }
+
+    public @Nullable String getJavaSpecificationName() {
+        return get(JAVA_SPECIFICATION_NAME);
     }
 
     private String get(String key) {

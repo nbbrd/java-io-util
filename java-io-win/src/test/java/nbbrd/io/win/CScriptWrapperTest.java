@@ -23,14 +23,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static nbbrd.io.win.CScriptWrapper.NO_TIMEOUT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -69,7 +67,7 @@ public class CScriptWrapperTest {
         assertThat(CScriptWrapper.exec(scriptWithArgs, NO_TIMEOUT, "a", "b", "c").waitFor())
                 .isEqualTo(0);
 
-        assertThat(readString(CScriptWrapper.exec(scriptWithArgs, NO_TIMEOUT, "a", "b", "c")))
+        assertThat(ProcessReader.readToString(CScriptWrapper.exec(scriptWithArgs, NO_TIMEOUT, "a", "b", "c")))
                 .isEqualTo("a" + System.lineSeparator() + "b" + System.lineSeparator() + "c");
 
         File infiniteLoop = vbs(
@@ -80,14 +78,8 @@ public class CScriptWrapperTest {
         assertThat(CScriptWrapper.exec(infiniteLoop, (short) 2).waitFor())
                 .isEqualTo(0);
 
-        assertThat(readString(CScriptWrapper.exec(infiniteLoop, (short) 2)))
+        assertThat(ProcessReader.readToString(CScriptWrapper.exec(infiniteLoop, (short) 2)))
                 .contains(infiniteLoop.toString());
-    }
-
-    private String readString(Process p) throws IOException {
-        try (BufferedReader reader = ProcessReader.newReader(p)) {
-            return reader.lines().collect(Collectors.joining(System.lineSeparator()));
-        }
     }
 
     private File vbs(String... content) throws IOException {
