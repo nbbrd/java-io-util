@@ -4,7 +4,7 @@
     
     <groupId>be.nbb.rd</groupId>
     <artifactId>java-io-parent</artifactId>
-    <version>0.0.9</version>
+    <version>0.0.10</version>
     <packaging>pom</packaging>
 
     <name>java-io</name>
@@ -25,6 +25,7 @@
     <modules>
         <module>java-io-base</module>
         <module>java-io-xml</module>
+        <module>java-io-win</module>
     </modules>
 	
     <dependencyManagement>
@@ -33,7 +34,7 @@
             <dependency>
                 <groupId>org.checkerframework</groupId>
                 <artifactId>checker-qual</artifactId>
-                <version>3.9.0</version>
+                <version>3.9.1</version>
             </dependency>
         
             <!-- test libraries -->

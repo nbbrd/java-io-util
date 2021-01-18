@@ -1,14 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    
+
     <parent>
-        <groupId>be.nbb.rd</groupId>
         <artifactId>java-io-parent</artifactId>
+        <groupId>be.nbb.rd</groupId>
         <version>0.0.10</version>
     </parent>
 
-    <artifactId>java-io-base</artifactId>
+    <artifactId>java-io-win</artifactId>
     <packaging>jar</packaging>
 
     <dependencies>
@@ -29,6 +31,13 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- compile & runtime -->
+        <dependency>
+            <groupId>be.nbb.rd</groupId>
+            <artifactId>java-io-base</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+
         <!-- test libraries -->
         <dependency>
             <groupId>junit</groupId>
@@ -40,10 +49,5 @@
             <artifactId>assertj-core</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.google.jimfs</groupId>
-            <artifactId>jimfs</artifactId>
-            <scope>test</scope>
-        </dependency>        
     </dependencies>
 </project>
