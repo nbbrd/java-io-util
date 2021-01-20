@@ -18,6 +18,7 @@ package nbbrd.io.win;
 
 import nbbrd.io.sys.OS;
 import org.assertj.core.api.Assumptions;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -26,8 +27,7 @@ import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * @author Philippe Charles
@@ -94,13 +94,14 @@ public class RegWrapperTest {
 
         Assumptions.assumeThat(OS.NAME).isEqualTo(OS.Name.WINDOWS);
 
-        Map<String, List<RegWrapper.RegValue>> data = RegWrapper.query("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", false);
+        String longKey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion";
+        String shortKey = "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion";
 
-        assertThat(data)
+        assertThat(RegWrapper.query(longKey, false))
+                .containsExactlyEntriesOf(RegWrapper.query(shortKey, false))
                 .hasSizeGreaterThan(1)
-                .containsKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion");
-
-        assertThat(data.get("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion"))
+                .containsKey(longKey)
+                .extractingByKey(longKey, as(InstanceOfAssertFactories.LIST))
                 .contains(new RegWrapper.RegValue("SystemRoot", "REG_SZ", System.getenv("SYSTEMROOT")));
     }
 
