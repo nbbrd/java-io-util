@@ -16,6 +16,8 @@
  */
 package nbbrd.io.win;
 
+import nbbrd.design.VisibleForTesting;
+import nbbrd.io.sys.EndOfProcessException;
 import nbbrd.io.sys.ProcessReader;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
@@ -34,14 +36,19 @@ public class RegWrapper {
 
     public static final String COMMAND = "reg";
 
-    @NonNull
-    public Map<String, List<RegValue>> query(@NonNull String keyName, boolean recursive) throws IOException {
+    public @NonNull Map<String, List<RegValue>> query(@NonNull String keyName, boolean recursive) throws IOException {
         Objects.requireNonNull(keyName);
         try (BufferedReader reader = ProcessReader.newReader(getArgs(keyName, recursive))) {
             return parse(reader);
+        } catch (EndOfProcessException ex) {
+            if (ex.getExitValue() == 1) {
+                return Collections.emptyMap();
+            }
+            throw ex;
         }
     }
 
+    @VisibleForTesting
     String[] getArgs(String keyName, boolean recursive) {
         List<String> args = new ArrayList<>();
         args.add(COMMAND);
@@ -53,6 +60,7 @@ public class RegWrapper {
         return args.toArray(new String[0]);
     }
 
+    @VisibleForTesting
     Map<String, List<RegValue>> parse(BufferedReader reader) throws IOException {
         Map<String, List<RegValue>> result = new LinkedHashMap<>();
         String line;
@@ -86,19 +94,23 @@ public class RegWrapper {
 
         private static final Pattern PATTERN = Pattern.compile("^[ ]{4}(.+)[ ]{4}(REG_(?:SZ|MULTI_SZ|EXPAND_SZ|DWORD|QWORD|BINARY|NONE))[ ]{4}(.*)$");
 
-        @Nullable
-        public static RegValue parseOrNull(@NonNull CharSequence line) {
+        @VisibleForTesting
+        static @Nullable RegValue parseOrNull(@NonNull CharSequence line) {
             Matcher m = PATTERN.matcher(line);
-            return m.matches() ? new RegValue(m.group(1), m.group(2), m.group(3)) : null;
+            return m.matches() ? new RegValue(m.group(1), RegType.valueOf(m.group(2)), m.group(3)) : null;
         }
 
         @lombok.NonNull
         private String name;
 
         @lombok.NonNull
-        private String dataType;
+        private RegType dataType;
 
         @lombok.NonNull
         private String value;
+    }
+
+    public enum RegType {
+        REG_SZ, REG_MULTI_SZ, REG_EXPAND_SZ, REG_DWORD, REG_QWORD, REG_BINARY, REG_NONE
     }
 }
