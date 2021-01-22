@@ -16,8 +16,11 @@
  */
 package nbbrd.io.text;
 
-import static nbbrd.io.text.Parser.*;
+import org.junit.Test;
+
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
@@ -29,7 +32,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
-import org.junit.Test;
+
+import static nbbrd.io.text.Parser.*;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -216,6 +220,20 @@ public class ParserTest {
 
         assertThat(onLocale().parse("EN-us"))
                 .isEqualTo(Locale.US);
+    }
+
+    @Test
+    public void testOnURL() throws MalformedURLException {
+        assertCompliance(onURL(), "file:/C:/temp/x.xml");
+
+        assertThat(onURL().parse("file:/C:/temp/x.xml"))
+                .isEqualTo(new URL("file:/C:/temp/x.xml"));
+
+        assertThat(onURL().parse(":/C:/temp/x.xml"))
+                .isNull();
+
+        assertThat(onURL().parse(null))
+                .isNull();
     }
 
     @SuppressWarnings("null")

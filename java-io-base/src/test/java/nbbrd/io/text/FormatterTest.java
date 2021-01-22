@@ -16,8 +16,12 @@
  */
 package nbbrd.io.text;
 
-import static nbbrd.io.text.Formatter.*;
+import org.assertj.core.util.DateUtil;
+import org.junit.Test;
+
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.text.NumberFormat;
@@ -32,9 +36,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static nbbrd.io.text.Formatter.*;
 import static org.assertj.core.api.Assertions.*;
-import org.assertj.core.util.DateUtil;
-import org.junit.Test;
 
 /**
  *
@@ -188,6 +192,12 @@ public class FormatterTest {
         Formatter<List<String>> f = onStringList(stream -> stream.collect(Collectors.joining(":")));
         assertCompliance(f, Arrays.asList("A", "B"), "A:B");
         assertCompliance(f, Arrays.asList(), "");
+    }
+
+    @Test
+    public void testURL() throws MalformedURLException {
+        Formatter<URL> f = onURL();
+        assertCompliance(f, new URL("file:/C:/temp/x.xml"), "file:/C:/temp/x.xml");
     }
 
     private static <T> void assertCompliance(Formatter<T> f, T value, CharSequence text) {

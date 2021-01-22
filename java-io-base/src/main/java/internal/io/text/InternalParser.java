@@ -17,6 +17,8 @@
 package internal.io.text;
 
 import java.io.File;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
 import java.text.DateFormat;
@@ -272,5 +274,15 @@ public class InternalParser {
     
     private boolean isLocaleSeparator(char c) {
         return c == '_' || c == '-';
+    }
+
+    public URL parseURL(CharSequence input) {
+        if (input != null) {
+            try {
+                return new URL(input.toString());
+            } catch (MalformedURLException ex) {
+            }
+        }
+        return null;
     }
 }
