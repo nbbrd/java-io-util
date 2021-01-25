@@ -17,7 +17,10 @@
 package nbbrd.io.win;
 
 import nbbrd.io.sys.OS;
+import nbbrd.io.win.RegWrapper.RegType;
+import nbbrd.io.win.RegWrapper.RegValue;
 import org.assertj.core.api.Assumptions;
+import org.assertj.core.api.InstanceOfAssertFactories;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -25,9 +28,9 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * @author Philippe Charles
@@ -36,56 +39,48 @@ public class RegWrapperTest {
 
     @Test
     public void testParseLeaf() throws IOException {
-        Map<String, List<RegWrapper.RegValue>> data = parse("regLeaf.txt");
+        String key = "HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit\\Capabilities\\UrlAssociations";
 
-        assertThat(data)
+        assertThat(parse("regLeaf.txt"))
                 .hasSize(1)
-                .containsKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit\\Capabilities\\UrlAssociations")
-                .isEqualTo(parse("regLeaf.txt"));
-
-        assertThat(data.get("HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit\\Capabilities\\UrlAssociations"))
+                .containsKey(key)
+                .isEqualTo(parse("regLeaf.txt"))
+                .extractingByKey(key, as(InstanceOfAssertFactories.LIST))
                 .hasSize(5)
-                .contains(new RegWrapper.RegValue("smartgit", "REG_SZ", "TortoiseGitURL"));
+                .contains(new RegValue("smartgit", RegType.REG_SZ, "TortoiseGitURL"));
     }
 
     @Test
     public void testParseNode() throws IOException {
-        Map<String, List<RegWrapper.RegValue>> data = parse("regNode.txt");
+        String key1 = "HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit";
+        String key2 = "HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit\\Capabilities";
+        RegValue value1 = new RegValue("CachePath", RegType.REG_SZ, "C:\\Program Files\\TortoiseGit\\bin\\TGitCache.exe");
 
-        assertThat(data)
+        assertThat(parse("regNode.txt"))
                 .hasSize(2)
-                .containsKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit")
-                .containsKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit\\Capabilities")
-                .isEqualTo(parse("regNode.txt"));
-
-        assertThat(data.get("HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit"))
-                .hasSize(5)
-                .contains(new RegWrapper.RegValue("CachePath", "REG_SZ", "C:\\Program Files\\TortoiseGit\\bin\\TGitCache.exe"));
-
-        assertThat(data.get("HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit\\Capabilities"))
-                .isEmpty();
+                .containsKeys(key1, key2)
+                .isEqualTo(parse("regNode.txt"))
+                .extractingByKeys(key1, key2)
+                .satisfies(o -> assertThat(o).hasSize(5).contains(value1), atIndex(0))
+                .satisfies(o -> assertThat(o).isEmpty(), atIndex(1));
     }
 
     @Test
     public void testParseNodeRecursive() throws IOException {
-        Map<String, List<RegWrapper.RegValue>> data = parse("regNodeRecursive.txt");
+        String key1 = "HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit";
+        String key2 = "HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit\\Capabilities";
+        String key3 = "HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit\\Capabilities\\UrlAssociations";
+        RegValue value1 = new RegValue("CachePath", RegType.REG_SZ, "C:\\Program Files\\TortoiseGit\\bin\\TGitCache.exe");
+        List<RegValue> values3 = parse("regLeaf.txt").get(key3);
 
-        assertThat(data)
+        assertThat(parse("regNodeRecursive.txt"))
                 .hasSize(3)
-                .containsKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit")
-                .containsKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit\\Capabilities")
-                .containsKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit\\Capabilities\\UrlAssociations")
-                .isEqualTo(parse("regNodeRecursive.txt"));
-
-        assertThat(data.get("HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit"))
-                .hasSize(5)
-                .contains(new RegWrapper.RegValue("CachePath", "REG_SZ", "C:\\Program Files\\TortoiseGit\\bin\\TGitCache.exe"));
-
-        assertThat(data.get("HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit\\Capabilities"))
-                .isEmpty();
-
-        assertThat(data.get("HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit\\Capabilities\\UrlAssociations"))
-                .isEqualTo(parse("regLeaf.txt").get("HKEY_LOCAL_MACHINE\\SOFTWARE\\TortoiseGit\\Capabilities\\UrlAssociations"));
+                .containsKeys(key1, key2, key3)
+                .isEqualTo(parse("regNodeRecursive.txt"))
+                .extractingByKeys(key1, key2, key3)
+                .satisfies(o -> assertThat(o).hasSize(5).contains(value1), atIndex(0))
+                .satisfies(o -> assertThat(o).isEmpty(), atIndex(1))
+                .satisfies(o -> assertThat(o).containsExactlyElementsOf(values3), atIndex(2));
     }
 
     @Test
@@ -94,17 +89,23 @@ public class RegWrapperTest {
 
         Assumptions.assumeThat(OS.NAME).isEqualTo(OS.Name.WINDOWS);
 
-        Map<String, List<RegWrapper.RegValue>> data = RegWrapper.query("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", false);
-
-        assertThat(data)
+        String longKey = "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion";
+        String shortKey = "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion";
+        assertThat(RegWrapper.query(longKey, false))
+                .containsExactlyEntriesOf(RegWrapper.query(shortKey, false))
                 .hasSizeGreaterThan(1)
-                .containsKey("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion");
+                .containsKey(longKey)
+                .extractingByKey(longKey, as(InstanceOfAssertFactories.LIST))
+                .contains(new RegValue("SystemRoot", RegType.REG_SZ, System.getenv("SYSTEMROOT")));
 
-        assertThat(data.get("HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion"))
-                .contains(new RegWrapper.RegValue("SystemRoot", "REG_SZ", System.getenv("SYSTEMROOT")));
+        String missingKey = "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\" + UUID.randomUUID().toString();
+        assertThat(RegWrapper.query(missingKey, false)).isEmpty();
+
+        String invalidKey = UUID.randomUUID().toString();
+        assertThat(RegWrapper.query(invalidKey, false)).isEmpty();
     }
 
-    static Map<String, List<RegWrapper.RegValue>> parse(String resourceName) throws IOException {
+    static Map<String, List<RegValue>> parse(String resourceName) throws IOException {
         try (BufferedReader reader = open(resourceName)) {
             return RegWrapper.parse(reader);
         }

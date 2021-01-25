@@ -29,7 +29,7 @@ import java.util.stream.Collectors;
 public class ProcessReader {
 
     public static @NonNull BufferedReader newReader(@NonNull String... args) throws IOException {
-        return newReader(new ProcessBuilder(args).redirectError(ProcessBuilder.Redirect.INHERIT).start());
+        return newReader(new ProcessBuilder(args).start());
     }
 
     public static @NonNull BufferedReader newReader(@NonNull Process process) throws IOException {
@@ -37,7 +37,7 @@ public class ProcessReader {
     }
 
     public static @NonNull String readToString(@NonNull String... args) throws IOException {
-        return readToString(new ProcessBuilder(args).redirectError(ProcessBuilder.Redirect.INHERIT).start());
+        return readToString(new ProcessBuilder(args).start());
     }
 
     public static @NonNull String readToString(@NonNull Process process) throws IOException {
@@ -81,7 +81,7 @@ public class ProcessReader {
                 throw new IOException(ex);
             }
             if (process.exitValue() != 0) {
-                throw new IOException("Invalid exit value: " + process.exitValue());
+                throw EndOfProcessException.of(process);
             }
         }
     }

@@ -16,6 +16,7 @@
  */
 package nbbrd.io.win;
 
+import nbbrd.io.sys.EndOfProcessException;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.IOException;
@@ -29,17 +30,16 @@ public class WhereWrapper {
     public static final String COMMAND = "where";
 
     public boolean isAvailable(@NonNull String command) throws IOException {
+        Process process = new ProcessBuilder(COMMAND, "/Q", command).start();
         try {
-            int exitCode = new ProcessBuilder(COMMAND, "/Q", command).start().waitFor();
-            switch (exitCode) {
+            switch (process.waitFor()) {
                 case SUCCESSFUL_EXIT_CODE:
                     return true;
                 case UNSUCCESSFUL_EXIT_CODE:
                     return false;
                 case ERRORS_EXIT_CODE:
-                    throw new IOException("Unexpected errors");
                 default:
-                    throw new IOException("Unexpected exit code: " + exitCode);
+                    throw EndOfProcessException.of(process);
             }
         } catch (InterruptedException ex) {
             throw new IOException(ex);

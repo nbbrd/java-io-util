@@ -22,6 +22,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.File;
+import java.net.URL;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.NumberFormat;
@@ -190,5 +191,10 @@ public interface Parser<T> {
     @StaticFactoryMethod
     static @NonNull Parser<Locale> onLocale() {
         return InternalParser::parseLocale;
+    }
+
+    @StaticFactoryMethod
+    static @NonNull Parser<URL> onURL() {
+        return InternalParser::parseURL;
     }
 }

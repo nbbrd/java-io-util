@@ -43,16 +43,28 @@ public class ProcessReaderTest {
     public void testExitCode() {
         switch (OS.NAME) {
             case WINDOWS:
-                assertThatIOException()
+                assertThatExceptionOfType(EndOfProcessException.class)
                         .isThrownBy(() -> ProcessReader.readToString("where", UUID.randomUUID().toString()))
-                        .withMessageContaining("Invalid exit value");
+                        .withMessageStartingWith("Invalid exit value")
+                        .withNoCause()
+                        .matches(ex -> ex.getExitValue() != 0)
+                        .matches(ex -> !ex.getErrorMessage().isEmpty());
+
+                assertThatExceptionOfType(EndOfProcessException.class)
+                        .isThrownBy(() -> ProcessReader.readToString("where", "/Q", UUID.randomUUID().toString()))
+                        .withMessageStartingWith("Invalid exit value")
+                        .withNoCause()
+                        .matches(ex -> ex.getExitValue() != 0)
+                        .matches(ex -> ex.getErrorMessage().isEmpty());
                 break;
             case LINUX:
             case MACOS:
             case SOLARIS:
-                assertThatIOException()
+                assertThatExceptionOfType(EndOfProcessException.class)
                         .isThrownBy(() -> ProcessReader.readToString("which", UUID.randomUUID().toString()))
-                        .withMessageContaining("Invalid exit value");
+                        .withMessageStartingWith("Invalid exit value")
+                        .withNoCause()
+                        .matches(ex -> ex.getExitValue() != 0);
                 break;
         }
     }

@@ -16,6 +16,7 @@
  */
 package nbbrd.io.win;
 
+import nbbrd.io.sys.EndOfProcessException;
 import nbbrd.io.sys.OS;
 import org.assertj.core.api.Assumptions;
 import org.junit.Test;
@@ -45,8 +46,9 @@ public class WhereWrapperTest {
                 .as("Should be unsuccessul")
                 .isFalse();
 
-        assertThatIOException()
-                .isThrownBy(() -> WhereWrapper.isAvailable("//"))
-                .withMessageContaining("Unexpected errors");
+        assertThatExceptionOfType(EndOfProcessException.class)
+                .isThrownBy(() -> WhereWrapper.isAvailable("/invalidoption"))
+                .matches(ex -> ex.getErrorMessage().contains(("/invalidoption")))
+                .matches(ex -> ex.getExitValue() == 2);
     }
 }
