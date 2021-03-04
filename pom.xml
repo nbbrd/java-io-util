@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
-    
+
     <groupId>be.nbb.rd</groupId>
     <artifactId>java-io-parent</artifactId>
     <version>0.0.12-SNAPSHOT</version>
@@ -10,24 +11,35 @@
     <name>java-io</name>
     <description>Common IO utilities</description>
     <url>https://github.com/nbbrd/java-io-util</url>
-    
-    <organization>
-        <name>National Bank of Belgium</name>
-    </organization>
-    
+
     <licenses>
         <license>
             <name>European Union Public Licence (EUPL)</name>
             <url>https://joinup.ec.europa.eu/page/eupl-text-11-12</url>
         </license>
     </licenses>
-    
+
+    <developers>
+        <developer>
+            <name>Philippe Charles</name>
+            <email>philippe.charles@nbb.be</email>
+            <organization>National Bank of Belgium</organization>
+            <organizationUrl>https://www.nbb.be</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/nbbrd/java-io-util.git</connection>
+        <developerConnection>scm:git:ssh://github.com:nbbrd/java-io-util.git</developerConnection>
+        <url>http://github.com/nbbrd/java-io-util/tree/master</url>
+    </scm>
+
     <modules>
         <module>java-io-base</module>
         <module>java-io-xml</module>
         <module>java-io-win</module>
     </modules>
-	
+
     <dependencyManagement>
         <dependencies>
             <!-- annotations & processors -->
@@ -36,7 +48,7 @@
                 <artifactId>checker-qual</artifactId>
                 <version>3.11.0</version>
             </dependency>
-        
+
             <!-- test libraries -->
             <dependency>
                 <groupId>junit</groupId>
@@ -52,7 +64,7 @@
                 <groupId>com.google.jimfs</groupId>
                 <artifactId>jimfs</artifactId>
                 <version>1.2</version>
-            </dependency>        
+            </dependency>
             <dependency>
                 <groupId>com.github.tomakehurst</groupId>
                 <artifactId>wiremock-standalone</artifactId>
@@ -60,7 +72,7 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
-    
+
     <profiles>
         <!-- Base build java8 -->
         <profile>
@@ -73,7 +85,7 @@
             <properties>
                 <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
                 <maven.compiler.target>1.8</maven.compiler.target>
-                <maven.compiler.source>1.8</maven.compiler.source>                
+                <maven.compiler.source>1.8</maven.compiler.source>
             </properties>
             <build>
                 <plugins>
@@ -90,7 +102,7 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <!-- Base processors -->
         <profile>
             <id>base-processors</id>
@@ -145,7 +157,7 @@
                 </plugins>
             </build>
         </profile>
-        
+
         <!-- Run Java8 build with JPMS on JDK9+ -->
         <profile>
             <id>java8-with-jpms</id>
@@ -155,7 +167,7 @@
             <properties>
                 <!-- Fix NetBeans bug with test packages -->
                 <maven.compiler.target>9</maven.compiler.target>
-                <maven.compiler.source>9</maven.compiler.source>                
+                <maven.compiler.source>9</maven.compiler.source>
             </properties>
             <build>
                 <plugins>
@@ -211,12 +223,12 @@
                                 </configuration>
                             </execution>
                         </executions>
-                    </plugin>        
+                    </plugin>
                 </plugins>
             </build>
         </profile>
 
-        <!-- Enforce dependency rules -->
+        <!-- Enforce dependency & Maven-central rules -->
         <profile>
             <id>enforce-dependency-rules</id>
             <activation>
@@ -230,9 +242,19 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-enforcer-plugin</artifactId>
                         <version>3.0.0-M3</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.kordamp.maven</groupId>
+                                <artifactId>pomchecker-enforcer-rules</artifactId>
+                                <version>1.1.0</version>
+                            </dependency>
+                        </dependencies>
                         <executions>
                             <execution>
                                 <id>enforce</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
                                 <configuration>
                                     <rules>
                                         <requireMavenVersion>
@@ -242,11 +264,13 @@
                                         <requireReleaseDeps>
                                             <onlyWhenRelease>true</onlyWhenRelease>
                                         </requireReleaseDeps>
+                                        <CheckMavenCentral
+                                                implementation="org.kordamp.maven.enforcer.checker.CheckMavenCentral">
+                                            <release>false</release>
+                                            <strict>false</strict>
+                                        </CheckMavenCentral>
                                     </rules>
                                 </configuration>
-                                <goals>
-                                    <goal>enforce</goal>
-                                </goals>
                             </execution>
                         </executions>
                     </plugin>
@@ -292,33 +316,33 @@
                 <property>
                     <name>!skipEnforceCodeCoverage</name>
                 </property>
-		<jdk>(,11]</jdk>
+                <jdk>(,11]</jdk>
             </activation>
             <build>
                 <plugins>
                     <plugin>
                         <groupId>org.jacoco</groupId>
-                        <artifactId>jacoco-maven-plugin</artifactId> 
-                        <version>0.8.6</version> 
-                        <executions> 
-                            <execution> 
-                                <goals> 
-                                    <goal>prepare-agent</goal> 
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <version>0.8.6</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>prepare-agent</goal>
                                 </goals>
                             </execution>
-                            <execution> 
-                                <id>report</id> 
-                                <phase>prepare-package</phase> 
-                                <goals> 
-                                    <goal>report</goal> 
-                                </goals> 
+                            <execution>
+                                <id>report</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>report</goal>
+                                </goals>
                             </execution>
                         </executions>
                     </plugin>
                 </plugins>
             </build>
         </profile>
-        
+
         <!-- Deploy SNAPSHOTS to jfrog with sources -->
         <profile>
             <id>deploy-snapshots</id>
