@@ -146,7 +146,7 @@ public class Resource {
      * @param uri
      * @param action
      * @throws IOException
-     * @see https://stackoverflow.com/a/36021165
+     * @see <a href="https://stackoverflow.com/a/36021165">https://stackoverflow.com/a/36021165</a>
      */
     public void process(@NonNull URI uri, @NonNull IOConsumer<? super Path> action) throws IOException {
         try {

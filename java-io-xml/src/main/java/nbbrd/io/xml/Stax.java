@@ -40,7 +40,7 @@ public class Stax {
      * Prevents XXE vulnerability by disabling features.
      *
      * @param factory non-null factory
-     * @see https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLInputFactory_.28a_StAX_parser.29
+     * @see <a href="https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLInputFactory_.28a_StAX_parser.29">XXE</a>
      */
     public void preventXXE(@NonNull XMLInputFactory factory) {
         setFeature(factory, XMLInputFactory.SUPPORT_DTD, false);
