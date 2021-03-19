@@ -5,13 +5,17 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
+        <groupId>com.github.nbbrd.java-io-util</groupId>
         <artifactId>java-io-parent</artifactId>
-        <groupId>be.nbb.rd</groupId>
-        <version>0.0.11</version>
+        <version>0.0.12</version>
     </parent>
 
     <artifactId>java-io-win</artifactId>
     <packaging>jar</packaging>
+
+    <name>java-io-win</name>
+    <description>Common IO utilities - Win</description>
+    <url>https://github.com/nbbrd/java-io-util</url>
 
     <dependencies>
         <!-- annotations & processors -->
@@ -26,14 +30,14 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>be.nbb.rd</groupId>
+            <groupId>com.github.nbbrd.java-design-util</groupId>
             <artifactId>java-design-processor</artifactId>
             <scope>provided</scope>
         </dependency>
 
         <!-- compile & runtime -->
         <dependency>
-            <groupId>be.nbb.rd</groupId>
+            <groupId>${project.groupId}</groupId>
             <artifactId>java-io-base</artifactId>
             <version>${project.version}</version>
         </dependency>

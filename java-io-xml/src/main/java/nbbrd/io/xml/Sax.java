@@ -44,7 +44,7 @@ public class Sax {
      * Prevents XXE vulnerability by disabling features.
      *
      * @param reader non-null reader
-     * @see https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLReader
+     * @see <a href="https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLReader">XXE</a>
      */
     public void preventXXE(@NonNull XMLReader reader) {
 //        setFeatureQuietly(reader, "http://apache.org/xml/features/disallow-doctype-decl", true);
