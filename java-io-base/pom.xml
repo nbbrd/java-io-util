@@ -3,13 +3,17 @@
     <modelVersion>4.0.0</modelVersion>
     
     <parent>
-        <groupId>be.nbb.rd</groupId>
+        <groupId>com.github.nbbrd.java-io-util</groupId>
         <artifactId>java-io-parent</artifactId>
         <version>0.0.12-SNAPSHOT</version>
     </parent>
 
     <artifactId>java-io-base</artifactId>
     <packaging>jar</packaging>
+
+    <name>java-io-base</name>
+    <description>Common IO utilities - Base</description>
+    <url>https://github.com/nbbrd/java-io-util</url>
 
     <dependencies>
         <!-- annotations & processors -->
@@ -24,7 +28,7 @@
             <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>be.nbb.rd</groupId>
+            <groupId>com.github.nbbrd.java-design-util</groupId>
             <artifactId>java-design-processor</artifactId>
             <scope>provided</scope>
         </dependency>
