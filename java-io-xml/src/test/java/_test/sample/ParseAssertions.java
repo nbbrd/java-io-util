@@ -231,7 +231,7 @@ public class ParseAssertions {
     @SuppressWarnings("null")
     private static void testParseReaderFromSupplier(Xml.Parser<Person> p) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> p.parseReader((IOSupplier) null))
+                .isThrownBy(() -> p.parseReader((IOSupplier<? extends Reader>) null))
                 .withMessageContaining("source");
 
         assertThat(p.parseReader(JOHN_DOE_READER))
@@ -250,7 +250,7 @@ public class ParseAssertions {
     @SuppressWarnings("null")
     private static void testParseStreamFromSupplier(Xml.Parser<Person> p) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> p.parseStream((IOSupplier) null))
+                .isThrownBy(() -> p.parseStream((IOSupplier<? extends InputStream>) null))
                 .withMessageContaining("source");
 
         assertThat(p.parseStream(JOHN_DOE_STREAM))
@@ -269,7 +269,7 @@ public class ParseAssertions {
     @SuppressWarnings("null")
     private static void testParseStreamFromSupplierCharset(Xml.Parser<Person> p) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> p.parseStream((IOSupplier) null, StandardCharsets.UTF_8))
+                .isThrownBy(() -> p.parseStream((IOSupplier<? extends InputStream>) null, StandardCharsets.UTF_8))
                 .withMessageContaining("source");
 
         assertThatNullPointerException()

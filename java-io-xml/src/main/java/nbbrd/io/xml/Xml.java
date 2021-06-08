@@ -41,7 +41,7 @@ public class Xml {
         boolean isIgnoreXXE();
 
         @NonNull
-        default <V> Parser andThen(@NonNull Function<? super T, ? extends V> after) {
+        default <V> Parser<V> andThen(@NonNull Function<? super T, ? extends V> after) {
             return new AdaptedParser<>(this, FileParser.super.andThen(after), TextParser.super.andThen(after));
         }
     }

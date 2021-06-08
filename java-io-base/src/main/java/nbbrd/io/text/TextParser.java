@@ -70,7 +70,7 @@ public interface TextParser<T> {
     @NonNull
     T parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException;
 
-    default <V> @NonNull TextParser andThen(@NonNull Function<? super T, ? extends V> after) {
+    default <V> @NonNull TextParser<V> andThen(@NonNull Function<? super T, ? extends V> after) {
         return new AndThenTextParser<>(this, after);
     }
 }

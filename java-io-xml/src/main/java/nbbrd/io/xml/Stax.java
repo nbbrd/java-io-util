@@ -335,7 +335,7 @@ public class Stax {
         public final static class Builder<T> {
 
             @Deprecated
-            public Builder handler(OutputHandler<XMLStreamWriter, T> handler) {
+            public Builder<T> handler(OutputHandler<XMLStreamWriter, T> handler) {
                 return handler2(handler.withEncoding());
             }
         }
