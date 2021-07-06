@@ -65,7 +65,7 @@ public class Sax {
     }
 
     @lombok.With
-    @lombok.Builder(builderClassName = "Builder", toBuilder = true)
+    @lombok.Builder(toBuilder = true)
     public static final class Parser<T> implements Xml.Parser<T> {
 
         @StaticFactoryMethod

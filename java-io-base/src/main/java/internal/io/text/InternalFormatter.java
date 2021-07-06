@@ -27,6 +27,7 @@ import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -80,47 +81,61 @@ public class InternalFormatter {
         return null;
     }
 
-    public <T> CharSequence formatFile(File value) {
+    public CharSequence formatFile(File value) {
         return value != null ? value.getPath() : null;
     }
 
-    public <T> CharSequence formatInteger(Integer value) {
+    public CharSequence formatInteger(Integer value) {
         return value != null ? value.toString() : null;
     }
 
-    public <T> CharSequence formatLong(Long value) {
+    public CharSequence formatLong(Long value) {
         return value != null ? value.toString() : null;
     }
 
-    public <T> CharSequence formatDouble(Double value) {
+    public CharSequence formatDouble(Double value) {
         return value != null ? value.toString() : null;
     }
 
-    public <T> CharSequence formatBoolean(Boolean value) {
+    public CharSequence formatBoolean(Boolean value) {
         return value != null ? value.toString() : null;
     }
 
-    public <T> CharSequence formatCharacter(Character value) {
+    public CharSequence formatCharacter(Character value) {
         return value != null ? value.toString() : null;
     }
 
-    public <T> CharSequence formatCharset(Charset value) {
+    public CharSequence formatCharset(Charset value) {
         return value != null ? value.name() : null;
     }
 
-    public <T> CharSequence formatEnum(Enum value) {
+    public CharSequence formatEnum(Enum<?> value) {
         return value != null ? value.name() : null;
     }
 
-    public <T> CharSequence formatString(String value) {
+    public CharSequence formatString(String value) {
         return value;
     }
 
-    public <T> CharSequence formatObjectToString(Object value) {
+    public CharSequence formatObjectToString(Object value) {
         return value != null ? value.toString() : null;
     }
 
     public CharSequence formatURL(URL value) {
         return value != null ? value.toString() : null;
+    }
+
+    public <T> CharSequence formatFailsafe(Function<? super T, ? extends CharSequence> formatter, Consumer<? super Throwable> onError, T input) {
+        if (input != null) {
+            try {
+                return formatter.apply(input);
+            } catch (Throwable ex) {
+                onError.accept(ex);
+            }
+        }
+        return null;
+    }
+
+    public void doNothing(Throwable ex) {
     }
 }

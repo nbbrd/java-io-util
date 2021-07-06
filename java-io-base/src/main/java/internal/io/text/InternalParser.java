@@ -1,17 +1,17 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package internal.io.text;
@@ -20,7 +20,6 @@ import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.charset.UnsupportedCharsetException;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.text.ParsePosition;
@@ -30,12 +29,13 @@ import java.time.temporal.TemporalQuery;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- *
  * @author Philippe Charles
  */
 @lombok.experimental.UtilityClass
@@ -154,7 +154,7 @@ public class InternalParser {
         if (input != null) {
             try {
                 return Charset.forName(input.toString());
-            } catch (UnsupportedCharsetException ex) {
+            } catch (IllegalArgumentException ex) {
             }
         }
         return null;
@@ -183,6 +183,17 @@ public class InternalParser {
             try {
                 return Enum.valueOf(enumClass, input.toString());
             } catch (IllegalArgumentException ex) {
+            }
+        }
+        return null;
+    }
+
+    public <T> T parse(T[] domain, ToIntFunction<T> function, Integer code) {
+        if (code != null) {
+            for (T value : domain) {
+                if (function.applyAsInt(value) == code) {
+                    return value;
+                }
             }
         }
         return null;
@@ -219,14 +230,13 @@ public class InternalParser {
      * </pre>
      *
      * <p>
-     * This method validates the input leniently. The language and country codes can be uppercase or lowercase. 
+     * This method validates the input leniently. The language and country codes can be uppercase or lowercase.
      * The separator can be an underscore or and hyphen. The length must be correct.
      * </p>
      *
      * @param input the locale String to convert, null returns null
      * @return a Locale, null if invalid locale format
-     * @see
-     * http://www.java2s.com/Code/Java/Data-Type/ConvertsaStringtoaLocale.htm
+     * @see <a href="http://www.java2s.com/Code/Java/Data-Type/ConvertsaStringtoaLocale.htm">ConvertsaStringtoaLocale</a>
      */
     public Locale parseLocale(CharSequence input) {
         if (input == null) {
@@ -267,11 +277,11 @@ public class InternalParser {
             }
         }
     }
-    
+
     private boolean isLocaleLetter(char c) {
         return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
     }
-    
+
     private boolean isLocaleSeparator(char c) {
         return c == '_' || c == '-';
     }
@@ -284,5 +294,19 @@ public class InternalParser {
             }
         }
         return null;
+    }
+
+    public <T> T parseFailsafe(Function<? super CharSequence, ? extends T> parser, Consumer<? super Throwable> onError, CharSequence input) {
+        if (input != null) {
+            try {
+                return parser.apply(input);
+            } catch (Throwable ex) {
+                onError.accept(ex);
+            }
+        }
+        return null;
+    }
+
+    public void doNothing(Throwable ex) {
     }
 }

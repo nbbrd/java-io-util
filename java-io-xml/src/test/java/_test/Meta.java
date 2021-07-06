@@ -129,7 +129,7 @@ public class Meta<T> {
         }
     }
 
-    public static Class<? extends Throwable> lookupExpectedException(Meta... list) {
+    public static Class<? extends Throwable> lookupExpectedException(Meta<?>... list) {
         return Stream.of(list).map(Meta::getExpectedException).filter(Objects::nonNull).findFirst().orElse(null);
     }
 }

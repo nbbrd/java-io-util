@@ -29,7 +29,9 @@ import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalQuery;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 
 /**
@@ -162,9 +164,16 @@ public interface Parser<T> {
     }
 
     @StaticFactoryMethod
-    static <T extends Enum<T>> @NonNull Parser<T> onEnum(@NonNull Class<T> enumClass) {
-        Objects.requireNonNull(enumClass);
-        return o -> InternalParser.parseEnum(enumClass, o);
+    static <T extends Enum<T>> @NonNull Parser<T> onEnum(@NonNull Class<T> type) {
+        Objects.requireNonNull(type);
+        return o -> InternalParser.parseEnum(type, o);
+    }
+
+    @StaticFactoryMethod
+    static <T extends Enum<T>> @NonNull Parser<T> onEnum(Class<T> type, ToIntFunction<T> function) {
+        final T[] values = type.getEnumConstants();
+        Objects.requireNonNull(function);
+        return onInteger().andThen(code -> InternalParser.parse(values, function, code));
     }
 
     @StaticFactoryMethod
@@ -196,5 +205,17 @@ public interface Parser<T> {
     @StaticFactoryMethod
     static @NonNull Parser<URL> onURL() {
         return InternalParser::parseURL;
+    }
+
+    @StaticFactoryMethod
+    static <T> @NonNull Parser<T> of(@NonNull Function<? super CharSequence, ? extends T> parser, @NonNull Consumer<? super Throwable> onError) {
+        Objects.requireNonNull(parser);
+        Objects.requireNonNull(onError);
+        return o -> InternalParser.parseFailsafe(parser, onError, o);
+    }
+
+    @StaticFactoryMethod
+    static <T> @NonNull Parser<T> of(@NonNull Function<? super CharSequence, ? extends T> parser) {
+        return of(parser, InternalParser::doNothing);
     }
 }

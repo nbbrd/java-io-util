@@ -1,17 +1,17 @@
 /*
  * Copyright 2013 National Bank of Belgium
  *
- * Licensed under the EUPL, Version 1.1 or – as soon they will be approved 
+ * Licensed under the EUPL, Version 1.1 or – as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
  *
  * http://ec.europa.eu/idabc/eupl
  *
- * Unless required by applicable law or agreed to in writing, software 
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package nbbrd.io.text;
@@ -30,18 +30,15 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static nbbrd.io.text.Formatter.*;
 import static org.assertj.core.api.Assertions.*;
 
 /**
- *
  * @author Philippe Charles
  */
 public class FormatterTest {
@@ -160,6 +157,12 @@ public class FormatterTest {
     }
 
     @Test
+    public void testEnum2() {
+        Formatter<TimeUnit> f = onEnum(Enum::ordinal);
+        assertCompliance(f, TimeUnit.DAYS, "6");
+    }
+
+    @Test
     public void testString() {
         Formatter<String> f = onString();
         assertCompliance(f, "hello", "hello");
@@ -198,6 +201,36 @@ public class FormatterTest {
     public void testURL() throws MalformedURLException {
         Formatter<URL> f = onURL();
         assertCompliance(f, new URL("file:/C:/temp/x.xml"), "file:/C:/temp/x.xml");
+    }
+
+    @Test
+    public void testOf() {
+        List<Object> errors = new ArrayList<>();
+
+        Function<Object, CharSequence> p1 = o -> {
+            throw new RuntimeException("boom");
+        };
+        assertCompliance(Formatter.of(p1, errors::add), "abc", null);
+        assertThat(errors).isNotEmpty();
+
+        errors.clear();
+
+        Function<Object, CharSequence> p2 = o -> "hello";
+        assertCompliance(Formatter.of(p2, errors::add), "abc", "hello");
+        assertThat(errors).isEmpty();
+        assertThat(p2.apply("abc")).isEqualTo("hello");
+    }
+
+    @Test
+    public void testOf2() {
+        Function<Object, CharSequence> p1 = o -> {
+            throw new RuntimeException("boom");
+        };
+        assertCompliance(Formatter.of(p1), "abc", null);
+
+        Function<Object, CharSequence> p2 = o -> "hello";
+        assertCompliance(Formatter.of(p2), "abc", "hello");
+        assertThat(p2.apply("abc")).isEqualTo("hello");
     }
 
     private static <T> void assertCompliance(Formatter<T> f, T value, CharSequence text) {

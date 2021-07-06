@@ -32,7 +32,9 @@ import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.ToIntFunction;
 import java.util.stream.Stream;
 
 /**
@@ -178,6 +180,12 @@ public interface Formatter<T> {
     }
 
     @StaticFactoryMethod
+    static @NonNull <T extends Enum<T>> Formatter<T> onEnum(@NonNull ToIntFunction<T> function) {
+        Objects.requireNonNull(function);
+        return onInteger().compose(value -> value != null ? function.applyAsInt(value) : null);
+    }
+
+    @StaticFactoryMethod
     static @NonNull Formatter<String> onString() {
         return InternalFormatter::formatString;
     }
@@ -206,5 +214,17 @@ public interface Formatter<T> {
     @StaticFactoryMethod
     static @NonNull Formatter<URL> onURL() {
         return InternalFormatter::formatURL;
+    }
+
+    @StaticFactoryMethod
+    static <T> @NonNull Formatter<T> of(@NonNull Function<? super T, ? extends CharSequence> formatter, @NonNull Consumer<? super Throwable> onError) {
+        Objects.requireNonNull(formatter);
+        Objects.requireNonNull(onError);
+        return o -> InternalFormatter.formatFailsafe(formatter, onError, o);
+    }
+
+    @StaticFactoryMethod
+    static <T> @NonNull Formatter<T> of(@NonNull Function<? super T, ? extends CharSequence> formatter) {
+        return of(formatter, InternalFormatter::doNothing);
     }
 }

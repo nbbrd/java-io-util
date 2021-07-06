@@ -1,17 +1,17 @@
 /*
  * Copyright 2013 National Bank of Belgium
  *
- * Licensed under the EUPL, Version 1.1 or – as soon they will be approved 
+ * Licensed under the EUPL, Version 1.1 or – as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
  *
  * http://ec.europa.eu/idabc/eupl
  *
- * Unless required by applicable law or agreed to in writing, software 
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package nbbrd.io.text;
@@ -29,15 +29,14 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
-import java.util.Date;
-import java.util.Locale;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static nbbrd.io.text.Parser.*;
 import static org.assertj.core.api.Assertions.*;
 
 /**
- *
  * @author Philippe Charles
  */
 public class ParserTest {
@@ -100,6 +99,7 @@ public class ParserTest {
         assertCompliance(p, "UTF-8");
         assertThat(p.parse("UTF-8")).isEqualTo(StandardCharsets.UTF_8);
         assertThat(p.parse("hello")).isNull();
+        assertThat(p.parse("")).isNull();
     }
 
     @Test
@@ -125,6 +125,14 @@ public class ParserTest {
         Parser<TimeUnit> p = onEnum(TimeUnit.class);
         assertCompliance(p, "DAYS");
         assertThat(p.parse("DAYS")).isEqualTo(TimeUnit.DAYS);
+        assertThat(p.parse("hello")).isNull();
+    }
+
+    @Test
+    public void testOnEnum2() {
+        Parser<TimeUnit> p = onEnum(TimeUnit.class, Enum::ordinal);
+        assertCompliance(p, "6");
+        assertThat(p.parse("6")).isEqualTo(TimeUnit.DAYS);
         assertThat(p.parse("hello")).isNull();
     }
 
@@ -236,6 +244,36 @@ public class ParserTest {
                 .isNull();
     }
 
+    @Test
+    public void testOf() {
+        List<Object> errors = new ArrayList<>();
+
+        Function<Object, Object> p1 = o -> {
+            throw new RuntimeException("boom");
+        };
+        assertCompliance(of(p1, errors::add), "abc");
+        assertThat(errors).isNotEmpty();
+
+        errors.clear();
+
+        Function<Object, Object> p2 = o -> "hello";
+        assertCompliance(of(p2, errors::add), "abc");
+        assertThat(errors).isEmpty();
+        assertThat(p2.apply("abc")).isEqualTo("hello");
+    }
+
+    @Test
+    public void testOf2() {
+        Function<Object, Object> p1 = o -> {
+            throw new RuntimeException("boom");
+        };
+        assertCompliance(of(p1), "abc");
+
+        Function<Object, Object> p2 = o -> "hello";
+        assertCompliance(of(p2), "abc");
+        assertThat(p2.apply("abc")).isEqualTo("hello");
+    }
+
     @SuppressWarnings("null")
     private static <T> void assertCompliance(Parser<T> p, CharSequence input) {
         assertThatCode(() -> p.parse(null)).doesNotThrowAnyException();
@@ -245,6 +283,12 @@ public class ParserTest {
         assertThatNullPointerException().isThrownBy(() -> p.orElse(null));
 
         assertThat(p.parse(input)).isEqualTo(p.parse(input));
-        assertThat(p.parseValue(input)).contains(p.parse(input));
+
+        Optional<T> actual = p.parseValue(input);
+        if (actual.isPresent()) {
+            assertThat(actual).contains(p.parse(input));
+        } else {
+            assertThat(p.parse(input)).isNull();
+        }
     }
 }

@@ -93,7 +93,7 @@ public class Stax {
     }
 
     @lombok.With
-    @lombok.Builder(builderClassName = "Builder", toBuilder = true)
+    @lombok.Builder(toBuilder = true)
     public static final class StreamParser<T> implements Xml.Parser<T> {
 
         @StaticFactoryMethod
@@ -202,7 +202,7 @@ public class Stax {
     }
 
     @lombok.With
-    @lombok.Builder(builderClassName = "Builder", toBuilder = true)
+    @lombok.Builder(toBuilder = true)
     public static final class EventParser<T> implements Xml.Parser<T> {
 
         @StaticFactoryMethod
@@ -310,7 +310,7 @@ public class Stax {
     }
 
     @lombok.With
-    @lombok.Builder(builderClassName = "Builder", toBuilder = true)
+    @lombok.Builder(toBuilder = true)
     public static final class StreamFormatter<T> implements Xml.Formatter<T> {
 
         @Deprecated
@@ -335,7 +335,7 @@ public class Stax {
         public final static class Builder<T> {
 
             @Deprecated
-            public Builder handler(OutputHandler<XMLStreamWriter, T> handler) {
+            public Builder<T> handler(OutputHandler<XMLStreamWriter, T> handler) {
                 return handler2(handler.withEncoding());
             }
         }
@@ -430,7 +430,7 @@ public class Stax {
     }
 
     @lombok.With
-    @lombok.Builder(builderClassName = "Builder", toBuilder = true)
+    @lombok.Builder(toBuilder = true)
     public static final class EventFormatter<T> implements Xml.Formatter<T> {
 
         @Deprecated

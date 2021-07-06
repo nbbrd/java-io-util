@@ -80,13 +80,13 @@ public interface IOIterator<E> {
     @StaticFactoryMethod
     static <E> @NonNull IOIterator<E> checked(@NonNull Iterator<E> iterator) {
         return iterator instanceof IOIterators.Unchecked
-                ? ((IOIterators.Unchecked) iterator).getDelegate()
+                ? ((IOIterators.Unchecked<E>) iterator).getDelegate()
                 : new IOIterators.Checked<>(iterator);
     }
 
     static <E> @NonNull Iterator<E> unchecked(@NonNull IOIterator<E> iterator) {
         return iterator instanceof IOIterators.Checked
-                ? ((IOIterators.Checked) iterator).getDelegate()
+                ? ((IOIterators.Checked<E>) iterator).getDelegate()
                 : new IOIterators.Unchecked<>(iterator);
     }
 

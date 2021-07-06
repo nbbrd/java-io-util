@@ -204,7 +204,7 @@ public class FormatAssertions {
                 .withMessageContaining("value");
 
         assertThatNullPointerException()
-                .isThrownBy(() -> p.formatWriter(JOHN_DOE, (IOSupplier) null))
+                .isThrownBy(() -> p.formatWriter(JOHN_DOE, (IOSupplier<? extends Writer>) null))
                 .withMessageContaining("target");
 
         StringWriter writer = new StringWriter();
@@ -229,7 +229,7 @@ public class FormatAssertions {
                 .withMessageContaining("value");
 
         assertThatNullPointerException()
-                .isThrownBy(() -> p.formatStream(JOHN_DOE, (IOSupplier) null))
+                .isThrownBy(() -> p.formatStream(JOHN_DOE, (IOSupplier<? extends OutputStream>) null))
                 .withMessageContaining("target");
 
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
@@ -254,7 +254,7 @@ public class FormatAssertions {
                 .withMessageContaining("value");
 
         assertThatNullPointerException()
-                .isThrownBy(() -> p.formatStream(JOHN_DOE, (IOSupplier) null, StandardCharsets.UTF_8))
+                .isThrownBy(() -> p.formatStream(JOHN_DOE, (IOSupplier<? extends OutputStream>) null, StandardCharsets.UTF_8))
                 .withMessageContaining("target");
 
         assertThatNullPointerException()
