@@ -2,6 +2,7 @@ package nbbrd.io.text;
 
 import org.checkerframework.checker.nullness.qual.NonNull;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.function.BiConsumer;
@@ -28,8 +29,8 @@ public final class BooleanProperty extends BaseProperty {
         return get(properties::getProperty);
     }
 
-    public void set(@NonNull Properties properties, boolean value) {
-        set(properties::setProperty, value);
+    public boolean get(@NonNull Map<String, String> properties) {
+        return get(properties::get);
     }
 
     public void set(@NonNull BiConsumer<? super String, ? super String> properties, boolean value) {
@@ -38,5 +39,13 @@ public final class BooleanProperty extends BaseProperty {
             String valueAsString = Formatter.onBoolean().formatAsString(value);
             if (valueAsString != null) properties.accept(key, valueAsString);
         }
+    }
+
+    public void set(@NonNull Properties properties, boolean value) {
+        set(properties::setProperty, value);
+    }
+
+    public void set(@NonNull Map<String, String> properties, boolean value) {
+        set(properties::put, value);
     }
 }

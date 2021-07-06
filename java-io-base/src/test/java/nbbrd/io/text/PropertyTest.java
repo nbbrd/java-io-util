@@ -37,10 +37,13 @@ public class PropertyTest {
             Property<Charset> x = Property.of("k1", defaultValue, Parser.onCharset(), Formatter.onCharset());
 
             assertThatNullPointerException()
+                    .isThrownBy(() -> x.get((Function<? super String, ? extends CharSequence>) null));
+
+            assertThatNullPointerException()
                     .isThrownBy(() -> x.get((Properties) null));
 
             assertThatNullPointerException()
-                    .isThrownBy(() -> x.get((Function<? super String, ? extends CharSequence>) null));
+                    .isThrownBy(() -> x.get((Map<String, String>) null));
 
             // check generic parameters
             x.get(new HashMap<Object, CharSequence>()::get);
@@ -74,10 +77,13 @@ public class PropertyTest {
             Property<Charset> x = Property.of("k1", defaultValue, Parser.onCharset(), Formatter.onCharset());
 
             assertThatNullPointerException()
+                    .isThrownBy(() -> x.set((BiConsumer<? super String, ? super String>) null, defaultValue));
+
+            assertThatNullPointerException()
                     .isThrownBy(() -> x.set((Properties) null, defaultValue));
 
             assertThatNullPointerException()
-                    .isThrownBy(() -> x.set((BiConsumer<? super String, ? super String>) null, defaultValue));
+                    .isThrownBy(() -> x.set((Map<String, String>) null, defaultValue));
 
             // check generic parameters
             x.set(new HashMap<Object, CharSequence>()::put, defaultValue);

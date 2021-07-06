@@ -19,6 +19,7 @@ package nbbrd.io.text;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.function.BiConsumer;
@@ -55,8 +56,8 @@ public final class Property<T> extends BaseProperty {
         return get(properties::getProperty);
     }
 
-    public void set(@NonNull Properties properties, T value) {
-        set(properties::setProperty, value);
+    public @Nullable T get(@NonNull Map<String, String> properties) {
+        return get(properties::get);
     }
 
     public void set(@NonNull BiConsumer<? super String, ? super String> properties, @Nullable T value) {
@@ -65,5 +66,13 @@ public final class Property<T> extends BaseProperty {
             String valueAsString = formatter.formatAsString(value);
             if (valueAsString != null) properties.accept(key, valueAsString);
         }
+    }
+
+    public void set(@NonNull Properties properties, T value) {
+        set(properties::setProperty, value);
+    }
+
+    public void set(@NonNull Map<String, String> properties, T value) {
+        set(properties::put, value);
     }
 }

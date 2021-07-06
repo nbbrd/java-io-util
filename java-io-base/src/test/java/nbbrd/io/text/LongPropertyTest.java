@@ -27,10 +27,13 @@ public class LongPropertyTest {
             LongProperty x = LongProperty.of("k1", defaultValue);
 
             assertThatNullPointerException()
+                    .isThrownBy(() -> x.get((Function<? super String, ? extends CharSequence>) null));
+
+            assertThatNullPointerException()
                     .isThrownBy(() -> x.get((Properties) null));
 
             assertThatNullPointerException()
-                    .isThrownBy(() -> x.get((Function<? super String, ? extends CharSequence>) null));
+                    .isThrownBy(() -> x.get((Map<String, String>) null));
 
             assertThat(x.get(emptyGetter()))
                     .as("Absent key returns default value")
@@ -54,10 +57,13 @@ public class LongPropertyTest {
             LongProperty x = LongProperty.of("k1", defaultValue);
 
             assertThatNullPointerException()
+                    .isThrownBy(() -> x.set((BiConsumer<? super String, ? super String>) null, defaultValue));
+
+            assertThatNullPointerException()
                     .isThrownBy(() -> x.set((Properties) null, defaultValue));
 
             assertThatNullPointerException()
-                    .isThrownBy(() -> x.set((BiConsumer<? super String, ? super String>) null, defaultValue));
+                    .isThrownBy(() -> x.set((Map<String, String>) null, defaultValue));
 
             for (long newValue : values) {
                 Map<String, String> properties = new HashMap<>();
