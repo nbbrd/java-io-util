@@ -100,6 +100,7 @@ public class ParserTest {
         assertCompliance(p, "UTF-8");
         assertThat(p.parse("UTF-8")).isEqualTo(StandardCharsets.UTF_8);
         assertThat(p.parse("hello")).isNull();
+        assertThat(p.parse("")).isNull();
     }
 
     @Test

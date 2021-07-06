@@ -154,7 +154,7 @@ public class InternalParser {
         if (input != null) {
             try {
                 return Charset.forName(input.toString());
-            } catch (UnsupportedCharsetException ex) {
+            } catch (IllegalArgumentException ex) {
             }
         }
         return null;
