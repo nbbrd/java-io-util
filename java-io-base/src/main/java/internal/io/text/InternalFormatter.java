@@ -27,6 +27,7 @@ import java.time.temporal.TemporalAccessor;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -122,5 +123,19 @@ public class InternalFormatter {
 
     public CharSequence formatURL(URL value) {
         return value != null ? value.toString() : null;
+    }
+
+    public <T> CharSequence formatFailsafe(Function<? super T, ? extends CharSequence> formatter, Consumer<? super Throwable> onError, T input) {
+        if (input != null) {
+            try {
+                return formatter.apply(input);
+            } catch (Throwable ex) {
+                onError.accept(ex);
+            }
+        }
+        return null;
+    }
+
+    public void doNothing(Throwable ex) {
     }
 }
