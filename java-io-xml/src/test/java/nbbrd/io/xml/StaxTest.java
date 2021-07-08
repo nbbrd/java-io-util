@@ -19,6 +19,8 @@ package nbbrd.io.xml;
 import _test.*;
 import _test.sample.ParseAssertions;
 import _test.sample.Person;
+import nbbrd.io.Resource;
+import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IOSupplier;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,9 +33,11 @@ import javax.xml.stream.events.XMLEvent;
 import java.io.ByteArrayOutputStream;
 import java.io.Closeable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import static _test.sample.FormatAssertions.assertFormatterCompliance;
@@ -83,6 +87,85 @@ public class StaxTest {
                 .isThrownBy(() -> Stax.StreamParser.valueOf(null));
 
         assertParserCompliance(Stax.StreamParser.valueOf(StaxTest::parseByStream), temp);
+    }
+
+    @Test
+    public void testStreamParserCloseableFlow() throws IOException {
+        AtomicBoolean readerClosed = new AtomicBoolean(false);
+        Stax.StreamParser<CloseablePerson> x = Stax.StreamParser
+                .<CloseablePerson>builder()
+                .handler(CloseablePerson::new)
+                .factory(() -> new ForwardingXMLInputFactory(XMLInputFactory.newFactory()).onStreamReader(reader -> new ForwardingXMLStreamReader(reader).onClose(() -> readerClosed.set(true))))
+                .build();
+
+        Charset encoding = StandardCharsets.UTF_8;
+
+        {
+            readerClosed.set(false);
+            try (CloseablePerson closeable = x.parseFile(Person.getFile(encoding))) {
+                assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
+                assertThat(readerClosed).isFalse();
+            }
+            assertThat(readerClosed).isTrue();
+
+            readerClosed.set(false);
+            try (CloseablePerson closeable = x.parseFile(Person.getFile(encoding), encoding)) {
+                assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
+                assertThat(readerClosed).isFalse();
+            }
+            assertThat(readerClosed).isTrue();
+        }
+
+        // FIXME: not able to detect if inputstream is closed outside of reader !
+        {
+            AtomicBoolean streamClosed = new AtomicBoolean(false);
+            IOSupplier<InputStream> johnDoeStream = Person.JOHN_DOE_STREAM
+                    .andThen(stream -> new ForwardingInputStream(stream).onClose(() -> streamClosed.set(true)));
+
+            readerClosed.set(false);
+            streamClosed.set(false);
+            try (CloseablePerson closeable = x.parseStream(johnDoeStream)) {
+                assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
+                assertThat(readerClosed).isFalse();
+                assertThat(streamClosed.get()).isEqualTo(closeable.isEndDocument());
+            }
+            assertThat(readerClosed).isTrue();
+            assertThat(streamClosed).isTrue();
+
+            readerClosed.set(false);
+            streamClosed.set(false);
+            try (CloseablePerson closeable = x.parseStream(johnDoeStream, encoding)) {
+                assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
+                assertThat(readerClosed).isFalse();
+                assertThat(streamClosed.get()).isEqualTo(closeable.isEndDocument());
+            }
+            assertThat(readerClosed).isTrue();
+            assertThat(streamClosed).isTrue();
+
+            readerClosed.set(false);
+            streamClosed.set(false);
+            try (InputStream stream = johnDoeStream.getWithIO()) {
+                try (CloseablePerson closeable = x.parseStream(stream)) {
+                    assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
+                    assertThat(readerClosed).isFalse();
+                    assertThat(streamClosed.get()).isEqualTo(closeable.isEndDocument());
+                }
+            }
+            assertThat(readerClosed).isTrue();
+            assertThat(streamClosed).isTrue();
+
+            readerClosed.set(false);
+            streamClosed.set(false);
+            try (InputStream stream = johnDoeStream.getWithIO()) {
+                try (CloseablePerson closeable = x.parseStream(stream, encoding)) {
+                    assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
+                    assertThat(readerClosed).isFalse();
+                    assertThat(streamClosed.get()).isEqualTo(closeable.isEndDocument());
+                }
+            }
+            assertThat(readerClosed).isTrue();
+            assertThat(streamClosed).isTrue();
+        }
     }
 
     @Test
@@ -358,6 +441,40 @@ public class StaxTest {
                     assertThat(counter.getMax()).isLessThanOrEqualTo(1);
                 }
             }
+        }
+    }
+
+    @lombok.Getter
+    @lombok.RequiredArgsConstructor
+    private static class CloseablePerson implements Closeable {
+
+        @lombok.NonNull
+        private final XMLStreamReader reader;
+
+        @lombok.NonNull
+        private final Closeable onClose;
+
+        public boolean isEndDocument() {
+            return reader.getEventType() == XMLStreamConstants.END_DOCUMENT;
+        }
+
+        public Person getPerson() throws IOException {
+            try {
+                return parseByStream(reader);
+            } catch (XMLStreamException ex) {
+                throw WrappedIOException.wrap(ex);
+            }
+        }
+
+        @Override
+        public void close() throws IOException {
+            try {
+                reader.close();
+            } catch (XMLStreamException ex) {
+                Resource.ensureClosed(ex, onClose);
+                throw WrappedIOException.wrap(ex);
+            }
+            onClose.close();
         }
     }
 
