@@ -164,6 +164,14 @@ public class Stax {
         }
 
         @Override
+        public @NonNull T parseStream(IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
+            Objects.requireNonNull(source, "source");
+            Objects.requireNonNull(encoding, "encoding");
+            InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream");
+            return parse(o -> o.createXMLStreamReader(resource, encoding.name()), resource);
+        }
+
+        @Override
         public T parseReader(Reader resource) throws IOException {
             Objects.requireNonNull(resource, "resource");
             return parse(o -> o.createXMLStreamReader(resource), NOTHING_TO_CLOSE);
@@ -270,6 +278,14 @@ public class Stax {
             Objects.requireNonNull(source, "source");
             InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream");
             return parse(o -> o.createXMLEventReader(resource), resource);
+        }
+
+        @Override
+        public T parseStream(IOSupplier<? extends InputStream> source, Charset encoding) throws IOException {
+            Objects.requireNonNull(source, "source");
+            Objects.requireNonNull(encoding, "encoding");
+            InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream");
+            return parse(o -> o.createXMLEventReader(resource, encoding.name()), resource);
         }
 
         @Override
