@@ -68,7 +68,7 @@ public final class SystemProperties {
 
     /**
      * Path used to find directories and JAR archives containing class files.
-     * Elements of the class path are separated by a platform-specific character specified in the path.separator property.
+     * Elements of the class path are separated by a platform-specific character specified in the path separator property.
      *
      * @return
      */

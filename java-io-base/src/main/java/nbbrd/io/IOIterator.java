@@ -67,6 +67,7 @@ public interface IOIterator<E> {
         return new IOIterators.Unchecked<>(this);
     }
 
+    @SuppressWarnings("unchecked")
     @StaticFactoryMethod
     static <E> @NonNull IOIterator<E> empty() {
         return (IOIterator<E>) IOIterators.Empty.INSTANCE;

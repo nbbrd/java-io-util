@@ -46,22 +46,52 @@ public class Sax {
      * @param reader non-null reader
      * @see <a href="https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLReader">XXE</a>
      */
-    public void preventXXE(@NonNull XMLReader reader) {
-//        setFeatureQuietly(reader, "http://apache.org/xml/features/disallow-doctype-decl", true);
-        setFeatureQuietly(reader, "http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-        setFeatureQuietly(reader, "http://xml.org/sax/features/external-general-entities", false);
-        setFeatureQuietly(reader, "http://xml.org/sax/features/external-parameter-entities", false);
+    public static void preventXXE(@NonNull XMLReader reader) {
+        disableFeature(reader, XERCES_FEATURES_NONVALIDATING_LOAD_EXTERNAL_DTD);
+        disableFeature(reader, SAX_FEATURES_EXTERNAL_GENERAL_ENTITIES);
+        disableFeature(reader, SAX_FEATURES_EXTERNAL_PARAMETER_ENTITIES);
     }
 
-    @NonNull
-    public static XMLReader createReader() throws IOException {
+    public static @NonNull XMLReader createReader() throws IOException {
         try {
             return DEFAULT_FACTORY.newSAXParser().getXMLReader();
         } catch (ParserConfigurationException ex) {
-            throw WrappedIOException.wrap(ex);
+            throw wrapConfigException(ex);
         } catch (SAXException ex) {
             throw toIOException(ex);
         }
+    }
+
+    /**
+     * Creates a new InputSource from a file.
+     *
+     * @param file a non-null file
+     * @return a new InputSource
+     * @see SAXParser#parse(java.io.File, org.xml.sax.helpers.DefaultHandler)
+     */
+    public static @NonNull InputSource newInputSource(@NonNull File file) {
+        return new InputSource(LegacyFiles.toSystemId(file));
+    }
+
+    /**
+     * Creates a new InputSource from a file.
+     *
+     * @param file     a non-null file
+     * @param encoding a non-null encoding
+     * @return a new InputSource
+     * @see SAXParser#parse(java.io.File, org.xml.sax.helpers.DefaultHandler)
+     */
+    public static @NonNull InputSource newInputSource(@NonNull File file, @NonNull Charset encoding) {
+        InputSource result = new InputSource(LegacyFiles.toSystemId(file));
+        result.setEncoding(encoding.name());
+        return result;
+    }
+
+    public static @NonNull IOException toIOException(@NonNull SAXException ex) {
+        if (ex instanceof SAXParseException) {
+            return wrapParseException((SAXParseException) ex);
+        }
+        return WrappedIOException.wrap(ex);
     }
 
     @lombok.With
@@ -83,73 +113,67 @@ public class Sax {
             return result.after(after).build();
         }
 
-        // Fix lombok.Builder.Default bug in NetBeans
-        @NonNull
-        public static <T> Builder<T> builder() {
-            return new Builder<T>()
-                    .factory(Sax::createReader)
-                    .dtdHandler(DEFAULT_HANDLER)
-                    .entityResolver(DEFAULT_HANDLER)
-                    .errorHandler(DEFAULT_HANDLER)
-                    .before(IORunnable.noOp())
-                    .ignoreXXE(false);
-        }
-
         public final static class Builder<T> {
 
         }
 
         @lombok.NonNull
-        private final IOSupplier<? extends XMLReader> factory;
+        @lombok.Builder.Default
+        private final IOSupplier<? extends XMLReader> factory = Sax::createReader;
 
         @lombok.NonNull
         private final ContentHandler contentHandler;
 
         @lombok.NonNull
-        private final DTDHandler dtdHandler;
+        @lombok.Builder.Default
+        private final DTDHandler dtdHandler = DEFAULT_HANDLER;
 
         @lombok.NonNull
-        private final EntityResolver entityResolver;
+        @lombok.Builder.Default
+        private final EntityResolver entityResolver = DEFAULT_HANDLER;
 
         @lombok.NonNull
-        private final ErrorHandler errorHandler;
+        @lombok.Builder.Default
+        private final ErrorHandler errorHandler = DEFAULT_HANDLER;
 
         @lombok.NonNull
-        private final IORunnable before;
+        @lombok.Builder.Default
+        private final IORunnable before = IORunnable.noOp();
 
         @lombok.NonNull
         private final IOSupplier<? extends T> after;
 
         @lombok.Getter
-        private final boolean ignoreXXE;
+        @lombok.Builder.Default
+        private final boolean ignoreXXE = false;
 
         @Override
-        public T parseFile(File source) throws IOException {
+        public @NonNull T parseFile(@NonNull File source) throws IOException {
             LegacyFiles.checkSource(source);
             return parse(newInputSource(source));
         }
 
         @Override
-        public T parseFile(File source, Charset encoding) throws IOException {
+        public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
             LegacyFiles.checkSource(source);
             Objects.requireNonNull(encoding, "encoding");
             return parse(newInputSource(source, encoding));
         }
 
         @Override
-        public T parseReader(Reader resource) throws IOException {
+        public @NonNull T parseReader(@NonNull Reader resource) throws IOException {
             Objects.requireNonNull(resource, "resource");
             return parse(new InputSource(resource));
         }
 
         @Override
-        public T parseStream(InputStream resource) throws IOException {
+        public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
             Objects.requireNonNull(resource, "resource");
             return parse(new InputSource(resource));
         }
 
         @Override
-        public T parseStream(InputStream resource, Charset encoding) throws IOException {
+        public @NonNull T parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
             Objects.requireNonNull(resource, "resource");
             Objects.requireNonNull(encoding, "encoding");
             InputSource input = new InputSource(resource);
@@ -176,31 +200,6 @@ public class Sax {
         }
     }
 
-    /**
-     * Creates a new InputSource from a file.
-     *
-     * @param file
-     * @return
-     * @see SAXParser#parse(java.io.File, org.xml.sax.helpers.DefaultHandler)
-     */
-    public InputSource newInputSource(File file) {
-        return new InputSource(LegacyFiles.toSystemId(file));
-    }
-
-    /**
-     * Creates a new InputSource from a file.
-     *
-     * @param file
-     * @param encoding
-     * @return
-     * @see SAXParser#parse(java.io.File, org.xml.sax.helpers.DefaultHandler)
-     */
-    public InputSource newInputSource(File file, Charset encoding) {
-        InputSource result = new InputSource(LegacyFiles.toSystemId(file));
-        result.setEncoding(encoding.name());
-        return result;
-    }
-
     private final static SAXParserFactory DEFAULT_FACTORY = initFactory();
     private final static DefaultHandler DEFAULT_HANDLER = new DefaultHandler();
 
@@ -210,34 +209,35 @@ public class Sax {
         return result;
     }
 
-    private void setFeatureQuietly(XMLReader reader, String feature, boolean value) {
+    private static void disableFeature(XMLReader reader, String feature) {
         try {
-            reader.setFeature(feature, value);
+            reader.setFeature(feature, false);
         } catch (SAXNotRecognizedException | SAXNotSupportedException ex) {
-            log.log(Level.FINE, ex, () -> String.format("Failed to set feature '%s' to '%s'", feature, value));
+            log.log(Level.FINE, ex, () -> String.format("Failed to disable feature '%s'", feature));
         }
     }
 
-    public IOException toIOException(SAXException ex) {
-        if (ex instanceof SAXParseException) {
-            return toIOException((SAXParseException) ex);
-        }
+    private static IOException wrapConfigException(ParserConfigurationException ex) {
         return WrappedIOException.wrap(ex);
     }
 
-    private IOException toIOException(SAXParseException ex) {
+    private static IOException wrapParseException(SAXParseException ex) {
         if (isEOF(ex)) {
-            return new EOFException(Objects.toString(getFile(ex)));
+            return new EOFException(Objects.toString(getFileOrNull(ex)));
         }
         return WrappedIOException.wrap(ex);
     }
 
-    private boolean isEOF(SAXParseException ex) {
+    private static boolean isEOF(SAXParseException ex) {
         return ex.getMessage() != null && ex.getMessage().contains("end of file");
     }
 
-    private File getFile(SAXParseException ex) {
+    private static File getFileOrNull(SAXParseException ex) {
         String result = ex.getSystemId();
         return result != null && result.startsWith("file:/") ? LegacyFiles.fromSystemId(result) : null;
     }
+
+    private static final String SAX_FEATURES_EXTERNAL_GENERAL_ENTITIES = "http://xml.org/sax/features/external-general-entities";
+    private static final String SAX_FEATURES_EXTERNAL_PARAMETER_ENTITIES = "http://xml.org/sax/features/external-parameter-entities";
+    private static final String XERCES_FEATURES_NONVALIDATING_LOAD_EXTERNAL_DTD = "http://apache.org/xml/features/nonvalidating/load-external-dtd";
 }

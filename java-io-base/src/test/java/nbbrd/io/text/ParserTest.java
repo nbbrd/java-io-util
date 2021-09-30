@@ -32,6 +32,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static nbbrd.io.text.Parser.*;
 import static org.assertj.core.api.Assertions.*;
@@ -155,6 +156,7 @@ public class ParserTest {
         assertThat(p.parse("hello")).isEqualTo("hello");
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Test
     public void testOnDateFormat() {
         assertThatNullPointerException().isThrownBy(() -> onDateFormat(null));
@@ -169,6 +171,7 @@ public class ParserTest {
         assertThat(p.parse("x2010-01")).isNull();
     }
 
+    @SuppressWarnings("ConstantConditions")
     @Test
     public void testOnNumberFormat() {
         assertThatNullPointerException().isThrownBy(() -> onNumberFormat(null));
@@ -245,6 +248,102 @@ public class ParserTest {
     }
 
     @Test
+    public void testOnNull() {
+        assertCompliance(onNull(), "");
+
+        assertThat(onNull().parse(null))
+                .isNull();
+
+        assertThat(onNull().parse(""))
+                .isNull();
+    }
+
+    @Test
+    public void testOnConstant() {
+        assertCompliance(onConstant("abc"), "");
+
+        assertThat(onConstant("abc").parse(null))
+                .isEqualTo("abc");
+
+        assertThat(onConstant("abc").parse(""))
+                .isEqualTo("abc");
+
+        assertThat(onConstant(null).parse(null))
+                .isNull();
+
+        assertThat(onConstant(null).parse(""))
+                .isNull();
+    }
+
+    @Test
+    public void testOnStringArray() {
+        assertCompliance(onStringArray(), "[a,b,c]");
+
+        assertThat(onStringArray().parse("[]"))
+                .containsExactly("");
+
+        assertThat(onStringArray().parse("[a,b,c]"))
+                .containsExactly("a", "b", "c");
+
+        assertThat(onStringArray().parse("[a, b, c]"))
+                .containsExactly("a", "b", "c");
+
+        assertThat(onStringArray().parse("[a,b,c"))
+                .isNull();
+
+        assertThat(onStringArray().parse("a,b,c]"))
+                .isNull();
+
+        assertThat(onStringArray().parse(null))
+                .isNull();
+    }
+
+    @Test
+    public void testOnStringList() {
+        assertThatNullPointerException()
+                .isThrownBy(() -> onStringList(null));
+
+        Function<CharSequence, Stream<String>> splitter = text -> Stream.of(text.toString().split(",", -1));
+
+        assertCompliance(onStringList(splitter), "a,b,c");
+
+        assertThat(onStringList(splitter).parse(""))
+                .containsExactly("");
+
+        assertThat(onStringList(splitter).parse("a,b,c"))
+                .containsExactly("a", "b", "c");
+
+        assertThat(onStringList(splitter).parse("a, b, c"))
+                .containsExactly("a", " b", " c");
+
+        assertThat(onStringList(splitter).parse(null))
+                .isNull();
+    }
+
+    @Test
+    public void testOnDouble() {
+        assertCompliance(onDouble(), "3.14");
+
+        assertThat(onDouble().parse(Double.toString(Math.PI)))
+                .isEqualTo(Math.PI);
+
+        assertThat(onDouble().parse(Double.toString(Double.NaN)))
+                .isNaN();
+
+        assertThat(onDouble().parse(null))
+                .isNull();
+
+        assertThat(onDouble().parse("3,14"))
+                .isNull();
+
+        assertThat(onDouble().parse("3.14x"))
+                .isNull();
+
+        assertThat(onDouble().parse("x3.14"))
+                .isNull();
+    }
+
+    @Test
     public void testOf() {
         List<Object> errors = new ArrayList<>();
 
@@ -274,7 +373,7 @@ public class ParserTest {
         assertThat(p2.apply("abc")).isEqualTo("hello");
     }
 
-    @SuppressWarnings("null")
+    @SuppressWarnings({"null", "ConstantConditions"})
     private static <T> void assertCompliance(Parser<T> p, CharSequence input) {
         assertThatCode(() -> p.parse(null)).doesNotThrowAnyException();
         assertThatCode(() -> p.parseValue(null)).doesNotThrowAnyException();

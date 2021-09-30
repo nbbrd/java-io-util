@@ -41,8 +41,7 @@ import java.util.Objects;
 @lombok.experimental.UtilityClass
 public class Jaxb {
 
-    @NonNull
-    public Unmarshaller createUnmarshaller(@NonNull Class<?> type) throws IOException {
+    public static @NonNull Unmarshaller createUnmarshaller(@NonNull Class<?> type) throws IOException {
         Objects.requireNonNull(type);
         try {
             return JAXBContext.newInstance(type).createUnmarshaller();
@@ -51,8 +50,7 @@ public class Jaxb {
         }
     }
 
-    @NonNull
-    public Unmarshaller createUnmarshaller(@NonNull JAXBContext context) throws IOException {
+    public static @NonNull Unmarshaller createUnmarshaller(@NonNull JAXBContext context) throws IOException {
         Objects.requireNonNull(context);
         try {
             return context.createUnmarshaller();
@@ -61,8 +59,7 @@ public class Jaxb {
         }
     }
 
-    @NonNull
-    public Marshaller createMarshaller(@NonNull Class<?> type) throws IOException {
+    public static @NonNull Marshaller createMarshaller(@NonNull Class<?> type) throws IOException {
         Objects.requireNonNull(type);
         try {
             return JAXBContext.newInstance(type).createMarshaller();
@@ -71,8 +68,7 @@ public class Jaxb {
         }
     }
 
-    @NonNull
-    public Marshaller createMarshaller(@NonNull JAXBContext context) throws IOException {
+    public static @NonNull Marshaller createMarshaller(@NonNull JAXBContext context) throws IOException {
         Objects.requireNonNull(context);
         try {
             return context.createMarshaller();
@@ -86,23 +82,15 @@ public class Jaxb {
     public static final class Parser<T> implements Xml.Parser<T> {
 
         @StaticFactoryMethod
-        public static <T> @NonNull Parser<T> of(@NonNull Class<T> type) throws IOException {
+        public static <T> @NonNull Parser<T> of(@NonNull Class<T> type) {
             Objects.requireNonNull(type);
             return Parser.<T>builder().factory(() -> createUnmarshaller(type)).build();
         }
 
         @StaticFactoryMethod
-        public static <T> @NonNull Parser<T> of(@NonNull JAXBContext context) throws IOException {
+        public static <T> @NonNull Parser<T> of(@NonNull JAXBContext context) {
             Objects.requireNonNull(context);
             return Parser.<T>builder().factory(() -> createUnmarshaller(context)).build();
-        }
-
-        // Fix lombok.Builder.Default bug in NetBeans
-        @NonNull
-        public static <T> Builder<T> builder() {
-            return new Builder<T>()
-                    .ignoreXXE(false)
-                    .xxeFactory(Parser::getStaxFactory);
         }
 
         public final static class Builder<T> {
@@ -113,61 +101,68 @@ public class Jaxb {
         private final IOSupplier<? extends Unmarshaller> factory;
 
         @lombok.Getter
-        private final boolean ignoreXXE;
+        @lombok.Builder.Default
+        private final boolean ignoreXXE = false;
 
         @lombok.NonNull
-        private final IOSupplier<? extends XMLInputFactory> xxeFactory;
+        @lombok.Builder.Default
+        private final IOSupplier<? extends XMLInputFactory> xxeFactory = Parser::getStaxFactory;
 
         @Override
-        public T parseFile(File source) throws IOException {
+        public @NonNull T parseFile(@NonNull File source) throws IOException {
             LegacyFiles.checkSource(source);
             Unmarshaller engine = factory.getWithIO();
 
-            return !ignoreXXE
+            return cast(!ignoreXXE
                     ? parseFileXXE(engine, source, xxeFactory.getWithIO())
-                    : parseFile(engine, source);
+                    : parseFile(engine, source));
         }
 
         @Override
-        public T parseFile(File source, Charset encoding) throws IOException {
+        public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
             LegacyFiles.checkSource(source);
             Objects.requireNonNull(encoding, "encoding");
             Unmarshaller engine = factory.getWithIO();
 
-            return !ignoreXXE
+            return cast(!ignoreXXE
                     ? parseFileXXE(engine, source, xxeFactory.getWithIO())
-                    : parseFile(engine, source, encoding);
+                    : parseFile(engine, source, encoding));
         }
 
         @Override
-        public T parseReader(Reader resource) throws IOException {
+        public @NonNull T parseReader(@NonNull Reader resource) throws IOException {
             Objects.requireNonNull(resource, "resource");
             Unmarshaller engine = factory.getWithIO();
 
-            return !ignoreXXE
+            return cast(!ignoreXXE
                     ? parseReaderXXE(engine, resource, xxeFactory.getWithIO())
-                    : parseReader(engine, resource);
+                    : parseReader(engine, resource));
         }
 
         @Override
-        public T parseStream(InputStream resource) throws IOException {
+        public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
             Objects.requireNonNull(resource, "resource");
             Unmarshaller engine = factory.getWithIO();
 
-            return !ignoreXXE
+            return cast(!ignoreXXE
                     ? parseStreamXXE(engine, resource, xxeFactory.getWithIO())
-                    : parseStream(engine, resource);
+                    : parseStream(engine, resource));
         }
 
         @Override
-        public T parseStream(InputStream resource, Charset encoding) throws IOException {
+        public @NonNull T parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
             Objects.requireNonNull(resource, "resource");
             Objects.requireNonNull(encoding, "encoding");
             Unmarshaller engine = factory.getWithIO();
 
-            return !ignoreXXE
+            return cast(!ignoreXXE
                     ? parseStreamXXE(engine, resource, xxeFactory.getWithIO())
-                    : parseStream(engine, resource);
+                    : parseStream(engine, resource));
+        }
+
+        @SuppressWarnings("unchecked")
+        private T cast(Object value) {
+            return (T) value;
         }
 
         private static XMLInputFactory getStaxFactory() {
@@ -176,43 +171,43 @@ public class Jaxb {
             return result;
         }
 
-        private static <T> T parseFile(Unmarshaller engine, File source) throws IOException {
+        private static Object parseFile(Unmarshaller engine, File source) throws IOException {
             try {
-                return (T) engine.unmarshal(Sax.newInputSource(source));
+                return engine.unmarshal(Sax.newInputSource(source));
             } catch (JAXBException ex) {
                 throw toIOException(ex);
             }
         }
 
-        private static <T> T parseFile(Unmarshaller engine, File source, Charset encoding) throws IOException {
+        private static Object parseFile(Unmarshaller engine, File source, Charset encoding) throws IOException {
             try {
-                return (T) engine.unmarshal(Sax.newInputSource(source, encoding));
+                return engine.unmarshal(Sax.newInputSource(source, encoding));
             } catch (JAXBException ex) {
                 throw toIOException(ex);
             }
         }
 
-        private static <T> T parseReader(Unmarshaller engine, Reader resource) throws IOException {
+        private static Object parseReader(Unmarshaller engine, Reader resource) throws IOException {
             try {
-                return (T) engine.unmarshal(resource);
+                return engine.unmarshal(resource);
             } catch (JAXBException ex) {
                 throw toIOException(ex);
             }
         }
 
-        private static <T> T parseStream(Unmarshaller engine, InputStream resource) throws IOException {
+        private static Object parseStream(Unmarshaller engine, InputStream resource) throws IOException {
             try {
-                return (T) engine.unmarshal(resource);
+                return engine.unmarshal(resource);
             } catch (JAXBException ex) {
                 throw toIOException(ex);
             }
         }
 
-        private static <T> T parseFileXXE(Unmarshaller engine, File source, XMLInputFactory xxe) throws IOException {
+        private static Object parseFileXXE(Unmarshaller engine, File source, XMLInputFactory xxe) throws IOException {
             try (InputStream resource = LegacyFiles.newInputStream(source)) {
                 XMLStreamReader reader = xxe.createXMLStreamReader(LegacyFiles.toSystemId(source), resource);
                 try {
-                    return (T) engine.unmarshal(reader);
+                    return engine.unmarshal(reader);
                 } finally {
                     reader.close();
                 }
@@ -223,11 +218,11 @@ public class Jaxb {
             }
         }
 
-        private static <T> T parseReaderXXE(Unmarshaller engine, Reader resource, XMLInputFactory xxe) throws IOException {
+        private static Object parseReaderXXE(Unmarshaller engine, Reader resource, XMLInputFactory xxe) throws IOException {
             try {
                 XMLStreamReader reader = xxe.createXMLStreamReader(resource);
                 try {
-                    return (T) engine.unmarshal(reader);
+                    return engine.unmarshal(reader);
                 } finally {
                     reader.close();
                 }
@@ -238,11 +233,11 @@ public class Jaxb {
             }
         }
 
-        private static <T> T parseStreamXXE(Unmarshaller engine, InputStream resource, XMLInputFactory xxe) throws IOException {
+        private static Object parseStreamXXE(Unmarshaller engine, InputStream resource, XMLInputFactory xxe) throws IOException {
             try {
                 XMLStreamReader reader = xxe.createXMLStreamReader(resource);
                 try {
-                    return (T) engine.unmarshal(reader);
+                    return engine.unmarshal(reader);
                 } finally {
                     reader.close();
                 }
@@ -259,23 +254,15 @@ public class Jaxb {
     public static final class Formatter<T> implements Xml.Formatter<T> {
 
         @StaticFactoryMethod
-        public static <T> @NonNull Formatter<T> of(@NonNull Class<T> type) throws IOException {
+        public static <T> @NonNull Formatter<T> of(@NonNull Class<T> type) {
             Objects.requireNonNull(type);
             return Formatter.<T>builder().factory(() -> createMarshaller(type)).build();
         }
 
         @StaticFactoryMethod
-        public static <T> @NonNull Formatter<T> of(@NonNull JAXBContext context) throws IOException {
+        public static <T> @NonNull Formatter<T> of(@NonNull JAXBContext context) {
             Objects.requireNonNull(context);
             return Formatter.<T>builder().factory(() -> createMarshaller(context)).build();
-        }
-
-        // Fix lombok.Builder.Default bug in NetBeans
-        @NonNull
-        public static <T> Builder<T> builder() {
-            return new Builder<T>()
-                    .formatted(false)
-                    .encoding(StandardCharsets.UTF_8);
         }
 
         public final static class Builder<T> {
@@ -285,18 +272,20 @@ public class Jaxb {
         private final IOSupplier<? extends Marshaller> factory;
 
         @lombok.Getter
-        private final boolean formatted;
+        @lombok.Builder.Default
+        private final boolean formatted = false;
 
         @lombok.NonNull
-        private final Charset encoding;
+        @lombok.Builder.Default
+        private final Charset encoding = StandardCharsets.UTF_8;
 
         @Override
-        public Charset getDefaultEncoding() {
+        public @NonNull Charset getDefaultEncoding() {
             return encoding;
         }
 
         @Override
-        public void formatFile(T value, File target) throws IOException {
+        public void formatFile(@NonNull T value, @NonNull File target) throws IOException {
             Objects.requireNonNull(value, "value");
             LegacyFiles.checkTarget(target);
             try {
@@ -307,7 +296,7 @@ public class Jaxb {
         }
 
         @Override
-        public void formatWriter(T value, Writer resource) throws IOException {
+        public void formatWriter(@NonNull T value, @NonNull Writer resource) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(resource, "resource");
             try {
@@ -318,7 +307,7 @@ public class Jaxb {
         }
 
         @Override
-        public void formatStream(T value, OutputStream resource) throws IOException {
+        public void formatStream(@NonNull T value, @NonNull OutputStream resource) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(resource, "resource");
             try {
@@ -329,7 +318,7 @@ public class Jaxb {
         }
 
         @Override
-        public void formatStream(T value, OutputStream resource, Charset encoding) throws IOException {
+        public void formatStream(@NonNull T value, @NonNull OutputStream resource, @NonNull Charset encoding) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(resource, "resource");
             Objects.requireNonNull(encoding, "encoding");

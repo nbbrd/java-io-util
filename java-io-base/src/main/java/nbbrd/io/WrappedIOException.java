@@ -35,7 +35,7 @@ public final class WrappedIOException extends IOException {
     @NonNull
     public static Throwable unwrap(@NonNull IOException ex) {
         Objects.requireNonNull(ex);
-        return ex instanceof WrappedIOException ? ((WrappedIOException) ex).getCause() : ex;
+        return ex instanceof WrappedIOException ? ex.getCause() : ex;
     }
 
     private WrappedIOException(Throwable ex) {

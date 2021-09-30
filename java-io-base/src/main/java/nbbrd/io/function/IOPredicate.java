@@ -139,7 +139,7 @@ public interface IOPredicate<T> {
     @JdkWithIO
     @StaticFactoryMethod
     static <T> @NonNull IOPredicate<T> isEqual(Object targetRef) {
-        return (null == targetRef) ? Objects::isNull : (object) -> targetRef.equals(object);
+        return (null == targetRef) ? Objects::isNull : targetRef::equals;
     }
 
     @StaticFactoryMethod

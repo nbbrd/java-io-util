@@ -33,7 +33,7 @@ public interface FileFormatter<T> {
         }
     }
 
-    default void formatStream(@NonNull T value, IOSupplier<? extends OutputStream> target) throws IOException {
+    default void formatStream(@NonNull T value, @NonNull IOSupplier<? extends OutputStream> target) throws IOException {
         Objects.requireNonNull(value, "value");
         Objects.requireNonNull(target, "target");
         try (OutputStream resource = LegacyFiles.checkResource(target.getWithIO(), "Missing OutputStream")) {

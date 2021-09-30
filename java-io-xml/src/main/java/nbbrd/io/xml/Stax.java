@@ -42,9 +42,16 @@ public class Stax {
      * @param factory non-null factory
      * @see <a href="https://www.owasp.org/index.php/XML_External_Entity_(XXE)_Prevention_Cheat_Sheet#XMLInputFactory_.28a_StAX_parser.29">XXE</a>
      */
-    public void preventXXE(@NonNull XMLInputFactory factory) {
-        setFeature(factory, XMLInputFactory.SUPPORT_DTD, false);
-        setFeature(factory, XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES, false);
+    public static void preventXXE(@NonNull XMLInputFactory factory) {
+        disableFeature(factory, XMLInputFactory.SUPPORT_DTD);
+        disableFeature(factory, XMLInputFactory.IS_SUPPORTING_EXTERNAL_ENTITIES);
+    }
+
+    public static @NonNull IOException toIOException(@NonNull XMLStreamException ex) {
+        if (isEOF(ex)) {
+            return new EOFException(Objects.toString(getFileOrNull(ex)));
+        }
+        return WrappedIOException.wrap(ex);
     }
 
     @FunctionalInterface
@@ -68,7 +75,7 @@ public class Stax {
         @NonNull
         default FlowHandler<I, T> asFlow() {
             return (input, onClose) -> {
-                try (Closeable c = onClose) {
+                try (Closeable ignored = onClose) {
                     return parse(input);
                 }
             };
@@ -106,14 +113,6 @@ public class Stax {
             return flowOf(handler.asFlow());
         }
 
-        // Fix lombok.Builder.Default bug in NetBeans
-        @NonNull
-        public static <T> Builder<T> builder() {
-            return new Builder<T>()
-                    .factory(XMLInputFactory::newFactory)
-                    .ignoreXXE(false);
-        }
-
         public final static class Builder<T> {
 
             public Builder<T> flow(FlowHandler<XMLStreamReader, T> handler) {
@@ -129,20 +128,22 @@ public class Stax {
         private final FlowHandler<XMLStreamReader, T> handler;
 
         @lombok.NonNull
-        private final IOSupplier<? extends XMLInputFactory> factory;
+        @lombok.Builder.Default
+        private final IOSupplier<? extends XMLInputFactory> factory = XMLInputFactory::newFactory;
 
         @lombok.Getter
-        private final boolean ignoreXXE;
+        @lombok.Builder.Default
+        private final boolean ignoreXXE = false;
 
         @Override
-        public T parseFile(File source) throws IOException {
+        public @NonNull T parseFile(@NonNull File source) throws IOException {
             LegacyFiles.checkSource(source);
             InputStream resource = LegacyFiles.newInputStream(source);
             return parse(o -> o.createXMLStreamReader(LegacyFiles.toSystemId(source), resource), resource);
         }
 
         @Override
-        public T parseFile(File source, Charset encoding) throws IOException {
+        public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
             LegacyFiles.checkSource(source);
             Objects.requireNonNull(encoding, "encoding");
             InputStream resource = LegacyFiles.newInputStream(source);
@@ -150,21 +151,21 @@ public class Stax {
         }
 
         @Override
-        public T parseReader(IOSupplier<? extends Reader> source) throws IOException {
+        public @NonNull T parseReader(@NonNull IOSupplier<? extends Reader> source) throws IOException {
             Objects.requireNonNull(source, "source");
             Reader resource = LegacyFiles.checkResource(source.getWithIO(), "Missing Reader");
             return parse(o -> o.createXMLStreamReader(resource), resource);
         }
 
         @Override
-        public T parseStream(IOSupplier<? extends InputStream> source) throws IOException {
+        public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source) throws IOException {
             Objects.requireNonNull(source, "source");
             InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream");
             return parse(o -> o.createXMLStreamReader(resource), resource);
         }
 
         @Override
-        public @NonNull T parseStream(IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
+        public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
             Objects.requireNonNull(source, "source");
             Objects.requireNonNull(encoding, "encoding");
             InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream");
@@ -172,19 +173,19 @@ public class Stax {
         }
 
         @Override
-        public T parseReader(Reader resource) throws IOException {
+        public @NonNull T parseReader(@NonNull Reader resource) throws IOException {
             Objects.requireNonNull(resource, "resource");
             return parse(o -> o.createXMLStreamReader(resource), NOTHING_TO_CLOSE);
         }
 
         @Override
-        public T parseStream(InputStream resource) throws IOException {
+        public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
             Objects.requireNonNull(resource, "resource");
             return parse(o -> o.createXMLStreamReader(resource), NOTHING_TO_CLOSE);
         }
 
         @Override
-        public T parseStream(InputStream resource, Charset encoding) throws IOException {
+        public @NonNull T parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
             Objects.requireNonNull(resource, "resource");
             Objects.requireNonNull(encoding, "encoding");
             return parse(o -> o.createXMLStreamReader(resource, encoding.name()), NOTHING_TO_CLOSE);
@@ -223,14 +224,6 @@ public class Stax {
             return flowOf(handler.asFlow());
         }
 
-        // Fix lombok.Builder.Default bug in NetBeans
-        @NonNull
-        public static <T> Builder<T> builder() {
-            return new Builder<T>()
-                    .factory(XMLInputFactory::newFactory)
-                    .ignoreXXE(false);
-        }
-
         public final static class Builder<T> {
 
             public Builder<T> flow(FlowHandler<XMLEventReader, T> handler) {
@@ -246,20 +239,22 @@ public class Stax {
         private final FlowHandler<XMLEventReader, T> handler;
 
         @lombok.NonNull
-        private final IOSupplier<? extends XMLInputFactory> factory;
+        @lombok.Builder.Default
+        private final IOSupplier<? extends XMLInputFactory> factory = XMLInputFactory::newFactory;
 
         @lombok.Getter
-        private final boolean ignoreXXE;
+        @lombok.Builder.Default
+        private final boolean ignoreXXE = false;
 
         @Override
-        public T parseFile(File source) throws IOException {
+        public @NonNull T parseFile(@NonNull File source) throws IOException {
             LegacyFiles.checkSource(source);
             InputStream resource = LegacyFiles.newInputStream(source);
             return parse(o -> o.createXMLEventReader(LegacyFiles.toSystemId(source), resource), resource);
         }
 
         @Override
-        public T parseFile(File source, Charset encoding) throws IOException {
+        public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
             LegacyFiles.checkSource(source);
             Objects.requireNonNull(encoding, "encoding");
             InputStream resource = LegacyFiles.newInputStream(source);
@@ -267,21 +262,21 @@ public class Stax {
         }
 
         @Override
-        public T parseReader(IOSupplier<? extends Reader> source) throws IOException {
+        public @NonNull T parseReader(@NonNull IOSupplier<? extends Reader> source) throws IOException {
             Objects.requireNonNull(source, "source");
             Reader resource = LegacyFiles.checkResource(source.getWithIO(), "Missing Reader");
             return parse(o -> o.createXMLEventReader(resource), resource);
         }
 
         @Override
-        public T parseStream(IOSupplier<? extends InputStream> source) throws IOException {
+        public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source) throws IOException {
             Objects.requireNonNull(source, "source");
             InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream");
             return parse(o -> o.createXMLEventReader(resource), resource);
         }
 
         @Override
-        public T parseStream(IOSupplier<? extends InputStream> source, Charset encoding) throws IOException {
+        public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
             Objects.requireNonNull(source, "source");
             Objects.requireNonNull(encoding, "encoding");
             InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream");
@@ -289,19 +284,19 @@ public class Stax {
         }
 
         @Override
-        public T parseReader(Reader resource) throws IOException {
+        public @NonNull T parseReader(@NonNull Reader resource) throws IOException {
             Objects.requireNonNull(resource, "resource");
             return parse(o -> o.createXMLEventReader(resource), NOTHING_TO_CLOSE);
         }
 
         @Override
-        public T parseStream(InputStream resource) throws IOException {
+        public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
             Objects.requireNonNull(resource, "resource");
             return parse(o -> o.createXMLEventReader(resource), NOTHING_TO_CLOSE);
         }
 
         @Override
-        public T parseStream(InputStream resource, Charset encoding) throws IOException {
+        public @NonNull T parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
             Objects.requireNonNull(resource, "resource");
             Objects.requireNonNull(encoding, "encoding");
             return parse(o -> o.createXMLEventReader(resource, encoding.name()), NOTHING_TO_CLOSE);
@@ -340,14 +335,6 @@ public class Stax {
             return StreamFormatter.<T>builder().handler2(handler2).build();
         }
 
-        // Fix lombok.Builder.Default bug in NetBeans
-        @NonNull
-        public static <T> Builder<T> builder() {
-            return new Builder<T>()
-                    .factory(XMLOutputFactory::newFactory)
-                    .encoding(StandardCharsets.UTF_8);
-        }
-
         public final static class Builder<T> {
 
             @Deprecated
@@ -365,10 +352,12 @@ public class Stax {
         private final OutputHandler2<XMLStreamWriter, T> handler2;
 
         @lombok.NonNull
-        private final IOSupplier<? extends XMLOutputFactory> factory;
+        @lombok.Builder.Default
+        private final IOSupplier<? extends XMLOutputFactory> factory = XMLOutputFactory::newFactory;
 
         @lombok.NonNull
-        private final Charset encoding;
+        @lombok.Builder.Default
+        private final Charset encoding = StandardCharsets.UTF_8;
 
         @Override
         public boolean isFormatted() {
@@ -376,12 +365,12 @@ public class Stax {
         }
 
         @Override
-        public Charset getDefaultEncoding() {
+        public @NonNull Charset getDefaultEncoding() {
             return encoding;
         }
 
         @Override
-        public void formatFile(T value, File target) throws IOException {
+        public void formatFile(@NonNull T value, @NonNull File target) throws IOException {
             Objects.requireNonNull(value, "value");
             LegacyFiles.checkTarget(target);
             try (OutputStream resource = LegacyFiles.newOutputStream(target)) {
@@ -390,7 +379,7 @@ public class Stax {
         }
 
         @Override
-        public void formatWriter(T value, IOSupplier<? extends Writer> target) throws IOException {
+        public void formatWriter(@NonNull T value, @NonNull IOSupplier<? extends Writer> target) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
             try (Writer resource = LegacyFiles.checkResource(target.getWithIO(), "Missing Writer")) {
@@ -399,7 +388,7 @@ public class Stax {
         }
 
         @Override
-        public void formatStream(T value, IOSupplier<? extends OutputStream> target) throws IOException {
+        public void formatStream(@NonNull T value, @NonNull IOSupplier<? extends OutputStream> target) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
             try (OutputStream resource = LegacyFiles.checkResource(target.getWithIO(), "Missing OutputStream")) {
@@ -408,21 +397,21 @@ public class Stax {
         }
 
         @Override
-        public void formatWriter(T value, Writer resource) throws IOException {
+        public void formatWriter(@NonNull T value, @NonNull Writer resource) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(resource, "resource");
             format(value, o -> o.createXMLStreamWriter(resource), getDefaultEncoding());
         }
 
         @Override
-        public void formatStream(T value, OutputStream resource) throws IOException {
+        public void formatStream(@NonNull T value, @NonNull OutputStream resource) throws IOException {
             Objects.requireNonNull(value);
             Objects.requireNonNull(resource, "resource");
             format(value, o -> o.createXMLStreamWriter(resource, getDefaultEncoding().name()), getDefaultEncoding());
         }
 
         @Override
-        public void formatStream(T value, OutputStream resource, Charset encoding) throws IOException {
+        public void formatStream(@NonNull T value, @NonNull OutputStream resource, @NonNull Charset encoding) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(resource, "resource");
             Objects.requireNonNull(encoding, "encoding");
@@ -440,8 +429,7 @@ public class Stax {
         }
 
         private XMLOutputFactory getEngine() throws IOException {
-            XMLOutputFactory result = factory.getWithIO();
-            return result;
+            return factory.getWithIO();
         }
     }
 
@@ -458,14 +446,6 @@ public class Stax {
         @StaticFactoryMethod
         public static <T> @NonNull EventFormatter<T> of(@NonNull OutputHandler2<XMLEventWriter, T> handler2) {
             return EventFormatter.<T>builder().handler2(handler2).build();
-        }
-
-        // Fix lombok.Builder.Default bug in NetBeans
-        @NonNull
-        public static <T> Builder<T> builder() {
-            return new Builder<T>()
-                    .factory(XMLOutputFactory::newFactory)
-                    .encoding(StandardCharsets.UTF_8);
         }
 
         public final static class Builder<T> {
@@ -485,10 +465,12 @@ public class Stax {
         private final OutputHandler2<XMLEventWriter, T> handler2;
 
         @lombok.NonNull
-        private final IOSupplier<? extends XMLOutputFactory> factory;
+        @lombok.Builder.Default
+        private final IOSupplier<? extends XMLOutputFactory> factory = XMLOutputFactory::newFactory;
 
         @lombok.NonNull
-        private final Charset encoding;
+        @lombok.Builder.Default
+        private final Charset encoding = StandardCharsets.UTF_8;
 
         @Override
         public boolean isFormatted() {
@@ -496,12 +478,12 @@ public class Stax {
         }
 
         @Override
-        public Charset getDefaultEncoding() {
+        public @NonNull Charset getDefaultEncoding() {
             return encoding;
         }
 
         @Override
-        public void formatFile(T value, File target) throws IOException {
+        public void formatFile(@NonNull T value, @NonNull File target) throws IOException {
             Objects.requireNonNull(value, "value");
             LegacyFiles.checkTarget(target);
             try (OutputStream resource = LegacyFiles.newOutputStream(target)) {
@@ -510,7 +492,7 @@ public class Stax {
         }
 
         @Override
-        public void formatWriter(T value, IOSupplier<? extends Writer> target) throws IOException {
+        public void formatWriter(@NonNull T value, @NonNull IOSupplier<? extends Writer> target) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
             try (Writer resource = LegacyFiles.checkResource(target.getWithIO(), "Missing Writer")) {
@@ -519,7 +501,7 @@ public class Stax {
         }
 
         @Override
-        public void formatStream(T value, IOSupplier<? extends OutputStream> target) throws IOException {
+        public void formatStream(@NonNull T value, @NonNull IOSupplier<? extends OutputStream> target) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(target, "target");
             try (OutputStream resource = LegacyFiles.checkResource(target.getWithIO(), "Missing OutputStream")) {
@@ -528,21 +510,21 @@ public class Stax {
         }
 
         @Override
-        public void formatWriter(T value, Writer resource) throws IOException {
+        public void formatWriter(@NonNull T value, @NonNull Writer resource) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(resource, "resource");
             format(value, o -> o.createXMLEventWriter(resource), getDefaultEncoding());
         }
 
         @Override
-        public void formatStream(T value, OutputStream resource) throws IOException {
+        public void formatStream(@NonNull T value, @NonNull OutputStream resource) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(resource, "resource");
             format(value, o -> o.createXMLEventWriter(resource, getDefaultEncoding().name()), getDefaultEncoding());
         }
 
         @Override
-        public void formatStream(T value, OutputStream resource, Charset encoding) throws IOException {
+        public void formatStream(@NonNull T value, @NonNull OutputStream resource, @NonNull Charset encoding) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(resource, "resource");
             Objects.requireNonNull(encoding, "encoding");
@@ -560,12 +542,11 @@ public class Stax {
         }
 
         private XMLOutputFactory getEngine() throws IOException {
-            XMLOutputFactory result = factory.getWithIO();
-            return result;
+            return factory.getWithIO();
         }
     }
 
-    private XMLInputFactory getInputEngine(IOSupplier<? extends XMLInputFactory> factory, boolean ignoreXXE) throws IOException {
+    private static XMLInputFactory getInputEngine(IOSupplier<? extends XMLInputFactory> factory, boolean ignoreXXE) throws IOException {
         XMLInputFactory result = factory.getWithIO();
         if (!ignoreXXE) {
             preventXXE(result);
@@ -573,7 +554,7 @@ public class Stax {
         return result;
     }
 
-    private <T, INPUT> T doParse(FlowHandler<INPUT, T> handler, INPUT input, Closeable onClose) throws IOException {
+    private static <T, INPUT> T doParse(FlowHandler<INPUT, T> handler, INPUT input, Closeable onClose) throws IOException {
         try {
             return handler.parse(input, onClose);
         } catch (XMLStreamException ex) {
@@ -585,7 +566,7 @@ public class Stax {
         }
     }
 
-    private <T, OUTPUT> void doFormat(OutputHandler2<OUTPUT, T> handler2, T value, OUTPUT output, Charset encoding, Closeable onClose) throws IOException {
+    private static <T, OUTPUT> void doFormat(OutputHandler2<OUTPUT, T> handler2, T value, OUTPUT output, Charset encoding, Closeable onClose) throws IOException {
         try {
             handler2.format(value, output, encoding);
         } catch (Exception ex) {
@@ -597,7 +578,7 @@ public class Stax {
         }
     }
 
-    private void close(XRunnable first) throws IOException {
+    private static void close(XRunnable first) throws IOException {
         try {
             first.run();
         } catch (XMLStreamException ex) {
@@ -605,7 +586,7 @@ public class Stax {
         }
     }
 
-    private void closeBoth(XRunnable first, Closeable second) throws IOException {
+    private static void closeBoth(XRunnable first, Closeable second) throws IOException {
         try {
             first.run();
         } catch (XMLStreamException ex) {
@@ -630,14 +611,14 @@ public class Stax {
         R apply(T t) throws XMLStreamException;
     }
 
-    private void setFeature(XMLInputFactory factory, String feature, boolean value) {
+    private static void disableFeature(XMLInputFactory factory, String feature) {
         if (factory.isPropertySupported(feature)
-                && ((Boolean) factory.getProperty(feature)) != value) {
-            factory.setProperty(feature, value);
+                && ((Boolean) factory.getProperty(feature))) {
+            factory.setProperty(feature, false);
         }
     }
 
-    private IOException toIOException(Exception ex) {
+    private static IOException toIOException(Exception ex) {
         if (ex instanceof XMLStreamException) {
             return toIOException((XMLStreamException) ex);
         }
@@ -647,21 +628,14 @@ public class Stax {
         return WrappedIOException.wrap(ex);
     }
 
-    public IOException toIOException(XMLStreamException ex) {
-        if (isEOF(ex)) {
-            return new EOFException(Objects.toString(getFile(ex)));
-        }
-        return WrappedIOException.wrap(ex);
-    }
-
-    private boolean isEOF(XMLStreamException ex) {
+    private static boolean isEOF(XMLStreamException ex) {
         return ex.getLocation() != null && ex.getMessage() != null && ex.getMessage().contains("end of file");
     }
 
-    private File getFile(XMLStreamException ex) {
+    private static File getFileOrNull(XMLStreamException ex) {
         String result = ex.getLocation().getSystemId();
         return result != null && result.startsWith("file:/") ? LegacyFiles.fromSystemId(result) : null;
     }
 
-    private final Closeable NOTHING_TO_CLOSE = IORunnable.noOp().asCloseable();
+    private static final Closeable NOTHING_TO_CLOSE = IORunnable.noOp().asCloseable();
 }

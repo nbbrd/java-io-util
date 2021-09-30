@@ -32,7 +32,7 @@ public class ProcessReader {
         return newReader(new ProcessBuilder(args).start());
     }
 
-    public static @NonNull BufferedReader newReader(@NonNull Process process) throws IOException {
+    public static @NonNull BufferedReader newReader(@NonNull Process process) {
         return new BufferedReader(new InputStreamReader(new ProcessInputStream(process), Charset.defaultCharset()));
     }
 
@@ -69,6 +69,7 @@ public class ProcessReader {
         }
 
         // we need the process to end, else we'll get an illegal Thread State Exception
+        @SuppressWarnings("StatementWithEmptyBody")
         private void readUntilEnd() throws IOException {
             while (delegate.read() != -1) {
             }

@@ -34,7 +34,7 @@ public abstract class AbstractIOIterator<E> implements IOIterator<E> {
 
     private enum State {
         COMPUTED, NOT_COMPUTED, DONE
-    };
+    }
 
     private State state = State.NOT_COMPUTED;
 
