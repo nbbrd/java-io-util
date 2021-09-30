@@ -44,6 +44,8 @@ import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.xml.Xml;
 import static org.assertj.core.api.Assertions.*;
+
+import org.assertj.core.api.Assertions;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -64,28 +66,28 @@ public class JaxbTest {
     @Test
     @SuppressWarnings("null")
     public void testCreateUnmarshaller() throws Exception {
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.createUnmarshaller((Class<?>) null));
 
-        assertThatThrownBy(() -> Jaxb.createUnmarshaller(Runnable.class))
+        Assertions.assertThatThrownBy(() -> Jaxb.createUnmarshaller(Runnable.class))
                 .isInstanceOf(WrappedIOException.class)
                 .hasCauseInstanceOf(JAXBException.class);
 
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.createUnmarshaller((JAXBContext) null));
     }
 
     @Test
     @SuppressWarnings("null")
     public void testCreateMarshaller() throws Exception {
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.createMarshaller((Class<?>) null));
 
-        assertThatThrownBy(() -> Jaxb.createMarshaller(Runnable.class))
+        Assertions.assertThatThrownBy(() -> Jaxb.createMarshaller(Runnable.class))
                 .isInstanceOf(WrappedIOException.class)
                 .hasCauseInstanceOf(JAXBException.class);
 
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.createMarshaller((JAXBContext) null));
     }
 
@@ -98,7 +100,7 @@ public class JaxbTest {
     @Test
     @SuppressWarnings("null")
     public void testParserOfClass() throws Exception {
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Parser.of((Class<?>) null));
 
         assertParserCompliance(Jaxb.Parser.of(Person.class), temp);
@@ -107,7 +109,7 @@ public class JaxbTest {
     @Test
     @SuppressWarnings("null")
     public void testParserOfContext() throws Exception {
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Parser.of((JAXBContext) null));
 
         assertParserCompliance(Jaxb.Parser.of(JAXBContext.newInstance(Person.class)), temp);
@@ -116,13 +118,13 @@ public class JaxbTest {
     @Test
     @SuppressWarnings("null")
     public void testParserBuilder() throws IOException {
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Parser.builder().build());
 
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Parser.builder().factory(null).build());
 
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Parser.builder().factory(validUnmarshaller).xxeFactory(null).build());
 
         for (boolean ignoreXXE : BOOLS) {
@@ -141,10 +143,10 @@ public class JaxbTest {
     public void testParserWither() throws IOException {
         Jaxb.Parser<Person> parser = Jaxb.Parser.of(Person.class);
 
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> parser.withFactory(null));
 
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> parser.withXxeFactory(null));
     }
 
@@ -187,7 +189,7 @@ public class JaxbTest {
     @Test
     @SuppressWarnings("null")
     public void testFormatterOfClass() throws Exception {
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Formatter.of((Class<?>) null));
 
         assertFormatterCompliance(Jaxb.Formatter.of(Person.class), false, temp);
@@ -196,7 +198,7 @@ public class JaxbTest {
     @Test
     @SuppressWarnings("null")
     public void testFormatterOfContext() throws Exception {
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Formatter.of((JAXBContext) null));
 
         assertFormatterCompliance(Jaxb.Formatter.of(JAXBContext.newInstance(Person.class)), false, temp);
@@ -205,10 +207,10 @@ public class JaxbTest {
     @Test
     @SuppressWarnings("null")
     public void testFormatterBuilder() throws IOException {
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Formatter.builder().build());
 
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Formatter.builder().factory(null).build());
 
         for (boolean formatted : BOOLS) {
@@ -226,17 +228,17 @@ public class JaxbTest {
     public void testFormatterWither() throws IOException {
         Jaxb.Formatter<Person> formatter = Jaxb.Formatter.of(Person.class);
 
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> formatter.withFactory(null));
 
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> formatter.withEncoding(null));
     }
 
     @Test
     @SuppressWarnings("null")
     public void testFormatterWithAlternateEncoding() throws IOException {
-        assertThatNullPointerException()
+        Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Formatter.of(Person.class).withEncoding(null));
 
         assertThat(Jaxb.Formatter.of(Person.class).withEncoding(StandardCharsets.ISO_8859_1).formatToString(Person.JOHN_DOE))

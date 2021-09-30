@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 National Bank of Belgium
+ * Copyright 2020 National Bank of Belgium
  * 
  * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
@@ -15,17 +15,15 @@
  * limitations under the Licence.
  */
 
-module nbbrd.io.base {
+module nbbrd.io.xml.bind {
 
     requires static org.checkerframework.checker.qual;
     requires static lombok;
     requires static nbbrd.design;
 
-    exports nbbrd.io;
-    exports nbbrd.io.function;
-    exports nbbrd.io.sys;
-    exports nbbrd.io.text;
-    exports nbbrd.io.zip;
+    requires java.logging;
+    requires transitive nbbrd.io.xml;
+    requires transitive java.xml.bind;
 
-    exports internal.io.text to nbbrd.io.xml, nbbrd.io.xml.bind;
+    exports nbbrd.io.xml.bind;
 }

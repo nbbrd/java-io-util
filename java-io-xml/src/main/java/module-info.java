@@ -24,8 +24,6 @@ module nbbrd.io.xml {
     requires java.logging;
     requires transitive nbbrd.io.base;
     requires transitive java.xml;
-    requires static java.xml.bind;
 
     exports nbbrd.io.xml;
-    exports nbbrd.io.xml.bind;
 }

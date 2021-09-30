@@ -36,8 +36,9 @@
 
     <modules>
         <module>java-io-base</module>
-        <module>java-io-xml</module>
         <module>java-io-win</module>
+        <module>java-io-xml</module>
+        <module>java-io-xml-bind</module>
     </modules>
 
     <dependencyManagement>
@@ -69,6 +70,18 @@
                 <groupId>com.github.tomakehurst</groupId>
                 <artifactId>wiremock-standalone</artifactId>
                 <version>2.27.2</version>
+            </dependency>
+
+            <!-- other -->
+            <dependency>
+                <groupId>javax.xml.bind</groupId>
+                <artifactId>jaxb-api</artifactId>
+                <version>2.4.0-b180830.0359</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+                <version>2.4.0-b180830.0438</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
