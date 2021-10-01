@@ -87,6 +87,7 @@ public interface Parser<T> {
         return o -> after.apply(parse(o));
     }
 
+    @SuppressWarnings("unchecked")
     @StaticFactoryMethod
     static <T> @NonNull Parser<T> onDateTimeFormatter(@NonNull DateTimeFormatter formatter, TemporalQuery<T>... queries) {
         Objects.requireNonNull(formatter);
@@ -170,7 +171,7 @@ public interface Parser<T> {
     }
 
     @StaticFactoryMethod
-    static <T extends Enum<T>> @NonNull Parser<T> onEnum(Class<T> type, ToIntFunction<T> function) {
+    static <T extends Enum<T>> @NonNull Parser<T> onEnum(@NonNull Class<T> type, @NonNull ToIntFunction<T> function) {
         final T[] values = type.getEnumConstants();
         Objects.requireNonNull(function);
         return onInteger().andThen(code -> InternalParser.parse(values, function, code));
@@ -192,7 +193,7 @@ public interface Parser<T> {
     }
 
     @StaticFactoryMethod
-    static @NonNull Parser<List<String>> onStringList(@NonNull Function<CharSequence, Stream<String>> splitter) {
+    static @NonNull Parser<List<String>> onStringList(@NonNull Function<CharSequence, @NonNull Stream<String>> splitter) {
         Objects.requireNonNull(splitter);
         return o -> InternalParser.parseStringList(splitter, o);
     }

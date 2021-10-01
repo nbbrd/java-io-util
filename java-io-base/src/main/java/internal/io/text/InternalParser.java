@@ -41,6 +41,7 @@ import java.util.stream.Stream;
 @lombok.experimental.UtilityClass
 public class InternalParser {
 
+    @SuppressWarnings("unchecked")
     public <T> T parseTemporalAccessor(DateTimeFormatter formatter, TemporalQuery<T>[] queries, CharSequence input) {
         if (input != null) {
             try {
@@ -53,6 +54,7 @@ public class InternalParser {
                         return (T) formatter.parseBest(input, queries);
                 }
             } catch (DateTimeParseException ex) {
+                doNothing(ex);
             }
         }
         return null;
@@ -94,6 +96,7 @@ public class InternalParser {
                 }
                 return result;
             } catch (Exception ex) {
+                doNothing(ex);
             }
         }
         return null;
@@ -115,6 +118,7 @@ public class InternalParser {
                 }
                 return result;
             } catch (Exception ex) {
+                doNothing(ex);
             }
         }
         return null;
@@ -125,6 +129,7 @@ public class InternalParser {
             try {
                 return Integer.valueOf(input.toString());
             } catch (NumberFormatException ex) {
+                doNothing(ex);
             }
         }
         return null;
@@ -135,6 +140,7 @@ public class InternalParser {
             try {
                 return Long.valueOf(input.toString());
             } catch (NumberFormatException ex) {
+                doNothing(ex);
             }
         }
         return null;
@@ -145,6 +151,7 @@ public class InternalParser {
             try {
                 return Double.valueOf(input.toString());
             } catch (NumberFormatException ex) {
+                doNothing(ex);
             }
         }
         return null;
@@ -155,6 +162,7 @@ public class InternalParser {
             try {
                 return Charset.forName(input.toString());
             } catch (IllegalArgumentException ex) {
+                doNothing(ex);
             }
         }
         return null;
@@ -183,6 +191,7 @@ public class InternalParser {
             try {
                 return Enum.valueOf(enumClass, input.toString());
             } catch (IllegalArgumentException ex) {
+                doNothing(ex);
             }
         }
         return null;
@@ -291,6 +300,7 @@ public class InternalParser {
             try {
                 return new URL(input.toString());
             } catch (MalformedURLException ex) {
+                doNothing(ex);
             }
         }
         return null;

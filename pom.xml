@@ -5,7 +5,7 @@
 
     <groupId>com.github.nbbrd.java-io-util</groupId>
     <artifactId>java-io-parent</artifactId>
-    <version>0.0.14</version>
+    <version>0.0.15</version>
     <packaging>pom</packaging>
 
     <name>java-io</name>
@@ -36,8 +36,9 @@
 
     <modules>
         <module>java-io-base</module>
-        <module>java-io-xml</module>
         <module>java-io-win</module>
+        <module>java-io-xml</module>
+        <module>java-io-xml-bind</module>
     </modules>
 
     <dependencyManagement>
@@ -46,7 +47,7 @@
             <dependency>
                 <groupId>org.checkerframework</groupId>
                 <artifactId>checker-qual</artifactId>
-                <version>3.15.0</version>
+                <version>3.18.0</version>
             </dependency>
 
             <!-- test libraries -->
@@ -58,7 +59,7 @@
             <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
-                <version>3.20.2</version>
+                <version>3.21.0</version>
             </dependency>
             <dependency>
                 <groupId>com.google.jimfs</groupId>
@@ -69,6 +70,18 @@
                 <groupId>com.github.tomakehurst</groupId>
                 <artifactId>wiremock-standalone</artifactId>
                 <version>2.27.2</version>
+            </dependency>
+
+            <!-- other -->
+            <dependency>
+                <groupId>javax.xml.bind</groupId>
+                <artifactId>jaxb-api</artifactId>
+                <version>2.4.0-b180830.0359</version>
+            </dependency>
+            <dependency>
+                <groupId>org.glassfish.jaxb</groupId>
+                <artifactId>jaxb-runtime</artifactId>
+                <version>2.4.0-b180830.0438</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -241,7 +254,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-enforcer-plugin</artifactId>
-                        <version>3.0.0-M3</version>
+                        <version>3.0.0</version>
                         <dependencies>
                             <dependency>
                                 <groupId>org.kordamp.maven</groupId>
@@ -291,7 +304,7 @@
                     <plugin>
                         <groupId>org.gaul</groupId>
                         <artifactId>modernizer-maven-plugin</artifactId>
-                        <version>2.2.0</version>
+                        <version>2.3.0</version>
                         <configuration>
                             <javaVersion>1.8</javaVersion>
                         </configuration>
@@ -388,7 +401,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.3.0</version>
+                        <version>3.3.1</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>

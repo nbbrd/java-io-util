@@ -42,6 +42,7 @@ public class InternalFormatter {
             try {
                 return formatter.format(value);
             } catch (DateTimeException ex) {
+                doNothing(ex);
             }
         }
         return null;
@@ -68,6 +69,7 @@ public class InternalFormatter {
             try {
                 return joiner.apply(value.stream().map(CharSequence.class::cast));
             } catch (Exception ex) {
+                doNothing(ex);
             }
         }
         return null;

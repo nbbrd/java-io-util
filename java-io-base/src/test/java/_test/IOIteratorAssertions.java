@@ -42,6 +42,7 @@ public class IOIteratorAssertions {
                 .isThrownBy(iterator::nextWithIO);
     }
 
+    @SafeVarargs
     public static <E> void assertContent(Supplier<IOIterator<E>> iterable, E... content) throws IOException {
         assertThat(iterable.get().asUnchecked())
                 .toIterable()

@@ -44,12 +44,12 @@ public class IOIterators {
         INSTANCE;
 
         @Override
-        public boolean hasNextWithIO() throws IOException {
+        public boolean hasNextWithIO() {
             return false;
         }
 
         @Override
-        public Object nextWithIO() throws IOException, NoSuchElementException {
+        public Object nextWithIO() throws NoSuchElementException {
             throw new NoSuchElementException();
         }
 
@@ -73,12 +73,12 @@ public class IOIterators {
         private boolean first = true;
 
         @Override
-        public boolean hasNextWithIO() throws IOException {
+        public boolean hasNextWithIO() {
             return first;
         }
 
         @Override
-        public E nextWithIO() throws IOException, NoSuchElementException {
+        public E nextWithIO() throws NoSuchElementException {
             if (!hasNextWithIO()) {
                 throw new NoSuchElementException();
             }

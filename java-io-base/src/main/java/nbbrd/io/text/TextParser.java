@@ -48,7 +48,7 @@ public interface TextParser<T> {
     }
 
     @NonNull
-    default T parseReader(IOSupplier<? extends Reader> source) throws IOException {
+    default T parseReader(@NonNull IOSupplier<? extends Reader> source) throws IOException {
         Objects.requireNonNull(source, "source");
         try (Reader resource = LegacyFiles.checkResource(source.getWithIO(), "Missing Reader")) {
             return parseReader(resource);
@@ -56,7 +56,7 @@ public interface TextParser<T> {
     }
 
     @NonNull
-    default T parseStream(IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
+    default T parseStream(@NonNull IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
         Objects.requireNonNull(source, "source");
         Objects.requireNonNull(encoding, "encoding");
         try (InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream")) {

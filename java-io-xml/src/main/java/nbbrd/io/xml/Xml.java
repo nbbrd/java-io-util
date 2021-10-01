@@ -40,8 +40,7 @@ public class Xml {
 
         boolean isIgnoreXXE();
 
-        @NonNull
-        default <V> Parser<V> andThen(@NonNull Function<? super T, ? extends V> after) {
+        default <V> @NonNull Parser<V> andThen(@NonNull Function<? super T, ? extends V> after) {
             return new AdaptedParser<>(this, FileParser.super.andThen(after), TextParser.super.andThen(after));
         }
     }
@@ -50,11 +49,9 @@ public class Xml {
 
         boolean isFormatted();
 
-        @NonNull
-        Charset getDefaultEncoding();
+        @NonNull Charset getDefaultEncoding();
 
-        @NonNull
-        default <V> Formatter<V> compose(@NonNull Function<? super V, ? extends T> before) {
+        default <V> @NonNull Formatter<V> compose(@NonNull Function<? super V, ? extends T> before) {
             return new AdaptedFormatter<>(this, FileFormatter.super.compose(before), TextFormatter.super.compose(before));
         }
     }
@@ -77,80 +74,67 @@ public class Xml {
         }
 
         @Override
-        @NonNull
-        public V parseFile(@NonNull File source) throws IOException {
+        public @NonNull V parseFile(@NonNull File source) throws IOException {
             return fileParser.parseFile(source);
         }
 
         @Override
-        @NonNull
-        public V parsePath(@NonNull Path source) throws IOException {
+        public @NonNull V parsePath(@NonNull Path source) throws IOException {
             return fileParser.parsePath(source);
         }
 
         @Override
-        @NonNull
-        public V parseResource(@NonNull Class<?> type, @NonNull String name) throws IOException {
+        public @NonNull V parseResource(@NonNull Class<?> type, @NonNull String name) throws IOException {
             return fileParser.parseResource(type, name);
         }
 
         @Override
-        @NonNull
-        public V parseStream(IOSupplier<? extends InputStream> source) throws IOException {
+        public @NonNull V parseStream(@NonNull IOSupplier<? extends InputStream> source) throws IOException {
             return fileParser.parseStream(source);
         }
 
         @Override
-        @NonNull
-        public V parseStream(@NonNull InputStream resource) throws IOException {
+        public @NonNull V parseStream(@NonNull InputStream resource) throws IOException {
             return fileParser.parseStream(resource);
         }
 
         @Override
-        @NonNull
-        public V parseChars(@NonNull CharSequence source) throws IOException {
+        public @NonNull V parseChars(@NonNull CharSequence source) throws IOException {
             return textParser.parseChars(source);
         }
 
         @Override
-        @NonNull
-        public V parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
+        public @NonNull V parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
             return textParser.parseFile(source, encoding);
         }
 
         @Override
-        @NonNull
-        public V parsePath(@NonNull Path source, @NonNull Charset encoding) throws IOException {
+        public @NonNull V parsePath(@NonNull Path source, @NonNull Charset encoding) throws IOException {
             return textParser.parsePath(source, encoding);
         }
 
         @Override
-        @NonNull
-        public V parseResource(@NonNull Class<?> type, @NonNull String name, @NonNull Charset encoding) throws IOException {
+        public @NonNull V parseResource(@NonNull Class<?> type, @NonNull String name, @NonNull Charset encoding) throws IOException {
             return textParser.parseResource(type, name, encoding);
         }
 
         @Override
-        @NonNull
-        public V parseReader(IOSupplier<? extends Reader> source) throws IOException {
+        public @NonNull V parseReader(@NonNull IOSupplier<? extends Reader> source) throws IOException {
             return textParser.parseReader(source);
         }
 
         @Override
-        @NonNull
-        public V parseStream(IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
+        public @NonNull V parseStream(@NonNull IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
             return textParser.parseStream(source, encoding);
         }
 
         @Override
-        @NonNull
-        public V parseReader(@NonNull Reader resource) throws IOException {
+        public @NonNull V parseReader(@NonNull Reader resource) throws IOException {
             return textParser.parseReader(resource);
         }
 
         @Override
-        @NonNull
-        public V parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
+        public @NonNull V parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
             return textParser.parseStream(resource, encoding);
         }
     }
@@ -173,7 +157,7 @@ public class Xml {
         }
 
         @Override
-        public Charset getDefaultEncoding() {
+        public @NonNull Charset getDefaultEncoding() {
             return delegate.getDefaultEncoding();
         }
 
@@ -188,7 +172,7 @@ public class Xml {
         }
 
         @Override
-        public void formatStream(@NonNull V value, IOSupplier<? extends OutputStream> target) throws IOException {
+        public void formatStream(@NonNull V value, @NonNull IOSupplier<? extends OutputStream> target) throws IOException {
             fileFormatter.formatStream(value, target);
         }
 
@@ -198,8 +182,7 @@ public class Xml {
         }
 
         @Override
-        @NonNull
-        public String formatToString(@NonNull V value) throws IOException {
+        public @NonNull String formatToString(@NonNull V value) throws IOException {
             return textFormatter.formatToString(value);
         }
 
@@ -219,12 +202,12 @@ public class Xml {
         }
 
         @Override
-        public void formatWriter(@NonNull V value, IOSupplier<? extends Writer> target) throws IOException {
+        public void formatWriter(@NonNull V value, @NonNull IOSupplier<? extends Writer> target) throws IOException {
             textFormatter.formatWriter(value, target);
         }
 
         @Override
-        public void formatStream(@NonNull V value, IOSupplier<? extends OutputStream> target, @NonNull Charset encoding) throws IOException {
+        public void formatStream(@NonNull V value, @NonNull IOSupplier<? extends OutputStream> target, @NonNull Charset encoding) throws IOException {
             textFormatter.formatStream(value, target, encoding);
         }
 
