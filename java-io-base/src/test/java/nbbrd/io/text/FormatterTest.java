@@ -16,6 +16,7 @@
  */
 package nbbrd.io.text;
 
+import _test.Util;
 import org.assertj.core.util.DateUtil;
 import org.junit.Test;
 
@@ -87,6 +88,16 @@ public class FormatterTest {
 
         Formatter<Number> f = onNumberFormat(NumberFormat.getInstance(Locale.ROOT));
         assertCompliance(f, 3.14, "3.14");
+
+        if (Util.isJDK8()) {
+            assertThat(f.format(Double.NaN))
+                    .describedAs("Not-a-number formatting in JDK8 is 'U+FFFD REPLACEMENT CHARACTER'")
+                    .isEqualTo("\uFFFD");
+        } else {
+            assertThat(f.format(Double.NaN))
+                    .describedAs("Not-a-number formatting in JDK9+ is 'NaN'")
+                    .isEqualTo("NaN");
+        }
     }
 
     @Test

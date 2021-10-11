@@ -16,6 +16,7 @@
  */
 package nbbrd.io.text;
 
+import _test.Util;
 import org.junit.Test;
 
 import java.io.File;
@@ -176,15 +177,24 @@ public class ParserTest {
     public void testOnNumberFormat() {
         assertThatNullPointerException().isThrownBy(() -> onNumberFormat(null));
 
-        assertCompliance(onNumberFormat(NumberFormat.getInstance(Locale.ROOT)), "1234.5");
+        Parser<Number> root = onNumberFormat(NumberFormat.getInstance(Locale.ROOT));
+        boolean jdk8 = Util.isJDK8();
 
-        assertThat(onNumberFormat(NumberFormat.getInstance(Locale.ROOT)))
+        assertCompliance(root, "1234.5");
+
+        assertThat(root)
                 .satisfies(p -> {
                     assertThat(p.parse("1234.5")).isEqualTo(1234.5);
                     assertThat(p.parse("1,234.5")).isEqualTo(1234.5);
                     assertThat(p.parse("1.234,5")).isNull();
                     assertThat(p.parse("1234.5x")).isNull();
                     assertThat(p.parse("x1234.5")).isNull();
+                    assertThat(p.parse("NaN"))
+                            .describedAs("Not-a-number formatting in JDK9+ is 'NaN'")
+                            .isEqualTo(jdk8 ? null : Double.NaN);
+                    assertThat(p.parse("\uFFFD"))
+                            .describedAs("Not-a-number formatting in JDK8 is 'U+FFFD REPLACEMENT CHARACTER'")
+                            .isEqualTo(jdk8 ? Double.NaN : null);
                 });
 
         assertThat(onNumberFormat(NumberFormat.getInstance(Locale.FRANCE)))
