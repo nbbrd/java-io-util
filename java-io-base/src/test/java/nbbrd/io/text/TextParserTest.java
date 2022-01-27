@@ -29,7 +29,7 @@ public class TextParserTest {
     }
 
     static TextParser<String> of() {
-        return new TextParser<>() {
+        return new TextParser<String>() {
             @Override
             public @NonNull String parseReader(@NonNull Reader resource) throws IOException {
                 try (StringWriter writer = new StringWriter()) {

@@ -37,7 +37,7 @@ public class TextFormatterTest {
     }
 
     static TextFormatter<String> of() {
-        return new TextFormatter<>() {
+        return new TextFormatter<String>() {
             @Override
             public void formatWriter(@NonNull String value, @NonNull Writer resource) throws IOException {
                 resource.write(value);
