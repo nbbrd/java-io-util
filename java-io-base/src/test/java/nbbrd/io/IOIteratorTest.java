@@ -35,7 +35,7 @@ import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.function.IOUnaryOperator;
 import static org.assertj.core.api.Assertions.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  *

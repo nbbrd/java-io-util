@@ -21,7 +21,6 @@ import _test.ResourceCounter;
 import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.xml.Xml;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -39,7 +38,7 @@ import static org.assertj.core.api.Assertions.*;
  */
 public class FormatAssertions {
 
-    public static void assertFormatterCompliance(Xml.Formatter<Person> p, boolean formatted, TemporaryFolder temp) throws IOException {
+    public static void assertFormatterCompliance(Xml.Formatter<Person> p, boolean formatted, Path temp) throws IOException {
         testFormatToString(p, formatted);
         testFormatChars(p, formatted);
         testFormatFile(p, formatted, temp);
@@ -80,8 +79,8 @@ public class FormatAssertions {
     }
 
     @SuppressWarnings("null")
-    private static void testFormatFile(Xml.Formatter<Person> p, boolean formatted, TemporaryFolder temp) throws IOException {
-        File target = temp.newFile();
+    private static void testFormatFile(Xml.Formatter<Person> p, boolean formatted, Path temp) throws IOException {
+        File target = Files.createTempFile("a", "b").toFile();
         target.delete();
 
         assertThatNullPointerException()
@@ -101,13 +100,13 @@ public class FormatAssertions {
                 .hasContent(Person.getString(StandardCharsets.UTF_8, formatted));
 
         assertThatIOException()
-                .isThrownBy(() -> p.formatFile(JOHN_DOE, temp.newFolder()))
+                .isThrownBy(() -> p.formatFile(JOHN_DOE, Files.createTempDirectory("a").toFile()))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
     @SuppressWarnings("null")
-    private static void testFormatFileCharset(Xml.Formatter<Person> p, boolean formatted, TemporaryFolder temp) throws IOException {
-        File target = temp.newFile();
+    private static void testFormatFileCharset(Xml.Formatter<Person> p, boolean formatted, Path temp) throws IOException {
+        File target = Files.createTempFile("a", "b").toFile();
         target.delete();
 
         assertThatNullPointerException()
@@ -126,7 +125,7 @@ public class FormatAssertions {
         assertThat(target).doesNotExist();
 
         assertThatIOException()
-                .isThrownBy(() -> p.formatFile(JOHN_DOE, temp.newFolder(), StandardCharsets.UTF_8))
+                .isThrownBy(() -> p.formatFile(JOHN_DOE, Files.createTempDirectory("a").toFile(), StandardCharsets.UTF_8))
                 .isInstanceOf(AccessDeniedException.class);
 
         for (Charset encoding : ENCODINGS) {
@@ -139,8 +138,8 @@ public class FormatAssertions {
     }
 
     @SuppressWarnings("null")
-    private static void testFormatPath(Xml.Formatter<Person> p, boolean formatted, TemporaryFolder temp) throws IOException {
-        Path target = temp.newFile().toPath();
+    private static void testFormatPath(Xml.Formatter<Person> p, boolean formatted, Path temp) throws IOException {
+        Path target = Files.createTempFile("a", "b");
         Files.delete(target);
 
         assertThatNullPointerException()
@@ -160,13 +159,13 @@ public class FormatAssertions {
                 .hasContent(Person.getString(StandardCharsets.UTF_8, formatted));
 
         assertThatIOException()
-                .isThrownBy(() -> p.formatPath(JOHN_DOE, temp.newFolder().toPath()))
+                .isThrownBy(() -> p.formatPath(JOHN_DOE, Files.createTempDirectory("a").toFile().toPath()))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
     @SuppressWarnings("null")
-    private static void testFormatPathCharset(Xml.Formatter<Person> p, boolean formatted, TemporaryFolder temp) throws IOException {
-        Path target = temp.newFile().toPath();
+    private static void testFormatPathCharset(Xml.Formatter<Person> p, boolean formatted, Path temp) throws IOException {
+        Path target = Files.createTempFile("a", "b");
         Files.delete(target);
 
         assertThatNullPointerException()
@@ -185,7 +184,7 @@ public class FormatAssertions {
         assertThat(target).doesNotExist();
 
         assertThatIOException()
-                .isThrownBy(() -> p.formatPath(JOHN_DOE, temp.newFolder().toPath(), StandardCharsets.UTF_8))
+                .isThrownBy(() -> p.formatPath(JOHN_DOE, Files.createTempDirectory("a"), StandardCharsets.UTF_8))
                 .isInstanceOf(AccessDeniedException.class);
 
         for (Charset encoding : ENCODINGS) {
@@ -335,7 +334,7 @@ public class FormatAssertions {
     private static final class TargetError extends IOException {
     }
 
-    public static void assertFormatterSafety(Xml.Formatter<Person> p, Class<? extends Throwable> expectedException, TemporaryFolder temp) {
+    public static void assertFormatterSafety(Xml.Formatter<Person> p, Class<? extends Throwable> expectedException, Path temp) {
         ResourceCounter counter = new ResourceCounter();
 
         Meta.<IORunnable>builder()
@@ -348,11 +347,11 @@ public class FormatAssertions {
                 .exception(IOException.class).as("Null").isThrownBy(() -> p.formatStream(JOHN_DOE, IOSupplier.of(null)))
                 .exception(TargetError.class).as("Throwing").isThrownBy(() -> p.formatStream(JOHN_DOE, targetErrorSupplier()))
                 .group("File")
-                .code().doesNotRaiseExceptionWhen(() -> p.formatFile(JOHN_DOE, temp.newFile()))
-                .exception(AccessDeniedException.class).as("Dir").isThrownBy(() -> p.formatFile(JOHN_DOE, temp.newFolder()))
+                .code().doesNotRaiseExceptionWhen(() -> p.formatFile(JOHN_DOE, Files.createTempFile("a", "b").toFile()))
+                .exception(AccessDeniedException.class).as("Dir").isThrownBy(() -> p.formatFile(JOHN_DOE, Files.createTempDirectory("a").toFile()))
                 .group("Path")
-                .code().doesNotRaiseExceptionWhen(() -> p.formatPath(JOHN_DOE, temp.newFile().toPath()))
-                .exception(AccessDeniedException.class).as("Dir").isThrownBy(() -> p.formatPath(JOHN_DOE, temp.newFolder().toPath()))
+                .code().doesNotRaiseExceptionWhen(() -> p.formatPath(JOHN_DOE, Files.createTempFile("a", "b")))
+                .exception(AccessDeniedException.class).as("Dir").isThrownBy(() -> p.formatPath(JOHN_DOE, Files.createTempDirectory("a")))
                 .group("Chars")
                 .code().doesNotRaiseExceptionWhen(() -> p.formatChars(JOHN_DOE, new StringBuilder()))
                 .code().doesNotRaiseExceptionWhen(() -> p.formatToString(JOHN_DOE))

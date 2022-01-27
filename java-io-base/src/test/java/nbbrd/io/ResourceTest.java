@@ -1,25 +1,31 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package nbbrd.io;
 
-import _test.Error2;
 import _test.Error1;
+import _test.Error2;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
+import nbbrd.io.function.IOConsumer;
+import nbbrd.io.function.IORunnable;
+import nbbrd.io.function.IORunnableTest;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
 import java.io.Closeable;
 import java.io.File;
 import java.io.IOException;
@@ -29,29 +35,20 @@ import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import nbbrd.io.function.IOConsumer;
-import nbbrd.io.function.IORunnable;
-import nbbrd.io.function.IORunnableTest;
+
 import static org.assertj.core.api.Assertions.*;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
- *
  * @author Philippe Charles
  */
 public class ResourceTest {
 
-    @Rule
-    public final TemporaryFolder temp = new TemporaryFolder();
-
     @Test
     @SuppressWarnings("null")
-    public void testGetFile() throws IOException {
+    public void testGetFile(@TempDir Path temp) throws IOException {
         assertThatNullPointerException().isThrownBy(() -> Resource.getFile(null));
 
-        File ok = temp.newFile();
+        File ok = Files.createFile(temp.resolve("exampleFile")).toFile();
         assertThat(Resource.getFile(ok.toPath())).contains(ok);
 
         try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {

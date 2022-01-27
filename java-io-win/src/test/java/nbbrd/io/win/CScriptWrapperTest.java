@@ -19,16 +19,15 @@ package nbbrd.io.win;
 import nbbrd.io.sys.OS;
 import nbbrd.io.sys.ProcessReader;
 import org.assertj.core.api.Assumptions;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.UUID;
 
 import static nbbrd.io.win.CScriptWrapper.NO_TIMEOUT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,26 +38,23 @@ import static org.assertj.core.api.Assertions.assertThatNullPointerException;
  */
 public class CScriptWrapperTest {
 
-    @Rule
-    public TemporaryFolder folder = new TemporaryFolder();
-
     @Test
-    public void testExec() throws IOException, InterruptedException {
+    public void testExec(@TempDir Path temp) throws IOException, InterruptedException {
         assertThatNullPointerException()
                 .isThrownBy(() -> CScriptWrapper.exec(null, NO_TIMEOUT, ""));
 
         assertThatNullPointerException()
-                .isThrownBy(() -> CScriptWrapper.exec(folder.newFile(), NO_TIMEOUT, (String[]) null));
+                .isThrownBy(() -> CScriptWrapper.exec(Files.createTempFile("a", "b").toFile(), NO_TIMEOUT, (String[]) null));
 
         Assumptions.assumeThat(OS.NAME).isEqualTo(OS.Name.WINDOWS);
 
-        assertThat(CScriptWrapper.exec(vbs(""), NO_TIMEOUT).waitFor())
+        assertThat(CScriptWrapper.exec(vbs(temp, ""), NO_TIMEOUT).waitFor())
                 .isEqualTo(0);
 
-        assertThat(CScriptWrapper.exec(vbs("WScript.Quit -123"), NO_TIMEOUT).waitFor())
+        assertThat(CScriptWrapper.exec(vbs(temp, "WScript.Quit -123"), NO_TIMEOUT).waitFor())
                 .isEqualTo(-123);
 
-        File scriptWithArgs = vbs(
+        File scriptWithArgs = vbs(temp,
                 "For Each strArg in Wscript.Arguments",
                 "  WScript.Echo strArg",
                 "Next"
@@ -70,7 +66,7 @@ public class CScriptWrapperTest {
         assertThat(ProcessReader.readToString(CScriptWrapper.exec(scriptWithArgs, NO_TIMEOUT, "a", "b", "c")))
                 .isEqualTo("a" + System.lineSeparator() + "b" + System.lineSeparator() + "c");
 
-        File infiniteLoop = vbs(
+        File infiniteLoop = vbs(temp,
                 "While (true)",
                 "Wend"
         );
@@ -82,8 +78,8 @@ public class CScriptWrapperTest {
                 .contains(infiniteLoop.toString());
     }
 
-    private File vbs(String... content) throws IOException {
-        File script = folder.newFile(UUID.randomUUID().toString() + ".vbs");
+    private File vbs(Path temp, String... content) throws IOException {
+        File script = Files.createTempFile("script", ".vbs").toFile();
         Files.write(script.toPath(), Arrays.asList(content), StandardCharsets.UTF_8);
         return script;
     }

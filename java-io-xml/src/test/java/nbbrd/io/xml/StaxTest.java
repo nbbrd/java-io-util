@@ -19,12 +19,14 @@ package nbbrd.io.xml;
 import _test.*;
 import _test.sample.ParseAssertions;
 import _test.sample.Person;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import nbbrd.io.Resource;
 import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IOSupplier;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 
 import javax.xml.stream.*;
 import javax.xml.stream.events.Characters;
@@ -36,6 +38,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
@@ -53,8 +56,10 @@ import static org.assertj.core.api.Assertions.*;
  */
 public class StaxTest {
 
-    @Rule
-    public TemporaryFolder temp = new TemporaryFolder();
+    @RegisterExtension
+    final WireMockExtension wire = WireMockExtension.newInstance()
+            .options(WireMockConfiguration.options().dynamicPort())
+            .build();
 
     private final IOSupplier<XMLInputFactory> validInputFactory = XMLInputFactory::newFactory;
     private final IOSupplier<XMLOutputFactory> validOutputFactory = XMLOutputFactory::newFactory;
@@ -69,15 +74,15 @@ public class StaxTest {
     @Test
     public void testXXE() throws IOException {
         Stax.StreamParser<Person> stream = Stax.StreamParser.valueOf(StaxTest::parseByStream);
-        ParseAssertions.testXXE(stream, stream.withIgnoreXXE(true));
+        ParseAssertions.testXXE(wire, stream, stream.withIgnoreXXE(true));
 
         Stax.EventParser<Person> event = Stax.EventParser.valueOf(StaxTest::parseByEvent);
-        ParseAssertions.testXXE(event, event.withIgnoreXXE(true));
+        ParseAssertions.testXXE(wire, event, event.withIgnoreXXE(true));
     }
 
     @Test
     @SuppressWarnings("null")
-    public void testStreamParserFactories() throws IOException {
+    public void testStreamParserFactories(@TempDir Path temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> Stax.StreamParser.flowOf(null));
 
@@ -170,7 +175,7 @@ public class StaxTest {
 
     @Test
     @SuppressWarnings("null")
-    public void testStreamParserBuilder() throws IOException {
+    public void testStreamParserBuilder(@TempDir Path temp) throws IOException {
         for (boolean ignoreXXE : BOOLS) {
             assertParserCompliance(
                     Stax.StreamParser.<Person>builder()
@@ -196,7 +201,7 @@ public class StaxTest {
 
     @Test
     @SuppressWarnings("null")
-    public void testEventParserFactories() throws IOException {
+    public void testEventParserFactories(@TempDir Path temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> Stax.EventParser.flowOf(null));
 
@@ -210,7 +215,7 @@ public class StaxTest {
 
     @Test
     @SuppressWarnings("null")
-    public void testEventParserBuilder() throws IOException {
+    public void testEventParserBuilder(@TempDir Path temp) throws IOException {
         for (boolean ignoreXXE : BOOLS) {
             assertParserCompliance(
                     Stax.EventParser.<Person>builder()
@@ -236,7 +241,7 @@ public class StaxTest {
 
     @Test
     @SuppressWarnings("null")
-    public void testStreamFormatterFactories() throws IOException {
+    public void testStreamFormatterFactories(@TempDir Path temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> Stax.StreamFormatter.of(null));
 
@@ -245,7 +250,7 @@ public class StaxTest {
 
     @Test
     @SuppressWarnings("null")
-    public void testStreamFormatterBuilder() throws IOException {
+    public void testStreamFormatterBuilder(@TempDir Path temp) throws IOException {
         assertFormatterCompliance(
                 Stax.StreamFormatter.<Person>builder()
                         .handler2(StaxTest::formatByStream)
@@ -283,7 +288,7 @@ public class StaxTest {
 
     @Test
     @SuppressWarnings("null")
-    public void testEventFormatterFactories() throws IOException {
+    public void testEventFormatterFactories(@TempDir Path temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> Stax.EventFormatter.of(null));
 
@@ -292,7 +297,7 @@ public class StaxTest {
 
     @Test
     @SuppressWarnings("null")
-    public void testEventFormatterBuilder() throws IOException {
+    public void testEventFormatterBuilder(@TempDir Path temp) throws IOException {
         assertFormatterCompliance(
                 Stax.EventFormatter.<Person>builder()
                         .handler2(StaxTest::formatByEvent)
@@ -387,7 +392,7 @@ public class StaxTest {
     }
 
     @Test
-    public void testFormatterSafety() throws IOException {
+    public void testFormatterSafety(@TempDir Path temp) throws IOException {
         ResourceCounter counter = new ResourceCounter();
 
         List<Meta<IOSupplier<XMLOutputFactory>>> factories = Meta.<IOSupplier<XMLOutputFactory>>builder()

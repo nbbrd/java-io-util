@@ -18,13 +18,11 @@ package _test.sample;
 
 import _test.Meta;
 import _test.ResourceCounter;
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.matching.UrlPattern;
 import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.xml.Xml;
-import org.junit.rules.TemporaryFolder;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -33,7 +31,9 @@ import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
+import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
+import java.nio.file.Path;
 
 import static _test.sample.Person.*;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -44,7 +44,7 @@ import static org.assertj.core.api.Assertions.*;
  */
 public class ParseAssertions {
 
-    public static void assertParserCompliance(Xml.Parser<Person> p, TemporaryFolder temp) throws IOException {
+    public static void assertParserCompliance(Xml.Parser<Person> p, Path temp) throws IOException {
         testParseChars(p);
         testParseFile(p, temp);
         testParseFileCharset(p, temp);
@@ -75,7 +75,7 @@ public class ParseAssertions {
     }
 
     @SuppressWarnings("null")
-    private static void testParseFile(Xml.Parser<Person> p, TemporaryFolder temp) throws IOException {
+    private static void testParseFile(Xml.Parser<Person> p, Path temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> p.parseFile(null))
                 .withMessageContaining("source");
@@ -102,7 +102,7 @@ public class ParseAssertions {
     }
 
     @SuppressWarnings("null")
-    private static void testParseFileCharset(Xml.Parser<Person> p, TemporaryFolder temp) throws IOException {
+    private static void testParseFileCharset(Xml.Parser<Person> p, Path temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> p.parseFile(null, StandardCharsets.UTF_8))
                 .withMessageContaining("source");
@@ -133,7 +133,7 @@ public class ParseAssertions {
     }
 
     @SuppressWarnings("null")
-    private static void testParsePath(Xml.Parser<Person> p, TemporaryFolder temp) throws IOException {
+    private static void testParsePath(Xml.Parser<Person> p, Path temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> p.parsePath(null))
                 .withMessageContaining("source");
@@ -147,7 +147,7 @@ public class ParseAssertions {
                 .isInstanceOf(NoSuchFileException.class);
 
         assertThatIOException()
-                .isThrownBy(() -> p.parsePath(temp.newFolder().toPath()))
+                .isThrownBy(() -> p.parsePath(Files.createTempDirectory(temp, "xyz")))
                 .isInstanceOf(AccessDeniedException.class);
 
         for (Charset encoding : ENCODINGS) {
@@ -157,7 +157,7 @@ public class ParseAssertions {
     }
 
     @SuppressWarnings("null")
-    private static void testParsePathCharset(Xml.Parser<Person> p, TemporaryFolder temp) throws IOException {
+    private static void testParsePathCharset(Xml.Parser<Person> p, Path temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> p.parsePath(null, StandardCharsets.UTF_8))
                 .withMessageContaining("source");
@@ -175,7 +175,7 @@ public class ParseAssertions {
                 .isInstanceOf(NoSuchFileException.class);
 
         assertThatIOException()
-                .isThrownBy(() -> p.parsePath(temp.newFolder().toPath(), StandardCharsets.UTF_8))
+                .isThrownBy(() -> p.parsePath(Files.createTempDirectory(temp, "abc"), StandardCharsets.UTF_8))
                 .isInstanceOf(AccessDeniedException.class);
 
         for (Charset encoding : ENCODINGS) {
@@ -329,34 +329,31 @@ public class ParseAssertions {
         }
     }
 
-    public static void testXXE(Xml.Parser<Person> with, Xml.Parser<Person> without) throws IOException {
+    public static void testXXE(WireMockExtension wire, Xml.Parser<Person> with, Xml.Parser<Person> without) throws IOException {
+        wire.resetRequests();
+
         UrlPattern urlPattern = urlMatching("/test.txt");
 
-        WireMockRule wire = new WireMockRule(WireMockConfiguration.options().dynamicPort());
         wire.stubFor(get(urlPattern)
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "text/xml")
                         .withBody("<firstName>John</firstName><lastName>Doe</lastName>")));
-        wire.start();
 
-        String xxePayload = getXxePayload(wire.port());
+        String xxePayload = getXxePayload(wire.getPort());
+
+        assertThatThrownBy(() -> with.parseChars(xxePayload)).isInstanceOf(IOException.class);
+        wire.verify(0, getRequestedFor(urlPattern));
+
+        wire.resetRequests();
         try {
-            assertThatThrownBy(() -> with.parseChars(xxePayload)).isInstanceOf(IOException.class);
+            Person p = without.parseChars(xxePayload);
+            assertThat(p).isEqualTo(JOHN_DOE);
+            wire.verify(1, getRequestedFor(urlPattern));
+        } catch (IOException ex) {
+            //restriction set by the accessExternalDTD property
+            assertThat(ex).hasRootCauseInstanceOf(org.xml.sax.SAXParseException.class);
             wire.verify(0, getRequestedFor(urlPattern));
-
-            wire.resetRequests();
-            try {
-                Person p = without.parseChars(xxePayload);
-                assertThat(p).isEqualTo(JOHN_DOE);
-                wire.verify(1, getRequestedFor(urlPattern));
-            } catch (IOException ex) {
-                //restriction set by the accessExternalDTD property
-                assertThat(ex).hasRootCauseInstanceOf(org.xml.sax.SAXParseException.class);
-                wire.verify(0, getRequestedFor(urlPattern));
-            }
-        } finally {
-            wire.stop();
         }
     }
 

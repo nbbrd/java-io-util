@@ -1,7 +1,7 @@
 package nbbrd.io.sys;
 
 import com.google.common.base.StandardSystemProperty;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.nio.file.FileSystems;
 import java.nio.file.Path;

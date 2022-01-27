@@ -1,63 +1,63 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package nbbrd.io.xml.bind;
 
-import _test.ForwardingMarshaller;
-import _test.ForwardingUnmarshaller;
-import _test.ForwardingXMLInputFactory;
-import _test.JaxbListener;
-import _test.Meta;
-import _test.StaxListener;
-import static _test.sample.FormatAssertions.assertFormatterCompliance;
-import static _test.sample.FormatAssertions.assertFormatterSafety;
+import _test.*;
 import _test.sample.ParseAssertions;
-import static _test.sample.ParseAssertions.assertParserCompliance;
-import static _test.sample.ParseAssertions.assertParserSafety;
 import _test.sample.Person;
-import static _test.sample.Person.BOOLS;
-import static _test.sample.Person.ENCODINGS;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import nbbrd.io.WrappedIOException;
+import nbbrd.io.function.IOSupplier;
+import nbbrd.io.xml.Xml;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
+
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
-import nbbrd.io.WrappedIOException;
-import nbbrd.io.function.IOSupplier;
-import nbbrd.io.xml.Xml;
-import static org.assertj.core.api.Assertions.*;
+import java.io.IOException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.List;
 
-import org.assertj.core.api.Assertions;
-import org.junit.Rule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import static _test.sample.FormatAssertions.assertFormatterCompliance;
+import static _test.sample.FormatAssertions.assertFormatterSafety;
+import static _test.sample.ParseAssertions.assertParserCompliance;
+import static _test.sample.ParseAssertions.assertParserSafety;
+import static _test.sample.Person.BOOLS;
+import static _test.sample.Person.ENCODINGS;
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- *
  * @author Philippe Charles
  */
 public class JaxbTest {
 
-    @Rule
-    public TemporaryFolder temp = new TemporaryFolder();
+    @RegisterExtension
+    final WireMockExtension wire = WireMockExtension.newInstance()
+            .options(WireMockConfiguration.options().dynamicPort())
+            .build();
 
     private final IOSupplier<Unmarshaller> validUnmarshaller = () -> Jaxb.createUnmarshaller(Person.class);
     private final IOSupplier<Marshaller> validMarshaller = () -> Jaxb.createMarshaller(Person.class);
@@ -94,12 +94,12 @@ public class JaxbTest {
     @Test
     public void testXXE() throws Exception {
         Jaxb.Parser<Person> p = Jaxb.Parser.of(Person.class);
-        ParseAssertions.testXXE(p, p.withIgnoreXXE(true));
+        ParseAssertions.testXXE(wire, p, p.withIgnoreXXE(true));
     }
 
     @Test
     @SuppressWarnings("null")
-    public void testParserOfClass() throws Exception {
+    public void testParserOfClass(@TempDir Path temp) throws Exception {
         Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Parser.of((Class<?>) null));
 
@@ -108,7 +108,7 @@ public class JaxbTest {
 
     @Test
     @SuppressWarnings("null")
-    public void testParserOfContext() throws Exception {
+    public void testParserOfContext(@TempDir Path temp) throws Exception {
         Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Parser.of((JAXBContext) null));
 
@@ -117,7 +117,7 @@ public class JaxbTest {
 
     @Test
     @SuppressWarnings("null")
-    public void testParserBuilder() throws IOException {
+    public void testParserBuilder(@TempDir Path temp) throws IOException {
         Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Parser.builder().build());
 
@@ -162,7 +162,7 @@ public class JaxbTest {
 
         for (boolean xxe : BOOLS) {
 
-            List<Meta<IOSupplier<XMLInputFactory>>> xxeFactories = Meta.< IOSupplier<XMLInputFactory>>builder()
+            List<Meta<IOSupplier<XMLInputFactory>>> xxeFactories = Meta.<IOSupplier<XMLInputFactory>>builder()
                     .valid("Ok", validXxeFactory)
                     .of("Null", xxe, IOSupplier.of(null))
                     .of("Throwing", xxe, errorSupplier())
@@ -188,7 +188,7 @@ public class JaxbTest {
 
     @Test
     @SuppressWarnings("null")
-    public void testFormatterOfClass() throws Exception {
+    public void testFormatterOfClass(@TempDir Path temp) throws Exception {
         Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Formatter.of((Class<?>) null));
 
@@ -197,7 +197,7 @@ public class JaxbTest {
 
     @Test
     @SuppressWarnings("null")
-    public void testFormatterOfContext() throws Exception {
+    public void testFormatterOfContext(@TempDir Path temp) throws Exception {
         Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Formatter.of((JAXBContext) null));
 
@@ -206,7 +206,7 @@ public class JaxbTest {
 
     @Test
     @SuppressWarnings("null")
-    public void testFormatterBuilder() throws IOException {
+    public void testFormatterBuilder(@TempDir Path temp) throws IOException {
         Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Formatter.builder().build());
 
@@ -246,7 +246,7 @@ public class JaxbTest {
     }
 
     @Test
-    public void testFormatterSafety() throws IOException {
+    public void testFormatterSafety(@TempDir Path temp) throws IOException {
         List<Meta<IOSupplier<Marshaller>>> factories = Meta.<IOSupplier<Marshaller>>builder()
                 .valid("Ok", validMarshaller)
                 .invalid("Null", IOSupplier.of(null))

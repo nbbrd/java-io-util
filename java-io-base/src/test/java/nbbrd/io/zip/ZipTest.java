@@ -1,50 +1,44 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package nbbrd.io.zip;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
 import nbbrd.io.Resource;
 import nbbrd.io.function.IOPredicate;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+
 import static org.assertj.core.api.Assertions.*;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 
 /**
- *
  * @author Philippe Charles
  */
 public class ZipTest {
 
-    @ClassRule
-    public static final TemporaryFolder TEMP = new TemporaryFolder();
-
     private static File FILE;
 
-    @BeforeClass
-    public static void beforeClass() throws IOException {
-        FILE = TEMP.newFile();
+    @BeforeAll
+    public static void beforeClass(@TempDir Path temp) throws IOException {
+        FILE = Files.createFile(temp.resolve("test.zip")).toFile();
         try (InputStream stream = Resource.getResourceAsStream(ZipTest.class, "test.zip").get()) {
             Files.copy(stream, FILE.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }

@@ -19,7 +19,7 @@ package nbbrd.io.win;
 import nbbrd.io.sys.EndOfProcessException;
 import nbbrd.io.sys.OS;
 import org.assertj.core.api.Assumptions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.util.UUID;
