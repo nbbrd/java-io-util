@@ -10,8 +10,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Add Maven BOM
-- Add DoubleProperty
+- Add `DoubleProperty`
 - Add URI parser and formatter
+- Add `TextResource` as reader/writer utilities
 
 ### Changed
 
