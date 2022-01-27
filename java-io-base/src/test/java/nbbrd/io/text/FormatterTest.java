@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -212,6 +213,12 @@ public class FormatterTest {
     public void testURL() throws MalformedURLException {
         Formatter<URL> f = onURL();
         assertCompliance(f, new URL("file:/C:/temp/x.xml"), "file:/C:/temp/x.xml");
+    }
+
+    @Test
+    public void testURI() {
+        Formatter<URI> f = onURI();
+        assertCompliance(f, URI.create("file:/C:/temp/x.xml"), "file:/C:/temp/x.xml");
     }
 
     @Test

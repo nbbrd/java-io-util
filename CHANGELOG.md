@@ -11,6 +11,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Add Maven BOM
 - Add DoubleProperty
+- Add URI parser and formatter
 
 ### Changed
 
