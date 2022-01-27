@@ -2,6 +2,8 @@ package nbbrd.io.text;
 
 import internal.io.text.AndThenTextParser;
 import internal.io.text.LegacyFiles;
+import internal.io.text.WithCharsetFileParser;
+import nbbrd.io.FileParser;
 import nbbrd.io.Resource;
 import nbbrd.io.function.IOSupplier;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -72,5 +74,9 @@ public interface TextParser<T> {
 
     default <V> @NonNull TextParser<V> andThen(@NonNull Function<? super T, ? extends V> after) {
         return new AndThenTextParser<>(this, after);
+    }
+
+    default @NonNull FileParser<T> withCharset(@NonNull Charset encoding) {
+        return new WithCharsetFileParser<>(this, encoding);
     }
 }

@@ -2,6 +2,8 @@ package nbbrd.io.text;
 
 import internal.io.text.ComposeTextFormatter;
 import internal.io.text.LegacyFiles;
+import internal.io.text.WithCharsetFileFormatter;
+import nbbrd.io.FileFormatter;
 import nbbrd.io.Resource;
 import nbbrd.io.function.IOSupplier;
 import org.checkerframework.checker.nullness.qual.NonNull;
@@ -74,5 +76,9 @@ public interface TextFormatter<T> {
 
     default <V> @NonNull TextFormatter<V> compose(@NonNull Function<? super V, ? extends T> before) {
         return new ComposeTextFormatter<>(this, before);
+    }
+
+    default @NonNull FileFormatter<T> withCharset(@NonNull Charset encoding) {
+        return new WithCharsetFileFormatter<>(this, encoding);
     }
 }

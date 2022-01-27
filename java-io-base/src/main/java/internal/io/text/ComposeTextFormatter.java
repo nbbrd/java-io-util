@@ -13,13 +13,13 @@ import java.util.Objects;
 import java.util.function.Function;
 
 @lombok.AllArgsConstructor
-public class ComposeTextFormatter<V, T> implements TextFormatter<V> {
+public final class ComposeTextFormatter<V, T> implements TextFormatter<V> {
 
     @lombok.NonNull
-    protected final TextFormatter<T> formatter;
+    private final TextFormatter<T> formatter;
 
     @lombok.NonNull
-    protected final Function<? super V, ? extends T> before;
+    private final Function<? super V, ? extends T> before;
 
     @Override
     public String formatToString(V value) throws IOException {
