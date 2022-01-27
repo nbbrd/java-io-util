@@ -39,6 +39,7 @@
         <module>java-io-win</module>
         <module>java-io-xml</module>
         <module>java-io-xml-bind</module>
+        <module>java-io-bom</module>
     </modules>
 
     <dependencyManagement>

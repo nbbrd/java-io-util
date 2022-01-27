@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <artifactId>java-io-parent</artifactId>
+        <groupId>com.github.nbbrd.java-io-util</groupId>
+        <version>0.0.16-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>java-io-bom</artifactId>
+    <packaging>pom</packaging>
+
+    <name>java-io-bom</name>
+    <description>Common IO utilities - Bill of Materials</description>
+    <url>https://github.com/nbbrd/java-io-util</url>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.github.nbbrd.java-io-util</groupId>
+                <artifactId>java-io-base</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.nbbrd.java-io-util</groupId>
+                <artifactId>java-io-win</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.nbbrd.java-io-util</groupId>
+                <artifactId>java-io-xml</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.nbbrd.java-io-util</groupId>
+                <artifactId>java-io-xml-bind</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+</project>
