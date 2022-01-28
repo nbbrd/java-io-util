@@ -120,8 +120,9 @@ public class Jaxb {
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            LegacyFiles.checkSource(source);
+            Objects.requireNonNull(source, "source");
             Objects.requireNonNull(encoding, "encoding");
+            LegacyFiles.checkSource(source);
             Unmarshaller engine = factory.getWithIO();
 
             return cast(!ignoreXXE

@@ -19,7 +19,7 @@ package nbbrd.io.xml;
 import _test.ForwardingXMLReader;
 import _test.Meta;
 import _test.SaxListener;
-import _test.sample.ParseAssertions;
+import _test.sample.XmlParserAssertions;
 import _test.sample.Person;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
@@ -39,8 +39,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
-import static _test.sample.ParseAssertions.assertParserCompliance;
-import static _test.sample.ParseAssertions.assertParserSafety;
+import static _test.sample.XmlParserAssertions.assertXmlParserCompliance;
+import static _test.sample.XmlParserAssertions.assertParserSafety;
 import static _test.sample.Person.BOOLS;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
@@ -67,7 +67,7 @@ public class SaxTest {
     @Test
     public void testXXE() throws IOException {
         Sax.Parser<Person> p = Sax.Parser.of(PersonHandler.INSTANCE, PersonHandler.INSTANCE::build);
-        ParseAssertions.testXXE(wire, p, p.withIgnoreXXE(true));
+        XmlParserAssertions.testXXE(wire, p, p.withIgnoreXXE(true));
     }
 
     @Test
@@ -76,7 +76,7 @@ public class SaxTest {
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.of(null, PersonHandler.INSTANCE::build));
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.of(PersonHandler.INSTANCE, null));
 
-        assertParserCompliance(Sax.Parser.of(PersonHandler.INSTANCE, PersonHandler.INSTANCE::build), temp);
+        assertXmlParserCompliance(temp, Sax.Parser.of(PersonHandler.INSTANCE, PersonHandler.INSTANCE::build));
     }
 
     @Test
@@ -87,14 +87,14 @@ public class SaxTest {
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.builder().contentHandler(PersonHandler.INSTANCE).after(null).build());
 
         for (boolean ignoreXXE : BOOLS) {
-            assertParserCompliance(Sax.Parser.<Person>builder()
+            assertXmlParserCompliance(temp, Sax.Parser.<Person>builder()
                             .factory(validFactory)
                             .contentHandler(PersonHandler.INSTANCE)
                             .before(PersonHandler.INSTANCE::clear)
                             .after(PersonHandler.INSTANCE::build)
                             .ignoreXXE(ignoreXXE)
-                            .build(),
-                    temp);
+                            .build()
+            );
         }
     }
 

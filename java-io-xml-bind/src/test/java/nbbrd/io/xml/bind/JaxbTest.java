@@ -17,7 +17,7 @@
 package nbbrd.io.xml.bind;
 
 import _test.*;
-import _test.sample.ParseAssertions;
+import _test.sample.XmlParserAssertions;
 import _test.sample.Person;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
@@ -41,10 +41,10 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
 
-import static _test.sample.FormatAssertions.assertFormatterCompliance;
-import static _test.sample.FormatAssertions.assertFormatterSafety;
-import static _test.sample.ParseAssertions.assertParserCompliance;
-import static _test.sample.ParseAssertions.assertParserSafety;
+import static _test.sample.XmlFormatterAssertions.assertXmlFormatterCompliance;
+import static _test.sample.XmlFormatterAssertions.assertFormatterSafety;
+import static _test.sample.XmlParserAssertions.assertXmlParserCompliance;
+import static _test.sample.XmlParserAssertions.assertParserSafety;
 import static _test.sample.Person.BOOLS;
 import static _test.sample.Person.ENCODINGS;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -94,7 +94,7 @@ public class JaxbTest {
     @Test
     public void testXXE() throws Exception {
         Jaxb.Parser<Person> p = Jaxb.Parser.of(Person.class);
-        ParseAssertions.testXXE(wire, p, p.withIgnoreXXE(true));
+        XmlParserAssertions.testXXE(wire, p, p.withIgnoreXXE(true));
     }
 
     @Test
@@ -103,7 +103,7 @@ public class JaxbTest {
         Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Parser.of((Class<?>) null));
 
-        assertParserCompliance(Jaxb.Parser.of(Person.class), temp);
+        assertXmlParserCompliance(temp, Jaxb.Parser.of(Person.class));
     }
 
     @Test
@@ -112,7 +112,7 @@ public class JaxbTest {
         Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Parser.of((JAXBContext) null));
 
-        assertParserCompliance(Jaxb.Parser.of(JAXBContext.newInstance(Person.class)), temp);
+        assertXmlParserCompliance(temp, Jaxb.Parser.of(JAXBContext.newInstance(Person.class)));
     }
 
     @Test
@@ -128,13 +128,13 @@ public class JaxbTest {
                 .isThrownBy(() -> Jaxb.Parser.builder().factory(validUnmarshaller).xxeFactory(null).build());
 
         for (boolean ignoreXXE : BOOLS) {
-            assertParserCompliance(
-                    Jaxb.Parser.<Person>builder()
+            assertXmlParserCompliance(
+                    temp, Jaxb.Parser.<Person>builder()
                             .factory(validUnmarshaller)
                             .xxeFactory(validXxeFactory)
                             .ignoreXXE(ignoreXXE)
-                            .build(),
-                    temp);
+                            .build()
+            );
         }
     }
 
@@ -192,7 +192,7 @@ public class JaxbTest {
         Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Formatter.of((Class<?>) null));
 
-        assertFormatterCompliance(Jaxb.Formatter.of(Person.class), false, temp);
+        assertXmlFormatterCompliance(temp, Jaxb.Formatter.of(Person.class), false);
     }
 
     @Test
@@ -201,7 +201,7 @@ public class JaxbTest {
         Assertions.assertThatNullPointerException()
                 .isThrownBy(() -> Jaxb.Formatter.of((JAXBContext) null));
 
-        assertFormatterCompliance(Jaxb.Formatter.of(JAXBContext.newInstance(Person.class)), false, temp);
+        assertXmlFormatterCompliance(temp, Jaxb.Formatter.of(JAXBContext.newInstance(Person.class)), false);
     }
 
     @Test
@@ -214,12 +214,12 @@ public class JaxbTest {
                 .isThrownBy(() -> Jaxb.Formatter.builder().factory(null).build());
 
         for (boolean formatted : BOOLS) {
-            assertFormatterCompliance(
-                    Jaxb.Formatter.<Person>builder()
+            assertXmlFormatterCompliance(
+                    temp, Jaxb.Formatter.<Person>builder()
                             .factory(validMarshaller)
                             .formatted(formatted)
                             .build(),
-                    formatted, temp);
+                    formatted);
         }
     }
 
@@ -266,7 +266,7 @@ public class JaxbTest {
                             .encoding(encoding)
                             .build();
 
-                    assertFormatterSafety(formatter, Meta.lookupExpectedException(factory), temp);
+                    assertFormatterSafety(temp, formatter, Meta.lookupExpectedException(factory));
                 }
             }
         }

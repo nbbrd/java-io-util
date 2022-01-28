@@ -16,7 +16,7 @@
  */
 package nbbrd.io.function;
 
-import _test.Error1;
+import _test.io.Error1;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Objects;

@@ -16,7 +16,7 @@
  */
 package nbbrd.io.text;
 
-import _test.Util;
+import _test.io.Util;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;

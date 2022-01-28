@@ -1,4 +1,4 @@
-package _test;
+package _test.io;
 
 import java.io.IOException;
 import java.util.NoSuchElementException;

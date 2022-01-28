@@ -16,8 +16,8 @@
  */
 package nbbrd.io;
 
-import _test.Error1;
-import _test.Error2;
+import _test.io.Error1;
+import _test.io.Error2;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
 import nbbrd.io.function.IOConsumer;

@@ -155,8 +155,9 @@ public class Sax {
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            LegacyFiles.checkSource(source);
+            Objects.requireNonNull(source, "source");
             Objects.requireNonNull(encoding, "encoding");
+            LegacyFiles.checkSource(source);
             return parse(newInputSource(source, encoding));
         }
 

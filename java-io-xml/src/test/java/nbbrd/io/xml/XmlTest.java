@@ -27,8 +27,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Objects;
 
-import static _test.sample.FormatAssertions.assertFormatterCompliance;
-import static _test.sample.ParseAssertions.assertParserCompliance;
+import static _test.sample.XmlFormatterAssertions.assertXmlFormatterCompliance;
+import static _test.sample.XmlParserAssertions.assertXmlParserCompliance;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 /**
@@ -38,12 +38,12 @@ public class XmlTest {
 
     @Test
     public void testParserCompliance(@TempDir Path temp) throws IOException {
-        assertParserCompliance(new DummyParser<>(Person.JOHN_DOE), temp);
+        assertXmlParserCompliance(temp, new DummyParser<>(Person.JOHN_DOE));
     }
 
     @Test
     public void testFormatterCompliance(@TempDir Path temp) throws IOException {
-        assertFormatterCompliance(new DummyFormatter<>(Person.JOHN_DOE), false, temp);
+        assertXmlFormatterCompliance(temp, new DummyFormatter<>(Person.JOHN_DOE), false);
     }
 
     @Test
@@ -54,7 +54,7 @@ public class XmlTest {
         assertThatNullPointerException()
                 .isThrownBy(() -> parser.andThen(null));
 
-        assertParserCompliance(parser.andThen(Employee::toPerson), temp);
+        assertXmlParserCompliance(temp, parser.andThen(Employee::toPerson));
     }
 
     @Test
@@ -65,7 +65,7 @@ public class XmlTest {
         assertThatNullPointerException()
                 .isThrownBy(() -> formatter.compose(null));
 
-        assertFormatterCompliance(formatter.compose(Employee::fromPerson), false, temp);
+        assertXmlFormatterCompliance(temp, formatter.compose(Employee::fromPerson), false);
     }
 
     @lombok.Value

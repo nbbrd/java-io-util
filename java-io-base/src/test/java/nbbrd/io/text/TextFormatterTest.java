@@ -10,16 +10,25 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.Objects;
 
+import static _test.io.text.TextFormatterAssertions.assertTextFormatterCompliance;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Collections.singleton;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 public class TextFormatterTest {
 
     @Test
+    public void testCompliance(@TempDir Path temp) throws IOException {
+        assertTextFormatterCompliance(temp, formatter, "world", encoding -> "world", singleton(UTF_8));
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Test
     public void testWithCharset(@TempDir Path temp) throws IOException {
-        TextFormatter<String> original = of();
+        TextFormatter<String> original = formatter;
 
         assertThatNullPointerException().isThrownBy(() -> original.withCharset(null));
 
@@ -36,18 +45,22 @@ public class TextFormatterTest {
                 .hasContent("WORLD");
     }
 
-    static TextFormatter<String> of() {
-        return new TextFormatter<String>() {
-            @Override
-            public void formatWriter(@NonNull String value, @NonNull Writer resource) throws IOException {
-                resource.write(value);
-                resource.flush();
-            }
+    private final TextFormatter<String> formatter = new TextFormatter<String>() {
+        @Override
+        public void formatWriter(@NonNull String value, @NonNull Writer resource) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(resource, "resource");
+            resource.write(value);
+        }
 
-            @Override
-            public void formatStream(@NonNull String value, @NonNull OutputStream resource, @NonNull Charset encoding) throws IOException {
-                formatWriter(value, new OutputStreamWriter(resource, encoding));
+        @Override
+        public void formatStream(@NonNull String value, @NonNull OutputStream resource, @NonNull Charset encoding) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(resource, "resource");
+            Objects.requireNonNull(encoding, "encoding");
+            try (OutputStreamWriter writer = new OutputStreamWriter(resource, encoding)) {
+                formatWriter(value, writer);
             }
-        };
-    }
+        }
+    };
 }

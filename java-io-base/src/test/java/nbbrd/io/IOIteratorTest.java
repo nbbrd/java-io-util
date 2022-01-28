@@ -16,9 +16,9 @@
  */
 package nbbrd.io;
 
-import _test.IOIteratorAssertions;
-import _test.IOIteratorFactory;
-import _test.IteratorFactory;
+import _test.io.IOIteratorAssertions;
+import _test.io.IOIteratorFactory;
+import _test.io.IteratorFactory;
 import com.google.common.collect.Iterators;
 import java.io.IOException;
 import java.io.UncheckedIOException;

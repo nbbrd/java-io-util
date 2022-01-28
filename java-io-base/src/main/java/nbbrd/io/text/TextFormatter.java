@@ -18,8 +18,7 @@ import java.util.function.Function;
 
 public interface TextFormatter<T> {
 
-    @NonNull
-    default String formatToString(@NonNull T value) throws IOException {
+    default @NonNull String formatToString(@NonNull T value) throws IOException {
         Objects.requireNonNull(value, "value");
         StringWriter writer = new StringWriter();
         formatWriter(value, writer);
@@ -49,7 +48,7 @@ public interface TextFormatter<T> {
         if (file.isPresent()) {
             formatFile(value, file.get(), encoding);
         } else {
-            formatWriter(value, () -> Files.newBufferedWriter(target, encoding));
+            formatStream(value, () -> Files.newOutputStream(target), encoding);
         }
     }
 
