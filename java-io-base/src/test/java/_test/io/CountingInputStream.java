@@ -31,18 +31,6 @@ public class CountingInputStream extends InputStream {
     }
 
     @Override
-    public byte[] readAllBytes() throws IOException {
-        count++;
-        return delegate.readAllBytes();
-    }
-
-    @Override
-    public int readNBytes(byte[] b, int off, int len) throws IOException {
-        count++;
-        return delegate.readNBytes(b, off, len);
-    }
-
-    @Override
     public long skip(long n) throws IOException {
         count++;
         return delegate.skip(n);
