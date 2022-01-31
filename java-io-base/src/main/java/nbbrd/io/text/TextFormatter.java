@@ -1,10 +1,13 @@
 package nbbrd.io.text;
 
 import internal.io.text.ComposeTextFormatter;
+import internal.io.text.FunctionalTextFormatter;
 import internal.io.text.LegacyFiles;
 import internal.io.text.WithCharsetFileFormatter;
+import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.FileFormatter;
 import nbbrd.io.Resource;
+import nbbrd.io.function.IOBiConsumer;
 import nbbrd.io.function.IOSupplier;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -79,5 +82,10 @@ public interface TextFormatter<T> {
 
     default @NonNull FileFormatter<T> withCharset(@NonNull Charset encoding) {
         return new WithCharsetFileFormatter<>(this, encoding);
+    }
+
+    @StaticFactoryMethod
+    static <T> @NonNull TextFormatter<T> onFormattingWriter(@NonNull IOBiConsumer<? super T, ? super Writer> function) {
+        return new FunctionalTextFormatter<>(function);
     }
 }

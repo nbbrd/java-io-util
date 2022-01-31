@@ -1,16 +1,11 @@
 package nbbrd.io.text;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
-import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.Objects;
 
 import static _test.io.text.TextFormatterAssertions.assertTextFormatterCompliance;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -22,13 +17,13 @@ public class TextFormatterTest {
 
     @Test
     public void testCompliance(@TempDir Path temp) throws IOException {
-        assertTextFormatterCompliance(temp, formatter, "world", encoding -> "world", singleton(UTF_8));
+        assertTextFormatterCompliance(temp, TextFormatter.onFormattingWriter(TextFormatterTest::formatFromString), "world", encoding -> "world", singleton(UTF_8));
     }
 
     @SuppressWarnings("ConstantConditions")
     @Test
     public void testWithCharset(@TempDir Path temp) throws IOException {
-        TextFormatter<String> original = formatter;
+        TextFormatter<String> original = TextFormatter.onFormattingWriter(TextFormatterTest::formatFromString);
 
         assertThatNullPointerException().isThrownBy(() -> original.withCharset(null));
 
@@ -45,22 +40,15 @@ public class TextFormatterTest {
                 .hasContent("WORLD");
     }
 
-    private final TextFormatter<String> formatter = new TextFormatter<String>() {
-        @Override
-        public void formatWriter(@NonNull String value, @NonNull Writer resource) throws IOException {
-            Objects.requireNonNull(value, "value");
-            Objects.requireNonNull(resource, "resource");
-            resource.write(value);
-        }
+    @SuppressWarnings("ConstantConditions")
+    @Test
+    public void testOnFormattingWriter() {
+        assertThatNullPointerException()
+                .isThrownBy(() -> TextFormatter.onFormattingWriter(null))
+                .withMessageContaining("function");
+    }
 
-        @Override
-        public void formatStream(@NonNull String value, @NonNull OutputStream resource, @NonNull Charset encoding) throws IOException {
-            Objects.requireNonNull(value, "value");
-            Objects.requireNonNull(resource, "resource");
-            Objects.requireNonNull(encoding, "encoding");
-            try (OutputStreamWriter writer = new OutputStreamWriter(resource, encoding)) {
-                formatWriter(value, writer);
-            }
-        }
-    };
+    private static void formatFromString(String value, Writer resource) throws IOException {
+        resource.write(value);
+    }
 }

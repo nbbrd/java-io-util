@@ -1,7 +1,10 @@
 package nbbrd.io;
 
 import internal.io.ComposeFileFormatter;
+import internal.io.FunctionalFileFormatter;
 import internal.io.text.LegacyFiles;
+import nbbrd.design.StaticFactoryMethod;
+import nbbrd.io.function.IOBiConsumer;
 import nbbrd.io.function.IOSupplier;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -45,5 +48,10 @@ public interface FileFormatter<T> {
 
     default <V> @NonNull FileFormatter<V> compose(@NonNull Function<? super V, ? extends T> before) {
         return new ComposeFileFormatter<>(this, before);
+    }
+
+    @StaticFactoryMethod
+    static <T> @NonNull FileFormatter<T> onFormattingStream(@NonNull IOBiConsumer<? super T, ? super OutputStream> function) {
+        return new FunctionalFileFormatter<>(function);
     }
 }

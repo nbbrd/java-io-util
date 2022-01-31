@@ -14,6 +14,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Add URI parser and formatter
 - Add `TextResource` as reader/writer utilities
 - Add bridge from `Text*` to `File*` utilities
+- Add functional factories from `Text*` to `File*` utilities
 
 ### Changed
 

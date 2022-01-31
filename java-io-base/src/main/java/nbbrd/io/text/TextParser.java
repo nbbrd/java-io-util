@@ -1,10 +1,13 @@
 package nbbrd.io.text;
 
 import internal.io.text.AndThenTextParser;
+import internal.io.text.FunctionalTextParser;
 import internal.io.text.LegacyFiles;
 import internal.io.text.WithCharsetFileParser;
+import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.FileParser;
 import nbbrd.io.Resource;
+import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -36,7 +39,7 @@ public interface TextParser<T> {
         Optional<File> file = Resource.getFile(source);
         return file.isPresent()
                 ? parseFile(file.get(), encoding)
-                : parseReader(() -> Files.newBufferedReader(source, encoding));
+                : parseStream(() -> Files.newInputStream(source), encoding);
     }
 
     default @NonNull T parseResource(@NonNull Class<?> type, @NonNull String name, @NonNull Charset encoding) throws IOException {
@@ -71,5 +74,10 @@ public interface TextParser<T> {
 
     default @NonNull FileParser<T> withCharset(@NonNull Charset encoding) {
         return new WithCharsetFileParser<>(this, encoding);
+    }
+
+    @StaticFactoryMethod
+    static <T> @NonNull TextParser<T> onParsingReader(@NonNull IOFunction<? super Reader, ? extends T> function) {
+        return new FunctionalTextParser<>(function);
     }
 }

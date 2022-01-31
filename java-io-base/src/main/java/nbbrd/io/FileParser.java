@@ -1,7 +1,10 @@
 package nbbrd.io;
 
 import internal.io.AndThenFileParser;
+import internal.io.FunctionalFileParser;
 import internal.io.text.LegacyFiles;
+import nbbrd.design.StaticFactoryMethod;
+import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
 import org.checkerframework.checker.nullness.qual.NonNull;
 
@@ -16,14 +19,12 @@ import java.util.function.Function;
 
 public interface FileParser<T> {
 
-    @NonNull
-    default T parseFile(@NonNull File source) throws IOException {
+    default @NonNull T parseFile(@NonNull File source) throws IOException {
         LegacyFiles.checkSource(source);
         return parseStream(() -> LegacyFiles.newInputStream(source));
     }
 
-    @NonNull
-    default T parsePath(@NonNull Path source) throws IOException {
+    default @NonNull T parsePath(@NonNull Path source) throws IOException {
         Objects.requireNonNull(source, "source");
         Optional<File> file = Resource.getFile(source);
         return file.isPresent()
@@ -31,25 +32,27 @@ public interface FileParser<T> {
                 : parseStream(() -> Files.newInputStream(source));
     }
 
-    @NonNull
-    default T parseResource(@NonNull Class<?> type, @NonNull String name) throws IOException {
+    default @NonNull T parseResource(@NonNull Class<?> type, @NonNull String name) throws IOException {
         Objects.requireNonNull(type, "type");
         Objects.requireNonNull(name, "name");
         return parseStream(() -> LegacyFiles.checkResource(type.getResourceAsStream(name), "Missing resource '" + name + "' of '" + type.getName() + "'"));
     }
 
-    @NonNull
-    default T parseStream(IOSupplier<? extends InputStream> source) throws IOException {
+    default @NonNull T parseStream(IOSupplier<? extends InputStream> source) throws IOException {
         Objects.requireNonNull(source, "source");
         try (InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream")) {
             return parseStream(resource);
         }
     }
 
-    @NonNull
-    T parseStream(@NonNull InputStream resource) throws IOException;
+    @NonNull T parseStream(@NonNull InputStream resource) throws IOException;
 
     default <V> @NonNull FileParser<V> andThen(@NonNull Function<? super T, ? extends V> after) {
         return new AndThenFileParser<>(this, after);
+    }
+
+    @StaticFactoryMethod
+    static <T> @NonNull FileParser<T> onParsingStream(@NonNull IOFunction<? super InputStream, ? extends T> function) {
+        return new FunctionalFileParser<>(function);
     }
 }
