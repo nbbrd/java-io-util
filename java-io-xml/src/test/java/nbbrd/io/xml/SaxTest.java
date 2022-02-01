@@ -1,52 +1,59 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package nbbrd.io.xml;
 
-import _test.sample.ParseAssertions;
+import _test.ForwardingXMLReader;
+import _test.Meta;
+import _test.SaxListener;
+import _test.sample.XmlParserAssertions;
 import _test.sample.Person;
-import java.io.IOException;
-import java.util.List;
-import static org.assertj.core.api.Assertions.*;
-import org.junit.Test;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import nbbrd.io.function.IORunnable;
+import nbbrd.io.function.IOSupplier;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.api.io.TempDir;
 import org.xml.sax.Attributes;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.DefaultHandler;
-import _test.ForwardingXMLReader;
-import _test.SaxListener;
-import _test.Meta;
-import static _test.sample.ParseAssertions.assertParserCompliance;
-import static _test.sample.ParseAssertions.assertParserSafety;
-import static _test.sample.Person.BOOLS;
+
 import javax.xml.parsers.SAXParserFactory;
-import nbbrd.io.function.IORunnable;
-import nbbrd.io.function.IOSupplier;
-import org.junit.Rule;
-import org.junit.rules.TemporaryFolder;
+import java.io.IOException;
+import java.nio.file.Path;
+import java.util.List;
+
+import static _test.sample.XmlParserAssertions.assertXmlParserCompliance;
+import static _test.sample.XmlParserAssertions.assertParserSafety;
+import static _test.sample.Person.BOOLS;
+import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 /**
- *
  * @author Philippe Charles
  */
 public class SaxTest {
 
-    @Rule
-    public TemporaryFolder temp = new TemporaryFolder();
+    @RegisterExtension
+    final WireMockExtension wire = WireMockExtension.newInstance()
+            .options(WireMockConfiguration.options().dynamicPort())
+            .build();
 
     private final IOSupplier<XMLReader> validFactory = Sax::createReader;
 
@@ -60,34 +67,34 @@ public class SaxTest {
     @Test
     public void testXXE() throws IOException {
         Sax.Parser<Person> p = Sax.Parser.of(PersonHandler.INSTANCE, PersonHandler.INSTANCE::build);
-        ParseAssertions.testXXE(p, p.withIgnoreXXE(true));
+        XmlParserAssertions.testXXE(wire, p, p.withIgnoreXXE(true));
     }
 
     @Test
     @SuppressWarnings("null")
-    public void testParserOf() throws Exception {
+    public void testParserOf(@TempDir Path temp) throws Exception {
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.of(null, PersonHandler.INSTANCE::build));
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.of(PersonHandler.INSTANCE, null));
 
-        assertParserCompliance(Sax.Parser.of(PersonHandler.INSTANCE, PersonHandler.INSTANCE::build), temp);
+        assertXmlParserCompliance(temp, Sax.Parser.of(PersonHandler.INSTANCE, PersonHandler.INSTANCE::build));
     }
 
     @Test
     @SuppressWarnings("null")
-    public void testParserBuilder() throws Exception {
+    public void testParserBuilder(@TempDir Path temp) throws Exception {
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.builder().build());
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.builder().contentHandler(null).build());
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.builder().contentHandler(PersonHandler.INSTANCE).after(null).build());
 
         for (boolean ignoreXXE : BOOLS) {
-            assertParserCompliance(Sax.Parser.<Person>builder()
-                    .factory(validFactory)
-                    .contentHandler(PersonHandler.INSTANCE)
-                    .before(PersonHandler.INSTANCE::clear)
-                    .after(PersonHandler.INSTANCE::build)
-                    .ignoreXXE(ignoreXXE)
-                    .build(),
-                    temp);
+            assertXmlParserCompliance(temp, Sax.Parser.<Person>builder()
+                            .factory(validFactory)
+                            .contentHandler(PersonHandler.INSTANCE)
+                            .before(PersonHandler.INSTANCE::clear)
+                            .after(PersonHandler.INSTANCE::build)
+                            .ignoreXXE(ignoreXXE)
+                            .build()
+            );
         }
     }
 

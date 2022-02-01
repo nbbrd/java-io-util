@@ -125,7 +125,7 @@ public class Person {
             JOHN_DOE_READER = () -> new StringReader(JOHN_DOE_CHARS.get(StandardCharsets.UTF_8));
             JOHN_DOE_STREAM = () -> new ByteArrayInputStream(JOHN_DOE_CHARS.get(StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8));
         } catch (IOException | JAXBException ex) {
-            throw new RuntimeException();
+            throw new RuntimeException(ex);
         }
     }
 }

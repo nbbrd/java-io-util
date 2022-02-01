@@ -18,6 +18,8 @@ package internal.io.text;
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
@@ -300,6 +302,17 @@ public class InternalParser {
             try {
                 return new URL(input.toString());
             } catch (MalformedURLException ex) {
+                doNothing(ex);
+            }
+        }
+        return null;
+    }
+
+    public URI parseURI(CharSequence input) {
+        if (input != null) {
+            try {
+                return new URI(input.toString());
+            } catch (URISyntaxException ex) {
                 doNothing(ex);
             }
         }

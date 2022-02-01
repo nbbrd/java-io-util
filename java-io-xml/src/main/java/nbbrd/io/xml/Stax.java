@@ -144,8 +144,9 @@ public class Stax {
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            LegacyFiles.checkSource(source);
+            Objects.requireNonNull(source, "source");
             Objects.requireNonNull(encoding, "encoding");
+            LegacyFiles.checkSource(source);
             InputStream resource = LegacyFiles.newInputStream(source);
             return parse(o -> o.createXMLStreamReader(LegacyFiles.toSystemId(source), resource), resource);
         }
@@ -255,8 +256,9 @@ public class Stax {
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            LegacyFiles.checkSource(source);
+            Objects.requireNonNull(source, "source");
             Objects.requireNonNull(encoding, "encoding");
+            LegacyFiles.checkSource(source);
             InputStream resource = LegacyFiles.newInputStream(source);
             return parse(o -> o.createXMLEventReader(LegacyFiles.toSystemId(source), resource), resource);
         }
@@ -405,7 +407,7 @@ public class Stax {
 
         @Override
         public void formatStream(@NonNull T value, @NonNull OutputStream resource) throws IOException {
-            Objects.requireNonNull(value);
+            Objects.requireNonNull(value, "value");
             Objects.requireNonNull(resource, "resource");
             format(value, o -> o.createXMLStreamWriter(resource, getDefaultEncoding().name()), getDefaultEncoding());
         }

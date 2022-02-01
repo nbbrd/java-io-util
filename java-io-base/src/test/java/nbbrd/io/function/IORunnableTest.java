@@ -16,7 +16,7 @@
  */
 package nbbrd.io.function;
 
-import _test.Error1;
+import _test.io.Error1;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Objects;
@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 import static org.assertj.core.api.Assertions.*;
 import org.checkerframework.checker.nullness.qual.NonNull;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  *

@@ -16,11 +16,13 @@
  */
 package nbbrd.io.text;
 
+import _test.io.Util;
 import org.assertj.core.util.DateUtil;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -87,6 +89,16 @@ public class FormatterTest {
 
         Formatter<Number> f = onNumberFormat(NumberFormat.getInstance(Locale.ROOT));
         assertCompliance(f, 3.14, "3.14");
+
+        if (Util.isJDK8()) {
+            assertThat(f.format(Double.NaN))
+                    .describedAs("Not-a-number formatting in JDK8 is 'U+FFFD REPLACEMENT CHARACTER'")
+                    .isEqualTo("\uFFFD");
+        } else {
+            assertThat(f.format(Double.NaN))
+                    .describedAs("Not-a-number formatting in JDK9+ is 'NaN'")
+                    .isEqualTo("NaN");
+        }
     }
 
     @Test
@@ -201,6 +213,12 @@ public class FormatterTest {
     public void testURL() throws MalformedURLException {
         Formatter<URL> f = onURL();
         assertCompliance(f, new URL("file:/C:/temp/x.xml"), "file:/C:/temp/x.xml");
+    }
+
+    @Test
+    public void testURI() {
+        Formatter<URI> f = onURI();
+        assertCompliance(f, URI.create("file:/C:/temp/x.xml"), "file:/C:/temp/x.xml");
     }
 
     @Test

@@ -12,13 +12,13 @@ import java.nio.file.Path;
 import java.util.function.Function;
 
 @lombok.AllArgsConstructor
-public class AndThenTextParser<T, V> implements TextParser<V> {
+public final class AndThenTextParser<T, V> implements TextParser<V> {
 
     @lombok.NonNull
-    protected final TextParser<T> parser;
+    private final TextParser<T> parser;
 
     @lombok.NonNull
-    protected final Function<? super T, ? extends V> after;
+    private final Function<? super T, ? extends V> after;
 
     @Override
     public V parseChars(CharSequence source) throws IOException {

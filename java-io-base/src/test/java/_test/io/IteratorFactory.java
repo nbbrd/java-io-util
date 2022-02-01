@@ -1,4 +1,4 @@
-package _test;
+package _test.io;
 
 import java.util.Iterator;
 import java.util.function.Predicate;

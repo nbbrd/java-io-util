@@ -1,11 +1,11 @@
 package nbbrd.io;
 
-import _test.IOIteratorAssertions;
-import _test.IOIteratorFactory;
+import _test.io.IOIteratorAssertions;
+import _test.io.IOIteratorFactory;
 import java.io.IOException;
 import java.util.function.Supplier;
 import static org.assertj.core.api.Assertions.assertThatIOException;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  *

@@ -22,6 +22,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.File;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
@@ -206,6 +207,11 @@ public interface Parser<T> {
     @StaticFactoryMethod
     static @NonNull Parser<URL> onURL() {
         return InternalParser::parseURL;
+    }
+
+    @StaticFactoryMethod
+    static @NonNull Parser<URI> onURI() {
+        return InternalParser::parseURI;
     }
 
     @StaticFactoryMethod

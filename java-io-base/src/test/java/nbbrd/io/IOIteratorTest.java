@@ -16,9 +16,9 @@
  */
 package nbbrd.io;
 
-import _test.IOIteratorAssertions;
-import _test.IOIteratorFactory;
-import _test.IteratorFactory;
+import _test.io.IOIteratorAssertions;
+import _test.io.IOIteratorFactory;
+import _test.io.IteratorFactory;
 import com.google.common.collect.Iterators;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -35,7 +35,7 @@ import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.function.IOUnaryOperator;
 import static org.assertj.core.api.Assertions.*;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /**
  *

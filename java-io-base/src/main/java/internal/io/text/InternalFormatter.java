@@ -17,6 +17,7 @@
 package internal.io.text;
 
 import java.io.File;
+import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
@@ -124,6 +125,10 @@ public class InternalFormatter {
     }
 
     public CharSequence formatURL(URL value) {
+        return value != null ? value.toString() : null;
+    }
+
+    public CharSequence formatURI(URI value) {
         return value != null ? value.toString() : null;
     }
 
