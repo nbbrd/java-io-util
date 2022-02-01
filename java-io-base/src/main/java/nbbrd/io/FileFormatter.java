@@ -1,6 +1,7 @@
 package nbbrd.io;
 
 import internal.io.ComposeFileFormatter;
+import internal.io.EncodingFileFormatter;
 import internal.io.FunctionalFileFormatter;
 import internal.io.text.LegacyFiles;
 import nbbrd.design.StaticFactoryMethod;
@@ -16,6 +17,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.zip.GZIPOutputStream;
 
 public interface FileFormatter<T> {
 
@@ -53,5 +55,10 @@ public interface FileFormatter<T> {
     @StaticFactoryMethod
     static <T> @NonNull FileFormatter<T> onFormattingStream(@NonNull IOBiConsumer<? super T, ? super OutputStream> function) {
         return new FunctionalFileFormatter<>(function);
+    }
+
+    @StaticFactoryMethod
+    static <T> @NonNull FileFormatter<T> onFormattingGzip(@NonNull FileFormatter<T> formatter) {
+        return new EncodingFileFormatter<>(formatter, GZIPOutputStream::new);
     }
 }

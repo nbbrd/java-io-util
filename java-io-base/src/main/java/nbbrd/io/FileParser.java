@@ -1,6 +1,7 @@
 package nbbrd.io;
 
 import internal.io.AndThenFileParser;
+import internal.io.DecodingFileFormatter;
 import internal.io.FunctionalFileParser;
 import internal.io.text.LegacyFiles;
 import nbbrd.design.StaticFactoryMethod;
@@ -16,6 +17,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.zip.GZIPInputStream;
 
 public interface FileParser<T> {
 
@@ -54,5 +56,10 @@ public interface FileParser<T> {
     @StaticFactoryMethod
     static <T> @NonNull FileParser<T> onParsingStream(@NonNull IOFunction<? super InputStream, ? extends T> function) {
         return new FunctionalFileParser<>(function);
+    }
+
+    @StaticFactoryMethod
+    static <T> @NonNull FileParser<T> onParsingGzip(@NonNull FileParser<T> parser) {
+        return new DecodingFileFormatter<>(parser, GZIPInputStream::new);
     }
 }

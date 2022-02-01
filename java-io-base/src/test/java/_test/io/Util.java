@@ -2,12 +2,10 @@ package _test.io;
 
 import nbbrd.io.Resource;
 import nbbrd.io.function.IOSupplier;
+import nbbrd.io.function.IOUnaryOperator;
 import nbbrd.io.sys.SystemProperties;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -61,5 +59,25 @@ public final class Util {
 
     public static FileTime lastAccessTime(Path file) throws IOException {
         return Files.readAttributes(file, BasicFileAttributes.class).lastAccessTime();
+    }
+
+    public static byte[] encode(byte[] bytes, IOUnaryOperator<OutputStream> encoder) throws IOException {
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        try (OutputStream output = encoder.applyWithIO(result)) {
+            output.write(bytes, 0, bytes.length);
+        }
+        return result.toByteArray();
+    }
+
+    public static byte[] decode(byte[] bytes, IOUnaryOperator<InputStream> encoder) throws IOException {
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        try (InputStream input = encoder.applyWithIO(new ByteArrayInputStream(bytes))) {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = input.read(buffer, 0, buffer.length)) >= 0) {
+                result.write(buffer, 0, read);
+            }
+        }
+        return result.toByteArray();
     }
 }
