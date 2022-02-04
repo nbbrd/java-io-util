@@ -47,6 +47,8 @@ public final class DecodingFileFormatter<T> implements FileParser<T> {
     @Override
     public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
         Objects.requireNonNull(resource, "resource");
-        return parser.parseStream(decoder.applyWithIO(resource));
+        try (InputStream decoding = decoder.applyWithIO(resource)) {
+            return parser.parseStream(decoding);
+        }
     }
 }

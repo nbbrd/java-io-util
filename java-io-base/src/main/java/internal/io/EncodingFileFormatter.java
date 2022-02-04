@@ -42,6 +42,8 @@ public final class EncodingFileFormatter<T> implements FileFormatter<T> {
     public void formatStream(@NonNull T value, @NonNull OutputStream resource) throws IOException {
         Objects.requireNonNull(value, "value");
         Objects.requireNonNull(resource, "resource");
-        formatter.formatStream(value, encoder.applyWithIO(resource));
+        try (OutputStream encoding = encoder.applyWithIO(resource)) {
+            formatter.formatStream(value, encoding);
+        }
     }
 }

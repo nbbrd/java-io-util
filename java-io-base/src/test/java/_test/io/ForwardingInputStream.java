@@ -14,7 +14,7 @@
  * See the Licence for the specific language governing permissions and 
  * limitations under the Licence.
  */
-package _test;
+package _test.io;
 
 import java.io.IOException;
 import java.io.InputStream;
