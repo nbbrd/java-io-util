@@ -17,6 +17,7 @@
 package nbbrd.io.xml;
 
 import _test.*;
+import _test.io.ForwardingInputStream;
 import _test.sample.XmlParserAssertions;
 import _test.sample.Person;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;

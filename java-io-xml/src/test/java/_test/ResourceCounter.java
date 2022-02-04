@@ -28,6 +28,9 @@ import javax.xml.stream.XMLStreamException;
 import javax.xml.stream.XMLStreamReader;
 import javax.xml.stream.XMLStreamWriter;
 import javax.xml.transform.Result;
+
+import _test.io.ForwardingInputStream;
+import _test.io.ForwardingOutputStream;
 import nbbrd.io.function.IOSupplier;
 
 /**
