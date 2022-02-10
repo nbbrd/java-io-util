@@ -78,7 +78,7 @@
                 <!-- slf4j required by wiremock-jre8-standalone -->
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-nop</artifactId>
-                <version>1.7.35</version>
+                <version>1.7.36</version>
             </dependency>
 
             <!-- other -->
