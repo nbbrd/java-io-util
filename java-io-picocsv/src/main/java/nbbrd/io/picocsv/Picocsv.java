@@ -11,6 +11,8 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
+import java.nio.file.AccessDeniedException;
+import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -60,6 +62,7 @@ public class Picocsv {
         public @NonNull T parsePath(@NonNull Path source, @NonNull Charset encoding) throws IOException {
             Objects.requireNonNull(source, "source");
             Objects.requireNonNull(encoding, "encoding");
+            checkIsFile(source);
             CharsetDecoder decoder = encoding.newDecoder();
             try (InputStream resource = Files.newInputStream(source)) {
                 return parse(newBufferedReader(resource, decoder), TextBuffers.of(source, decoder));
@@ -112,6 +115,30 @@ public class Picocsv {
         private final OutputHandler<T> handler;
 
         @Override
+        public void formatFile(@NonNull T value, @NonNull File target, @NonNull Charset encoding) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(target, "target");
+            Objects.requireNonNull(encoding, "encoding");
+            LegacyFiles.checkTarget(target);
+            CharsetEncoder encoder = encoding.newEncoder();
+            try (OutputStream resource = LegacyFiles.newOutputStream(target)) {
+                format(value, newBufferedWriter(resource, encoder), TextBuffers.of(target.toPath(), encoder));
+            }
+        }
+
+        @Override
+        public void formatPath(@NonNull T value, @NonNull Path target, @NonNull Charset encoding) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(target, "target");
+            Objects.requireNonNull(encoding, "encoding");
+            checkIsFile(target);
+            CharsetEncoder encoder = encoding.newEncoder();
+            try (OutputStream resource = Files.newOutputStream(target)) {
+                format(value, newBufferedWriter(resource, encoder), TextBuffers.of(target, encoder));
+            }
+        }
+
+        @Override
         public void formatWriter(@NonNull T value, @NonNull Writer resource) throws IOException {
             Objects.requireNonNull(value, "value");
             Objects.requireNonNull(resource, "resource");
@@ -131,6 +158,12 @@ public class Picocsv {
             try (Csv.Writer csv = Csv.Writer.of(format, options, charWriter, buffers.getCharBufferSize())) {
                 handler.format(value, csv);
             }
+        }
+    }
+
+    private static void checkIsFile(@NonNull Path source) throws FileSystemException {
+        if (Files.isDirectory(source)) {
+            throw new AccessDeniedException(source.toString());
         }
     }
 }
