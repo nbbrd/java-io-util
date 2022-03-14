@@ -19,7 +19,6 @@ import static _test.io.text.TextParserAssertions.assertTextParserCompliance;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static nbbrd.io.function.IOFunction.unchecked;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 @SuppressWarnings("ConstantConditions")
@@ -31,7 +30,7 @@ public class PicocsvTest {
 
         TextParser<List<User>> parser = Picocsv.Parser
                 .builder(User::parse)
-                .format(FORMAT)
+                .options(Csv.ReaderOptions.DEFAULT.toBuilder().lenientSeparator(true).build())
                 .build();
 
         assertTextParserCompliance(temp, parser, USERS, charset -> RESOURCE_ID, ENCODINGS, true);
@@ -43,15 +42,15 @@ public class PicocsvTest {
 
         TextFormatter<List<User>> formatter = Picocsv.Formatter
                 .builder(User::format)
-                .format(FORMAT)
+                .format(Csv.Format.RFC4180.toBuilder().separator(Csv.Format.UNIX_SEPARATOR).build())
                 .build();
 
-        assertTextFormatterCompliance(temp, formatter, USERS, unchecked(RESOURCE_ID::copyToString), ENCODINGS);
+        String expected = RESOURCE_ID.copyByLineToString(UTF_8, Csv.Format.UNIX_SEPARATOR);
+
+        assertTextFormatterCompliance(temp, formatter, USERS, encoding -> expected, ENCODINGS);
     }
 
-    private static final Csv.Format FORMAT = Csv.Format.RFC4180.toBuilder().separator(Csv.Format.UNIX_SEPARATOR).build();
-
-    private static final ResourceId RESOURCE_ID = new ResourceId(PicocsvTest.class, "/Users.csv.gz");
+    private static final ResourceId RESOURCE_ID = new ResourceId(PicocsvTest.class, "/Users.csv");
 
     private static final List<Charset> ENCODINGS = singletonList(UTF_8);
 
