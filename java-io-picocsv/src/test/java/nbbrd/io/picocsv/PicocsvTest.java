@@ -31,7 +31,7 @@ public class PicocsvTest {
 
         TextParser<List<User>> parser = Picocsv.Parser
                 .builder(User::parse)
-                .options(LENIENT)
+                .format(FORMAT)
                 .build();
 
         assertTextParserCompliance(temp, parser, USERS, charset -> RESOURCE_ID, ENCODINGS, true);
@@ -43,15 +43,15 @@ public class PicocsvTest {
 
         TextFormatter<List<User>> formatter = Picocsv.Formatter
                 .builder(User::format)
-                .format(Csv.Format.RFC4180.toBuilder().separator(Csv.Format.UNIX_SEPARATOR).build())
+                .format(FORMAT)
                 .build();
 
         assertTextFormatterCompliance(temp, formatter, USERS, unchecked(RESOURCE_ID::copyToString), ENCODINGS);
     }
 
-    private static final Csv.ReaderOptions LENIENT = Csv.ReaderOptions.DEFAULT.toBuilder().lenientSeparator(true).build();
+    private static final Csv.Format FORMAT = Csv.Format.RFC4180.toBuilder().separator(Csv.Format.UNIX_SEPARATOR).build();
 
-    private static final ResourceId RESOURCE_ID = new ResourceId(PicocsvTest.class, "/Users.csv");
+    private static final ResourceId RESOURCE_ID = new ResourceId(PicocsvTest.class, "/Users.csv.gz");
 
     private static final List<Charset> ENCODINGS = singletonList(UTF_8);
 
