@@ -88,6 +88,9 @@ public class Picocsv {
                 return handler.parse(csv);
             }
         }
+
+        public final static class Builder<T> {
+        }
     }
 
     @FunctionalInterface
@@ -158,6 +161,9 @@ public class Picocsv {
             try (Csv.Writer csv = Csv.Writer.of(format, options, charWriter, buffers.getCharBufferSize())) {
                 handler.format(value, csv);
             }
+        }
+
+        public final static class Builder<T> {
         }
     }
 
