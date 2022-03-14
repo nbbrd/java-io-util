@@ -26,6 +26,11 @@
             </dependency>
             <dependency>
                 <groupId>com.github.nbbrd.java-io-util</groupId>
+                <artifactId>java-io-picocsv</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.nbbrd.java-io-util</groupId>
                 <artifactId>java-io-win</artifactId>
                 <version>${project.version}</version>
             </dependency>
