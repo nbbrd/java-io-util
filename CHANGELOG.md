@@ -11,6 +11,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Add picocsv module
 
+### Fixed
+
+- Fix compile-time dependencies convergence in BOM
+
 ## [0.0.17] - 2022-02-04
 
 ### Fixed
