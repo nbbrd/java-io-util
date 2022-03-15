@@ -48,4 +48,17 @@ public class ResourceId {
             }
         }
     }
+
+    public String copyByLineToString(Charset encoding, String separator) throws IOException {
+        try (StringWriter writer = new StringWriter()) {
+            try (BufferedReader reader = open(encoding)) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    writer.write(line);
+                    writer.write(separator);
+                }
+                return writer.toString();
+            }
+        }
+    }
 }

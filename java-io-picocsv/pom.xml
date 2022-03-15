@@ -5,16 +5,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>com.github.nbbrd.java-io-util</groupId>
         <artifactId>java-io-parent</artifactId>
+        <groupId>com.github.nbbrd.java-io-util</groupId>
         <version>0.0.18</version>
     </parent>
 
-    <artifactId>java-io-win</artifactId>
+    <artifactId>java-io-picocsv</artifactId>
     <packaging>jar</packaging>
 
-    <name>java-io-win</name>
-    <description>Common IO utilities - Win</description>
+    <name>java-io-picocsv</name>
+    <description>Common IO utilities - picocsv</description>
     <url>https://github.com/nbbrd/java-io-util</url>
 
     <dependencies>
@@ -41,8 +41,21 @@
             <artifactId>java-io-base</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.github.nbbrd.picocsv</groupId>
+            <artifactId>picocsv</artifactId>
+            <version>2.1.0</version>
+        </dependency>
 
         <!-- test libraries -->
+        <dependency>
+            <groupId>${project.groupId}</groupId>
+            <artifactId>java-io-base</artifactId>
+            <version>${project.version}</version>
+            <classifier>tests</classifier>
+            <type>test-jar</type>
+            <scope>test</scope>
+        </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
@@ -51,6 +64,11 @@
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.jimfs</groupId>
+            <artifactId>jimfs</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>
