@@ -1,9 +1,6 @@
 package nbbrd.io.text;
 
-import internal.io.text.ComposeTextFormatter;
-import internal.io.text.FunctionalTextFormatter;
-import internal.io.text.LegacyFiles;
-import internal.io.text.WithCharsetFileFormatter;
+import internal.io.text.*;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.FileFormatter;
 import nbbrd.io.Resource;
@@ -17,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public interface TextFormatter<T> {
@@ -80,8 +78,26 @@ public interface TextFormatter<T> {
         return new ComposeTextFormatter<>(this, before);
     }
 
-    default @NonNull FileFormatter<T> withCharset(@NonNull Charset encoding) {
+    default @NonNull FileFormatter<T> asFileFormatter(@NonNull Charset encoding) {
         return new WithCharsetFileFormatter<>(this, encoding);
+    }
+
+    default @NonNull Formatter<T> asFormatter() {
+        return asFormatter(InternalFormatter::doNothing);
+    }
+
+    default @NonNull Formatter<T> asFormatter(@NonNull Consumer<? super Throwable> onError) {
+        Objects.requireNonNull(onError, "onError");
+        return value -> {
+            if (value != null) {
+                try {
+                    return formatToString(value);
+                } catch (Throwable ex) {
+                    onError.accept(ex);
+                }
+            }
+            return null;
+        };
     }
 
     @StaticFactoryMethod

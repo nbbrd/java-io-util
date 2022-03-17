@@ -1,9 +1,6 @@
 package nbbrd.io.text;
 
-import internal.io.text.AndThenTextParser;
-import internal.io.text.FunctionalTextParser;
-import internal.io.text.LegacyFiles;
-import internal.io.text.WithCharsetFileParser;
+import internal.io.text.*;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.FileParser;
 import nbbrd.io.Resource;
@@ -17,6 +14,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 public interface TextParser<T> {
@@ -72,8 +70,26 @@ public interface TextParser<T> {
         return new AndThenTextParser<>(this, after);
     }
 
-    default @NonNull FileParser<T> withCharset(@NonNull Charset encoding) {
+    default @NonNull FileParser<T> asFileParser(@NonNull Charset encoding) {
         return new WithCharsetFileParser<>(this, encoding);
+    }
+
+    default @NonNull Parser<T> asParser() {
+        return asParser(InternalParser::doNothing);
+    }
+
+    default @NonNull Parser<T> asParser(@NonNull Consumer<? super Throwable> onError) {
+        Objects.requireNonNull(onError, "onError");
+        return chars -> {
+            if (chars != null) {
+                try {
+                    return parseChars(chars);
+                } catch (Throwable ex) {
+                    onError.accept(ex);
+                }
+            }
+            return null;
+        };
     }
 
     @StaticFactoryMethod

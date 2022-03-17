@@ -251,7 +251,7 @@ public class FormatterTest {
         assertThat(p2.apply("abc")).isEqualTo("hello");
     }
 
-    private static <T> void assertCompliance(Formatter<T> f, T value, CharSequence text) {
+    public static <T> void assertCompliance(Formatter<T> f, T value, CharSequence text) {
         assertThatCode(() -> f.format(null)).doesNotThrowAnyException();
         assertThatCode(() -> f.formatAsString(null)).doesNotThrowAnyException();
         assertThatCode(() -> f.formatValue(null)).doesNotThrowAnyException();
