@@ -1,17 +1,18 @@
 package nbbrd.io.picocsv;
 
 import _test.io.ResourceId;
-import nbbrd.io.text.TextFormatter;
-import nbbrd.io.text.TextParser;
 import nbbrd.picocsv.Csv;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.StringWriter;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static _test.io.text.TextFormatterAssertions.assertTextFormatterCompliance;
@@ -19,6 +20,8 @@ import static _test.io.text.TextParserAssertions.assertTextParserCompliance;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static nbbrd.picocsv.Csv.DEFAULT_CHAR_BUFFER_SIZE;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 @SuppressWarnings("ConstantConditions")
@@ -28,27 +31,68 @@ public class PicocsvTest {
     public void testParser(@TempDir Path temp) throws IOException {
         assertThatNullPointerException().isThrownBy(() -> Picocsv.Parser.builder(null).build());
 
-        TextParser<List<User>> parser = Picocsv.Parser
+        Picocsv.Parser<List<User>> x = Picocsv.Parser
                 .builder(User::parse)
-                .options(Csv.ReaderOptions.DEFAULT.toBuilder().lenientSeparator(true).build())
+                .options(LENIENT)
                 .build();
 
-        assertTextParserCompliance(temp, parser, USERS, charset -> RESOURCE_ID, ENCODINGS, true);
+        assertTextParserCompliance(temp, x, USERS, charset -> RESOURCE_ID, ENCODINGS, true);
+    }
+
+    @Test
+    public void testParseCsv() throws IOException {
+        Picocsv.Parser<List<User>> x = Picocsv.Parser
+                .builder(User::parse)
+                .options(LENIENT)
+                .build();
+
+        assertThatNullPointerException().isThrownBy(() -> x.parseCsv(null));
+
+        try (BufferedReader chars = RESOURCE_ID.open(UTF_8)) {
+            try (Csv.Reader csv = Csv.Reader.of(x.getFormat(), x.getOptions(), chars, DEFAULT_CHAR_BUFFER_SIZE)) {
+                assertThat(x.parseCsv(csv))
+                        .containsExactlyElementsOf(USERS);
+            }
+        }
     }
 
     @Test
     public void testFormatter(@TempDir Path temp) throws IOException {
         assertThatNullPointerException().isThrownBy(() -> Picocsv.Formatter.builder(null).build());
 
-        TextFormatter<List<User>> formatter = Picocsv.Formatter
+        Picocsv.Formatter<List<User>> x = Picocsv.Formatter
                 .builder(User::format)
-                .format(Csv.Format.RFC4180.toBuilder().separator(Csv.Format.UNIX_SEPARATOR).build())
+                .format(UNIX)
                 .build();
 
         String expected = RESOURCE_ID.copyByLineToString(UTF_8, Csv.Format.UNIX_SEPARATOR);
 
-        assertTextFormatterCompliance(temp, formatter, USERS, encoding -> expected, ENCODINGS);
+        assertTextFormatterCompliance(temp, x, USERS, encoding -> expected, ENCODINGS);
     }
+
+    @Test
+    public void testFormatCsv() throws IOException {
+        Picocsv.Formatter<List<User>> x = Picocsv.Formatter
+                .builder(User::format)
+                .format(UNIX)
+                .build();
+
+        assertThatNullPointerException().isThrownBy(() -> x.formatCsv(null, Csv.Writer.of(Csv.Format.DEFAULT, Csv.WriterOptions.DEFAULT, new StringWriter(), DEFAULT_CHAR_BUFFER_SIZE)));
+        assertThatNullPointerException().isThrownBy(() -> x.formatCsv(Collections.emptyList(), null));
+
+        String expected = RESOURCE_ID.copyByLineToString(UTF_8, Csv.Format.UNIX_SEPARATOR);
+
+        try (StringWriter chars = new StringWriter()) {
+            try (Csv.Writer csv = Csv.Writer.of(x.getFormat(), x.getOptions(), chars, DEFAULT_CHAR_BUFFER_SIZE)) {
+                x.formatCsv(USERS, csv);
+            }
+            assertThat(chars.toString()).isEqualTo(expected);
+        }
+    }
+
+    private static final Csv.ReaderOptions LENIENT = Csv.ReaderOptions.DEFAULT.toBuilder().lenientSeparator(true).build();
+
+    private static final Csv.Format UNIX = Csv.Format.RFC4180.toBuilder().separator(Csv.Format.UNIX_SEPARATOR).build();
 
     private static final ResourceId RESOURCE_ID = new ResourceId(PicocsvTest.class, "/Users.csv");
 

@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Add convenient CSV methods
+
 ## [0.0.18] - 2022-03-15
 
 ### Added

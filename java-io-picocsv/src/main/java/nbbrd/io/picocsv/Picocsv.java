@@ -37,10 +37,12 @@ public class Picocsv {
         }
 
         @lombok.NonNull
+        @lombok.Getter
         @lombok.Builder.Default
         private final Csv.Format format = Csv.Format.DEFAULT;
 
         @lombok.NonNull
+        @lombok.Getter
         @lombok.Builder.Default
         private final Csv.ReaderOptions options = Csv.ReaderOptions.DEFAULT;
 
@@ -83,6 +85,11 @@ public class Picocsv {
             return parse(newBufferedReader(resource, decoder), TextBuffers.of(resource, decoder));
         }
 
+        public @NonNull T parseCsv(Csv.@NonNull Reader resource) throws IOException {
+            Objects.requireNonNull(resource, "resource");
+            return handler.parse(resource);
+        }
+
         private T parse(Reader charReader, TextBuffers buffers) throws IOException {
             try (Csv.Reader csv = Csv.Reader.of(format, options, charReader, buffers.getCharBufferSize())) {
                 return handler.parse(csv);
@@ -107,10 +114,12 @@ public class Picocsv {
         }
 
         @lombok.NonNull
+        @lombok.Getter
         @lombok.Builder.Default
         private final Csv.Format format = Csv.Format.DEFAULT;
 
         @lombok.NonNull
+        @lombok.Getter
         @lombok.Builder.Default
         private final Csv.WriterOptions options = Csv.WriterOptions.DEFAULT;
 
@@ -155,6 +164,12 @@ public class Picocsv {
             Objects.requireNonNull(encoding, "encoding");
             CharsetEncoder encoder = encoding.newEncoder();
             format(value, newBufferedWriter(resource, encoder), TextBuffers.of(resource, encoder));
+        }
+
+        public void formatCsv(@NonNull T value, Csv.@NonNull Writer resource) throws IOException {
+            Objects.requireNonNull(value, "value");
+            Objects.requireNonNull(resource, "resource");
+            handler.format(value, resource);
         }
 
         private void format(T value, Writer charWriter, TextBuffers buffers) throws IOException {
