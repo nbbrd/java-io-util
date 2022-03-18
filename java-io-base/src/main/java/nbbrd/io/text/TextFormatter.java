@@ -6,6 +6,7 @@ import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.FileFormatter;
 import nbbrd.io.Resource;
 import nbbrd.io.function.IOBiConsumer;
+import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
 
 import java.io.*;
@@ -14,7 +15,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 public interface TextFormatter<T> {
 
@@ -60,7 +60,7 @@ public interface TextFormatter<T> {
 
     void formatStream(@NonNull T value, @NonNull OutputStream resource, @NonNull Charset encoding) throws IOException;
 
-    default <V> @NonNull TextFormatter<V> compose(@NonNull Function<? super V, ? extends T> before) {
+    default <V> @NonNull TextFormatter<V> compose(@NonNull IOFunction<? super V, ? extends T> before) {
         return new ComposeTextFormatter<>(this, before);
     }
 

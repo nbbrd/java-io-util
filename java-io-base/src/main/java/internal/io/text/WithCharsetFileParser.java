@@ -2,6 +2,7 @@ package internal.io.text;
 
 import lombok.NonNull;
 import nbbrd.io.FileParser;
+import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.text.TextParser;
 
@@ -10,7 +11,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.function.Function;
 
 @lombok.AllArgsConstructor
 public final class WithCharsetFileParser<T> implements FileParser<T> {
@@ -47,7 +47,7 @@ public final class WithCharsetFileParser<T> implements FileParser<T> {
     }
 
     @Override
-    public <V> @NonNull FileParser<V> andThen(@NonNull Function<? super T, ? extends V> after) {
+    public <V> @NonNull FileParser<V> andThen(@NonNull IOFunction<? super T, ? extends V> after) {
         return new WithCharsetFileParser<>(delegate.andThen(after), charset);
     }
 }

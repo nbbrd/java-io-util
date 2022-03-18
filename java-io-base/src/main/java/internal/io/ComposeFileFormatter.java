@@ -2,13 +2,13 @@ package internal.io;
 
 import lombok.NonNull;
 import nbbrd.io.FileFormatter;
+import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
-import java.util.function.Function;
 
 @lombok.AllArgsConstructor
 public class ComposeFileFormatter<V, T> implements FileFormatter<V> {
@@ -17,25 +17,25 @@ public class ComposeFileFormatter<V, T> implements FileFormatter<V> {
     protected final FileFormatter<T> formatter;
 
     @NonNull
-    protected final Function<? super V, ? extends T> before;
+    protected final IOFunction<? super V, ? extends T> before;
 
     @Override
     public void formatFile(@NonNull V value, @NonNull File target) throws IOException {
-        formatter.formatFile(before.apply(value), target);
+        formatter.formatFile(before.applyWithIO(value), target);
     }
 
     @Override
     public void formatPath(@NonNull V value, @NonNull Path target) throws IOException {
-        formatter.formatPath(before.apply(value), target);
+        formatter.formatPath(before.applyWithIO(value), target);
     }
 
     @Override
     public void formatStream(@NonNull V value, @NonNull IOSupplier<? extends OutputStream> target) throws IOException {
-        formatter.formatStream(before.apply(value), target);
+        formatter.formatStream(before.applyWithIO(value), target);
     }
 
     @Override
     public void formatStream(@NonNull V value, @NonNull OutputStream resource) throws IOException {
-        formatter.formatStream(before.apply(value), resource);
+        formatter.formatStream(before.applyWithIO(value), resource);
     }
 }

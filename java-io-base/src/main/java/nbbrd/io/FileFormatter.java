@@ -7,6 +7,7 @@ import internal.io.text.LegacyFiles;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.function.IOBiConsumer;
+import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
 
 import java.io.File;
@@ -15,7 +16,6 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.zip.GZIPOutputStream;
 
 public interface FileFormatter<T> {
@@ -42,7 +42,7 @@ public interface FileFormatter<T> {
 
     void formatStream(@NonNull T value, @NonNull OutputStream resource) throws IOException;
 
-    default <V> @NonNull FileFormatter<V> compose(@NonNull Function<? super V, ? extends T> before) {
+    default <V> @NonNull FileFormatter<V> compose(@NonNull IOFunction<? super V, ? extends T> before) {
         return new ComposeFileFormatter<>(this, before);
     }
 

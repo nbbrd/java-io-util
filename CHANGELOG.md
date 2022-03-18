@@ -12,6 +12,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Add convenient CSV methods
 - Add bridge between Text* and Parser/Formatter
 
+### Changed
+
+- Replace composition functions with IO functions
+
 ## [0.0.18] - 2022-03-15
 
 ### Added

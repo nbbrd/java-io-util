@@ -2,6 +2,7 @@ package internal.io.text;
 
 import lombok.NonNull;
 import nbbrd.io.FileFormatter;
+import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.text.TextFormatter;
 
@@ -10,7 +11,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.function.Function;
 
 @lombok.AllArgsConstructor
 public final class WithCharsetFileFormatter<T> implements FileFormatter<T> {
@@ -42,7 +42,7 @@ public final class WithCharsetFileFormatter<T> implements FileFormatter<T> {
     }
 
     @Override
-    public @NonNull <V> FileFormatter<V> compose(@NonNull Function<? super V, ? extends T> before) {
+    public @NonNull <V> FileFormatter<V> compose(@NonNull IOFunction<? super V, ? extends T> before) {
         return new WithCharsetFileFormatter<>(delegate.compose(before), charset);
     }
 }
