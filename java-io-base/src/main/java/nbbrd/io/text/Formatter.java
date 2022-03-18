@@ -73,7 +73,7 @@ public interface Formatter<T> {
     }
 
     /**
-     * Returns an {@link Optional} containing the CharSequence that has bean
+     * Returns an {@link Optional} containing the CharSequence that has been
      * created by the formatting if this formatting was possible.<p>
      * Use this instead of {@link #format(java.lang.Object)} to increase
      * readability and prevent NullPointerExceptions.
@@ -86,7 +86,7 @@ public interface Formatter<T> {
     }
 
     /**
-     * Returns an {@link Optional} containing the String that has bean created
+     * Returns an {@link Optional} containing the String that has been created
      * by the formatting if this formatting was possible.<p>
      * Use this instead of {@link #format(java.lang.Object)} to increase
      * readability and prevent NullPointerExceptions.

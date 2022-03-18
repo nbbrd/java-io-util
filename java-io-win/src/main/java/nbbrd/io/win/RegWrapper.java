@@ -89,7 +89,7 @@ public class RegWrapper {
     }
 
     @lombok.Value
-    public static final class RegValue {
+    public static class RegValue {
 
         private static final Pattern PATTERN = Pattern.compile("^[ ]{4}(.+)[ ]{4}(REG_(?:SZ|MULTI_SZ|EXPAND_SZ|DWORD|QWORD|BINARY|NONE))[ ]{4}(.*)$");
 
@@ -99,14 +99,11 @@ public class RegWrapper {
             return m.matches() ? new RegValue(m.group(1), RegType.valueOf(m.group(2)), m.group(3)) : null;
         }
 
-        @NonNull
-        private String name;
+        @NonNull String name;
 
-        @NonNull
-        private RegType dataType;
+        @NonNull RegType dataType;
 
-        @NonNull
-        private String value;
+        @NonNull String value;
     }
 
     public enum RegType {

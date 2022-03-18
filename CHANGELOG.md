@@ -156,7 +156,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
-- Improve XXE desambiguation
+- Improve XXE disambiguation
 - Improve XML error reporting
 
 ### Fixed

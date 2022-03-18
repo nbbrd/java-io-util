@@ -56,12 +56,12 @@ public class IOIterators {
         }
 
         @Override
-        public Stream<Object> asStream() {
+        public @NonNull Stream<Object> asStream() {
             return Stream.empty();
         }
 
         @Override
-        public Iterator<Object> asUnchecked() {
+        public @NonNull Iterator<Object> asUnchecked() {
             return Collections.emptyIterator();
         }
     }
@@ -124,7 +124,7 @@ public class IOIterators {
         }
 
         @Override
-        public void forEachRemainingWithIO(IOConsumer<? super E> action) throws IOException {
+        public void forEachRemainingWithIO(@NonNull IOConsumer<? super E> action) throws IOException {
             try {
                 delegate.forEachRemaining(action.asUnchecked());
             } catch (UncheckedIOException ex) {
@@ -133,12 +133,12 @@ public class IOIterators {
         }
 
         @Override
-        public Stream<E> asStream() {
+        public @NonNull Stream<E> asStream() {
             return StreamSupport.stream(Spliterators.spliteratorUnknownSize(delegate, 0), false);
         }
 
         @Override
-        public Iterator<E> asUnchecked() {
+        public @NonNull Iterator<E> asUnchecked() {
             return delegate;
         }
     }

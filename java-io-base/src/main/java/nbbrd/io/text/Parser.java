@@ -62,7 +62,7 @@ public interface Parser<T> {
     @Nullable T parse(@Nullable CharSequence input);
 
     /**
-     * Returns an {@link Optional} containing the object that has bean created
+     * Returns an {@link Optional} containing the object that has been created
      * by the parsing if this parsing was possible.<p>
      * Use this instead of {@link #parse(java.lang.CharSequence)} to increase
      * readability and prevent NullPointerExceptions.

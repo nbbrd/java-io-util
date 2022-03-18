@@ -12,7 +12,7 @@ import java.util.function.BiConsumer;
  * Represents an operation that accepts two input arguments and returns no
  * result.  This is the two-arity specialization of {@link IOConsumer}.
  * Unlike most other functional interfaces, {@code IOBiConsumer} is expected
- * to operate via side-effects.
+ * to operate via side effects.
  *
  * <p>This is a <a href="package-summary.html">functional interface</a>
  * whose functional method is {@link #acceptWithIO(Object, Object)}.

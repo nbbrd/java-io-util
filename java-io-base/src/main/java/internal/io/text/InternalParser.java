@@ -218,7 +218,8 @@ public class InternalParser {
         return constant;
     }
 
-    public <T> T parseNull(CharSequence input) {
+    @SuppressWarnings("SameReturnValue")
+    public <T> T parseNull(CharSequence ignoredInput) {
         return null;
     }
 
@@ -261,7 +262,7 @@ public class InternalParser {
         if (len != 2 && len != 5 && len < 7) {
             return null;
         }
-        if (!isLocaleLetter(str.charAt(0)) || !isLocaleLetter(str.charAt(1))) {
+        if (isNotLocaleLetter(str.charAt(0)) || isNotLocaleLetter(str.charAt(1))) {
             return null;
         }
         if (len == 2) {
@@ -275,7 +276,7 @@ public class InternalParser {
                 return new Locale(str.substring(0, 2), "", str.substring(4));
             }
             char ch4 = str.charAt(4);
-            if (!isLocaleLetter(ch3) || !isLocaleLetter(ch4)) {
+            if (isNotLocaleLetter(ch3) || isNotLocaleLetter(ch4)) {
                 return null;
             }
             if (len == 5) {
@@ -289,8 +290,8 @@ public class InternalParser {
         }
     }
 
-    private boolean isLocaleLetter(char c) {
-        return ('a' <= c && c <= 'z') || ('A' <= c && c <= 'Z');
+    private boolean isNotLocaleLetter(char c) {
+        return ('a' > c || c > 'z') && ('A' > c || c > 'Z');
     }
 
     private boolean isLocaleSeparator(char c) {
@@ -330,6 +331,7 @@ public class InternalParser {
         return null;
     }
 
-    public void doNothing(Throwable ex) {
+    @SuppressWarnings("EmptyMethod")
+    public void doNothing(Throwable ignoredEx) {
     }
 }

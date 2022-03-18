@@ -181,7 +181,7 @@ public class XmlTest {
         }
 
         @Override
-        public Charset getDefaultEncoding() {
+        public @NonNull Charset getDefaultEncoding() {
             return StandardCharsets.UTF_8;
         }
 

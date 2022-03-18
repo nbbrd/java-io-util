@@ -76,11 +76,12 @@ public class InternalFormatter {
         return null;
     }
 
-    public <T> CharSequence formatConstant(CharSequence constant, T value) {
+    public <T> CharSequence formatConstant(CharSequence constant, T ignoredValue) {
         return constant;
     }
 
-    public <T> CharSequence formatNull(T value) {
+    @SuppressWarnings("SameReturnValue")
+    public <T> CharSequence formatNull(T ignoredValue) {
         return null;
     }
 
@@ -143,6 +144,7 @@ public class InternalFormatter {
         return null;
     }
 
-    public void doNothing(Throwable ex) {
+    @SuppressWarnings("EmptyMethod")
+    public void doNothing(Throwable ignoredEx) {
     }
 }

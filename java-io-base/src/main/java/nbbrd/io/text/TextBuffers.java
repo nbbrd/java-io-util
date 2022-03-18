@@ -60,7 +60,7 @@ public final class TextBuffers {
         return chars > 0 ? chars : DEFAULT_CHAR_BUFFER_SIZE;
     }
 
-    public @NonNegative int getChannelMinBufferCap() {
+    public int getChannelMinBufferCap() {
         return bytes > 0 ? bytes : IMPL_DEPENDENT_MIN_BUFFER_CAP;
     }
 

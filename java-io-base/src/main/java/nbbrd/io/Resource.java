@@ -48,27 +48,7 @@ public class Resource {
 
         @StaticFactoryMethod
         static <K> @NonNull Loader<K> of(@NonNull IOFunction<? super K, ? extends InputStream> loader, @NonNull Closeable closer) {
-            return new Loader<K>() {
-                boolean closed = false;
-
-                @Override
-                public @NonNull InputStream load(@NonNull K key) throws IOException {
-                    if (closed) {
-                        throw new IllegalStateException("Closed");
-                    }
-                    InputStream result = loader.applyWithIO(key);
-                    if (result == null) {
-                        throw new IOException("Null stream");
-                    }
-                    return result;
-                }
-
-                @Override
-                public void close() throws IOException {
-                    closed = true;
-                    closer.close();
-                }
-            };
+            return new FunctionalLoader<>(loader, closer);
         }
     }
 
@@ -150,6 +130,32 @@ public class Resource {
             try (FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap())) {
                 action.acceptWithIO(fs.provider().getPath(uri));
             }
+        }
+    }
+
+    @lombok.RequiredArgsConstructor
+    private static final class FunctionalLoader<K> implements Loader<K> {
+
+        private final @NonNull IOFunction<? super K, ? extends InputStream> loader;
+        private final @NonNull Closeable closer;
+        private boolean closed = false;
+
+        @Override
+        public @NonNull InputStream load(@NonNull K key) throws IOException {
+            if (closed) {
+                throw new IllegalStateException("Closed");
+            }
+            InputStream result = loader.applyWithIO(key);
+            if (result == null) {
+                throw new IOException("Null stream");
+            }
+            return result;
+        }
+
+        @Override
+        public void close() throws IOException {
+            closed = true;
+            closer.close();
         }
     }
 }
