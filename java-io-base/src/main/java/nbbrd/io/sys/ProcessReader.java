@@ -16,7 +16,7 @@
  */
 package nbbrd.io.sys;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import lombok.NonNull;
 
 import java.io.*;
 import java.nio.charset.Charset;

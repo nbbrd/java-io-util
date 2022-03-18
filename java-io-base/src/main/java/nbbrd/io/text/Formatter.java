@@ -17,8 +17,8 @@
 package nbbrd.io.text;
 
 import internal.io.text.InternalFormatter;
+import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.File;
@@ -31,7 +31,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
 import java.util.Date;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -108,25 +107,21 @@ public interface Formatter<T> {
      * @return a never-null formatter
      */
     default <Y> @NonNull Formatter<Y> compose(@NonNull Function<? super Y, ? extends T> before) {
-        Objects.requireNonNull(before);
         return o -> format(before.apply(o));
     }
 
     @StaticFactoryMethod
     static <T extends TemporalAccessor> @NonNull Formatter<T> onDateTimeFormatter(@NonNull DateTimeFormatter formatter) {
-        Objects.requireNonNull(formatter);
         return o -> InternalFormatter.formatTemporalAccessor(formatter, o);
     }
 
     @StaticFactoryMethod
     static @NonNull Formatter<Date> onDateFormat(@NonNull DateFormat dateFormat) {
-        Objects.requireNonNull(dateFormat);
         return o -> InternalFormatter.formatDate(dateFormat, o);
     }
 
     @StaticFactoryMethod
     static @NonNull Formatter<Number> onNumberFormat(@NonNull NumberFormat numberFormat) {
-        Objects.requireNonNull(numberFormat);
         return o -> InternalFormatter.formatNumber(numberFormat, o);
     }
 
@@ -182,7 +177,6 @@ public interface Formatter<T> {
 
     @StaticFactoryMethod
     static @NonNull <T extends Enum<T>> Formatter<T> onEnum(@NonNull ToIntFunction<T> function) {
-        Objects.requireNonNull(function);
         return onInteger().compose(value -> value != null ? function.applyAsInt(value) : null);
     }
 
@@ -208,7 +202,6 @@ public interface Formatter<T> {
 
     @StaticFactoryMethod
     static @NonNull Formatter<List<String>> onStringList(@NonNull Function<Stream<CharSequence>, String> joiner) {
-        Objects.requireNonNull(joiner);
         return o -> InternalFormatter.formatStringList(joiner, o);
     }
 
@@ -224,8 +217,6 @@ public interface Formatter<T> {
 
     @StaticFactoryMethod
     static <T> @NonNull Formatter<T> of(@NonNull Function<? super T, ? extends CharSequence> formatter, @NonNull Consumer<? super Throwable> onError) {
-        Objects.requireNonNull(formatter);
-        Objects.requireNonNull(onError);
         return o -> InternalFormatter.formatFailsafe(formatter, onError, o);
     }
 

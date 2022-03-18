@@ -1,5 +1,6 @@
 package internal.io.text;
 
+import lombok.NonNull;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.text.TextFormatter;
 
@@ -9,63 +10,54 @@ import java.io.OutputStream;
 import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.function.Function;
 
 @lombok.AllArgsConstructor
 public final class ComposeTextFormatter<V, T> implements TextFormatter<V> {
 
-    @lombok.NonNull
+    @NonNull
     private final TextFormatter<T> formatter;
 
-    @lombok.NonNull
+    @NonNull
     private final Function<? super V, ? extends T> before;
 
     @Override
-    public String formatToString(V value) throws IOException {
-        Objects.requireNonNull(value, "value");
+    public @NonNull String formatToString(@NonNull V value) throws IOException {
         return formatter.formatToString(before.apply(value));
     }
 
     @Override
-    public void formatChars(V value, Appendable target) throws IOException {
-        Objects.requireNonNull(value, "value");
+    public void formatChars(@NonNull V value, @NonNull Appendable target) throws IOException {
         formatter.formatChars(before.apply(value), target);
     }
 
     @Override
-    public void formatFile(V value, File target, Charset encoding) throws IOException {
-        Objects.requireNonNull(value, "value");
+    public void formatFile(@NonNull V value, @NonNull File target, @NonNull Charset encoding) throws IOException {
         formatter.formatFile(before.apply(value), target, encoding);
     }
 
     @Override
-    public void formatPath(V value, Path target, Charset encoding) throws IOException {
-        Objects.requireNonNull(value, "value");
+    public void formatPath(@NonNull V value, @NonNull Path target, @NonNull Charset encoding) throws IOException {
         formatter.formatPath(before.apply(value), target, encoding);
     }
 
     @Override
-    public void formatWriter(V value, IOSupplier<? extends Writer> target) throws IOException {
-        Objects.requireNonNull(value, "value");
+    public void formatWriter(@NonNull V value, @NonNull IOSupplier<? extends Writer> target) throws IOException {
         formatter.formatWriter(before.apply(value), target);
     }
 
     @Override
-    public void formatStream(V value, IOSupplier<? extends OutputStream> target, Charset encoding) throws IOException {
-        Objects.requireNonNull(value, "value");
+    public void formatStream(@NonNull V value, @NonNull IOSupplier<? extends OutputStream> target, @NonNull Charset encoding) throws IOException {
         formatter.formatStream(before.apply(value), target, encoding);
     }
 
     @Override
-    public void formatWriter(V value, Writer resource) throws IOException {
-        Objects.requireNonNull(value, "value");
+    public void formatWriter(@NonNull V value, @NonNull Writer resource) throws IOException {
         formatter.formatWriter(before.apply(value), resource);
     }
 
     @Override
-    public void formatStream(V value, OutputStream resource, Charset encoding) throws IOException {
-        Objects.requireNonNull(value, "value");
+    public void formatStream(@NonNull V value, @NonNull OutputStream resource, @NonNull Charset encoding) throws IOException {
         formatter.formatStream(before.apply(value), resource, encoding);
     }
 }

@@ -3,6 +3,7 @@ package _test.io.text;
 import _test.io.CountingIOSupplier;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
+import lombok.NonNull;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.text.TextFormatter;
 
@@ -13,7 +14,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.function.Function;
 
 import static _test.io.Util.*;
@@ -24,12 +24,12 @@ import static org.assertj.core.api.Assertions.*;
 @SuppressWarnings("ConstantConditions")
 public final class TextFormatterAssertions {
 
-    public static <T> void assertTextFormatterCompliance(Path temp, TextFormatter<T> p, T value, Function<Charset, String> expected, Collection<Charset> encodings) throws IOException {
-        Objects.requireNonNull(temp);
-        Objects.requireNonNull(p);
-        Objects.requireNonNull(value);
-        Objects.requireNonNull(expected);
-        Objects.requireNonNull(encodings);
+    public static <T> void assertTextFormatterCompliance(
+            @NonNull Path temp,
+            @NonNull TextFormatter<T> p,
+            @NonNull T value,
+            @NonNull Function<Charset, String> expected,
+            @NonNull Collection<Charset> encodings) throws IOException {
 
         checkDefaultProvider(temp);
 

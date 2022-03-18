@@ -2,6 +2,7 @@ package _test.io;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
+import lombok.NonNull;
 import nbbrd.io.FileParser;
 import nbbrd.io.function.IOSupplier;
 
@@ -13,7 +14,6 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystem;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.UUID;
 
 import static _test.io.Util.*;
@@ -23,11 +23,12 @@ import static org.assertj.core.api.Assertions.*;
 @SuppressWarnings("ConstantConditions")
 public final class FileParserAssertions {
 
-    public static <T> void assertFileParserCompliance(Path temp, FileParser<T> p, T value, ResourceId expected, boolean allowEmpty) throws IOException {
-        Objects.requireNonNull(temp);
-        Objects.requireNonNull(p);
-        Objects.requireNonNull(value);
-        Objects.requireNonNull(expected);
+    public static <T> void assertFileParserCompliance(
+            @NonNull Path temp,
+            @NonNull FileParser<T> p,
+            @NonNull T value,
+            @NonNull ResourceId expected,
+            boolean allowEmpty) throws IOException {
 
         checkDefaultProvider(temp);
 

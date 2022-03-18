@@ -1,5 +1,6 @@
 package _test.io;
 
+import lombok.NonNull;
 import nbbrd.io.Resource;
 import nbbrd.io.text.TextResource;
 
@@ -15,10 +16,10 @@ import java.nio.file.StandardCopyOption;
 @lombok.Value
 public class ResourceId {
 
-    @lombok.NonNull
+    @NonNull
     Class<?> anchor;
 
-    @lombok.NonNull
+    @NonNull
     String name;
 
     public InputStream open() throws IOException {

@@ -16,12 +16,12 @@
  */
 package nbbrd.io.xml;
 
+import lombok.NonNull;
 import nbbrd.io.FileFormatter;
 import nbbrd.io.FileParser;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.text.TextFormatter;
 import nbbrd.io.text.TextParser;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -59,13 +59,13 @@ public class Xml {
     @lombok.RequiredArgsConstructor
     private static final class AdaptedParser<V> implements Parser<V> {
 
-        @lombok.NonNull
+        @NonNull
         private final Parser<?> delegate;
 
-        @lombok.NonNull
+        @NonNull
         private final FileParser<V> fileParser;
 
-        @lombok.NonNull
+        @NonNull
         private final TextParser<V> textParser;
 
         @Override
@@ -142,13 +142,13 @@ public class Xml {
     @lombok.RequiredArgsConstructor
     private static final class AdaptedFormatter<V> implements Formatter<V> {
 
-        @lombok.NonNull
+        @NonNull
         private final Formatter<?> delegate;
 
-        @lombok.NonNull
+        @NonNull
         private final FileFormatter<V> fileFormatter;
 
-        @lombok.NonNull
+        @NonNull
         private final TextFormatter<V> textFormatter;
 
         @Override

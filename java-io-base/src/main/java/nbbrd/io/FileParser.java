@@ -4,17 +4,16 @@ import internal.io.AndThenFileParser;
 import internal.io.DecodingFileFormatter;
 import internal.io.FunctionalFileParser;
 import internal.io.text.LegacyFiles;
+import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.zip.GZIPInputStream;
@@ -27,7 +26,6 @@ public interface FileParser<T> {
     }
 
     default @NonNull T parsePath(@NonNull Path source) throws IOException {
-        Objects.requireNonNull(source, "source");
         Optional<File> file = Resource.getFile(source);
         return file.isPresent()
                 ? parseFile(file.get())
@@ -35,13 +33,10 @@ public interface FileParser<T> {
     }
 
     default @NonNull T parseResource(@NonNull Class<?> type, @NonNull String name) throws IOException {
-        Objects.requireNonNull(type, "type");
-        Objects.requireNonNull(name, "name");
         return parseStream(() -> LegacyFiles.checkResource(type.getResourceAsStream(name), "Missing resource '" + name + "' of '" + type.getName() + "'"));
     }
 
-    default @NonNull T parseStream(IOSupplier<? extends InputStream> source) throws IOException {
-        Objects.requireNonNull(source, "source");
+    default @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source) throws IOException {
         try (InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream")) {
             return parseStream(resource);
         }

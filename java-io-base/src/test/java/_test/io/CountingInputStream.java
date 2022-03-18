@@ -1,12 +1,14 @@
 package _test.io;
 
+import lombok.NonNull;
+
 import java.io.IOException;
 import java.io.InputStream;
 
 @lombok.RequiredArgsConstructor
 public class CountingInputStream extends InputStream {
 
-    @lombok.NonNull
+    @NonNull
     private final InputStream delegate;
 
     @lombok.Getter

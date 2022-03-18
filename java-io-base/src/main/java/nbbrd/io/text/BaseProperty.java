@@ -1,8 +1,8 @@
 package nbbrd.io.text;
 
+import lombok.NonNull;
 import nbbrd.design.MightBePromoted;
 import nbbrd.design.SealedType;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.Collections;
 import java.util.List;

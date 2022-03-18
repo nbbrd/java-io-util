@@ -16,6 +16,14 @@
  */
 package internal.io;
 
+import lombok.NonNull;
+import nbbrd.io.IOIterator;
+import nbbrd.io.function.IOConsumer;
+import nbbrd.io.function.IOPredicate;
+import nbbrd.io.function.IOSupplier;
+import nbbrd.io.function.IOUnaryOperator;
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.Collections;
@@ -25,12 +33,6 @@ import java.util.Spliterators;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
-import nbbrd.io.IOIterator;
-import nbbrd.io.function.IOConsumer;
-import nbbrd.io.function.IOPredicate;
-import nbbrd.io.function.IOSupplier;
-import nbbrd.io.function.IOUnaryOperator;
-import org.checkerframework.checker.nullness.qual.Nullable;
 
 /**
  *
@@ -91,7 +93,7 @@ public class IOIterators {
     public static final class Checked<E> implements IOIterator<E> {
 
         @lombok.Getter
-        @lombok.NonNull
+        @NonNull
         private final Iterator<E> delegate;
 
         @Override
@@ -145,7 +147,7 @@ public class IOIterators {
     public static final class Unchecked<E> implements Iterator<E> {
 
         @lombok.Getter
-        @lombok.NonNull
+        @NonNull
         private final IOIterator<E> delegate;
 
         @Override
@@ -188,13 +190,13 @@ public class IOIterators {
     @lombok.RequiredArgsConstructor
     public static final class Functional<E> implements IOIterator<E> {
 
-        @lombok.NonNull
+        @NonNull
         private final IOSupplier<E> seed;
 
-        @lombok.NonNull
+        @NonNull
         private final IOPredicate<? super E> hasNext;
 
-        @lombok.NonNull
+        @NonNull
         private final IOUnaryOperator<E> next;
 
         private boolean seeded = false;

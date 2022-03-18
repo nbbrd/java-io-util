@@ -20,6 +20,9 @@ import _test.io.IOIteratorAssertions;
 import _test.io.IOIteratorFactory;
 import _test.io.IteratorFactory;
 import com.google.common.collect.Iterators;
+import nbbrd.io.function.*;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
@@ -29,13 +32,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import nbbrd.io.function.IOConsumer;
-import nbbrd.io.function.IOPredicate;
-import nbbrd.io.function.IORunnable;
-import nbbrd.io.function.IOSupplier;
-import nbbrd.io.function.IOUnaryOperator;
+
 import static org.assertj.core.api.Assertions.*;
-import org.junit.jupiter.api.Test;
 
 /**
  *
@@ -69,14 +67,16 @@ public class IOIteratorTest {
 
     @Test
     public void testSingletonNull() throws IOException {
-        Supplier<IOIterator<String>> sample = () -> IOIterator.singleton(null);
+        assertThatNullPointerException().isThrownBy(() -> IOIterator.singleton(null));
+
+        Supplier<IOIterator<String>> sample = () -> IOIterator.singleton("");
 
         IOIteratorAssertions.assertApi(sample);
 
         assertThatExceptionOfType(UnsupportedOperationException.class)
                 .isThrownBy(sample.get()::removeWithIO);
 
-        IOIteratorAssertions.assertContent(sample, (String) null);
+        IOIteratorAssertions.assertContent(sample, "");
     }
 
     @Test

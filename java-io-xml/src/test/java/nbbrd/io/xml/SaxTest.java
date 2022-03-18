@@ -19,8 +19,8 @@ package nbbrd.io.xml;
 import _test.ForwardingXMLReader;
 import _test.Meta;
 import _test.SaxListener;
-import _test.sample.XmlParserAssertions;
 import _test.sample.Person;
+import _test.sample.XmlParserAssertions;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import nbbrd.io.function.IORunnable;
@@ -39,9 +39,9 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 
-import static _test.sample.XmlParserAssertions.assertXmlParserCompliance;
-import static _test.sample.XmlParserAssertions.assertParserSafety;
 import static _test.sample.Person.BOOLS;
+import static _test.sample.XmlParserAssertions.assertParserSafety;
+import static _test.sample.XmlParserAssertions.assertXmlParserCompliance;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 

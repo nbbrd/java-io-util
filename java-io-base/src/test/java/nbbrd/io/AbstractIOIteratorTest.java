@@ -2,10 +2,12 @@ package nbbrd.io;
 
 import _test.io.IOIteratorAssertions;
 import _test.io.IOIteratorFactory;
+import org.junit.jupiter.api.Test;
+
 import java.io.IOException;
 import java.util.function.Supplier;
+
 import static org.assertj.core.api.Assertions.assertThatIOException;
-import org.junit.jupiter.api.Test;
 
 /**
  *

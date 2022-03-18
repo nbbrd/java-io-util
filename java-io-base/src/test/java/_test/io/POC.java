@@ -1,10 +1,10 @@
 package _test.io;
 
+import lombok.NonNull;
 import nbbrd.io.FileFormatter;
 import nbbrd.io.FileParser;
 import nbbrd.io.text.TextFormatter;
 import nbbrd.io.text.TextParser;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.*;
 import java.nio.charset.Charset;

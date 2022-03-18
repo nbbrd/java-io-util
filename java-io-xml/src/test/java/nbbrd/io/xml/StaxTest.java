@@ -18,10 +18,11 @@ package nbbrd.io.xml;
 
 import _test.*;
 import _test.io.ForwardingInputStream;
-import _test.sample.XmlParserAssertions;
 import _test.sample.Person;
+import _test.sample.XmlParserAssertions;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
+import lombok.NonNull;
 import nbbrd.io.Resource;
 import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IOSupplier;
@@ -44,12 +45,12 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
-import static _test.sample.XmlFormatterAssertions.assertXmlFormatterCompliance;
-import static _test.sample.XmlFormatterAssertions.assertFormatterSafety;
-import static _test.sample.XmlParserAssertions.assertXmlParserCompliance;
-import static _test.sample.XmlParserAssertions.assertParserSafety;
 import static _test.sample.Person.BOOLS;
 import static _test.sample.Person.ENCODINGS;
+import static _test.sample.XmlFormatterAssertions.assertFormatterSafety;
+import static _test.sample.XmlFormatterAssertions.assertXmlFormatterCompliance;
+import static _test.sample.XmlParserAssertions.assertParserSafety;
+import static _test.sample.XmlParserAssertions.assertXmlParserCompliance;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -454,10 +455,10 @@ public class StaxTest {
     @lombok.RequiredArgsConstructor
     private static class CloseablePerson implements Closeable {
 
-        @lombok.NonNull
+        @NonNull
         private final XMLStreamReader reader;
 
-        @lombok.NonNull
+        @NonNull
         private final Closeable onClose;
 
         public boolean isEndDocument() {

@@ -1,23 +1,22 @@
 package internal.io;
 
+import lombok.NonNull;
 import nbbrd.io.FileFormatter;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.function.IOUnaryOperator;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
-import java.util.Objects;
 
 @lombok.RequiredArgsConstructor
 public final class EncodingFileFormatter<T> implements FileFormatter<T> {
 
-    @lombok.NonNull
+    @NonNull
     final FileFormatter<T> formatter;
 
-    @lombok.NonNull
+    @NonNull
     final IOUnaryOperator<OutputStream> encoder;
 
     @Override
@@ -40,8 +39,6 @@ public final class EncodingFileFormatter<T> implements FileFormatter<T> {
 
     @Override
     public void formatStream(@NonNull T value, @NonNull OutputStream resource) throws IOException {
-        Objects.requireNonNull(value, "value");
-        Objects.requireNonNull(resource, "resource");
         try (OutputStream encoding = encoder.applyWithIO(resource)) {
             formatter.formatStream(value, encoding);
         }

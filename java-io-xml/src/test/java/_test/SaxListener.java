@@ -16,9 +16,10 @@
  */
 package _test;
 
+import org.xml.sax.SAXException;
+
 import java.io.IOException;
 import java.util.function.Supplier;
-import org.xml.sax.SAXException;
 
 /**
  *

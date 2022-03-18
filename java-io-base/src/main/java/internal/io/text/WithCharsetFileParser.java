@@ -1,9 +1,9 @@
 package internal.io.text;
 
+import lombok.NonNull;
 import nbbrd.io.FileParser;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.text.TextParser;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,10 +15,10 @@ import java.util.function.Function;
 @lombok.AllArgsConstructor
 public final class WithCharsetFileParser<T> implements FileParser<T> {
 
-    @lombok.NonNull
+    @NonNull
     private final TextParser<T> delegate;
 
-    @lombok.NonNull
+    @NonNull
     private final Charset charset;
 
     @Override
@@ -37,7 +37,7 @@ public final class WithCharsetFileParser<T> implements FileParser<T> {
     }
 
     @Override
-    public @NonNull T parseStream(IOSupplier<? extends InputStream> source) throws IOException {
+    public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source) throws IOException {
         return delegate.parseStream(source, charset);
     }
 

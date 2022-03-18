@@ -17,12 +17,11 @@
 package nbbrd.io.function;
 
 import internal.io.JdkWithIO;
+import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Objects;
 import java.util.function.UnaryOperator;
 
 /**
@@ -52,7 +51,6 @@ public interface IOUnaryOperator<T> extends IOFunction<T, T> {
 
     @StaticFactoryMethod
     static <T> @NonNull IOUnaryOperator<T> checked(@NonNull UnaryOperator<T> func) {
-        Objects.requireNonNull(func);
         return (o) -> {
             try {
                 return func.apply(o);

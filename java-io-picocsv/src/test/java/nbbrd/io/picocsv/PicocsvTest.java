@@ -1,8 +1,8 @@
 package nbbrd.io.picocsv;
 
 import _test.io.ResourceId;
+import lombok.NonNull;
 import nbbrd.picocsv.Csv;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 

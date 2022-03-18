@@ -1,10 +1,10 @@
 package nbbrd.io.text;
 
 import lombok.AccessLevel;
+import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.BlockSizer;
 import org.checkerframework.checker.index.qual.NonNegative;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.*;
 import java.nio.channels.Channels;
@@ -13,7 +13,6 @@ import java.nio.channels.WritableByteChannel;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.nio.file.Path;
-import java.util.Objects;
 
 @lombok.AllArgsConstructor(access = AccessLevel.PACKAGE)
 public final class TextBuffers {
@@ -40,7 +39,6 @@ public final class TextBuffers {
 
     @StaticFactoryMethod
     public static @NonNull TextBuffers of(@NonNull OutputStream stream, @NonNull CharsetEncoder encoder) throws IOException {
-        Objects.requireNonNull(stream);
         return make(BlockSizer.INSTANCE.get().getBlockSize(stream), 1f / encoder.averageBytesPerChar());
     }
 

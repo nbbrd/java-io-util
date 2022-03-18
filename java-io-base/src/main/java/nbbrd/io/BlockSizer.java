@@ -1,11 +1,12 @@
 package nbbrd.io;
 
+import lombok.NonNull;
+
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -28,8 +29,7 @@ public class BlockSizer {
      * @throws IOException if an I/O error occurs
      * @see <a href="https://docs.oracle.com/javase/10/docs/api/java/nio/file/FileStore.html#getBlockSize()">https://docs.oracle.com/javase/10/docs/api/java/nio/file/FileStore.html#getBlockSize()</a>
      */
-    public long getBlockSize(Path file) throws IOException {
-        Objects.requireNonNull(file);
+    public long getBlockSize(@NonNull Path file) throws IOException {
         return DEFAULT_BLOCK_BUFFER_SIZE;
     }
 
@@ -40,7 +40,7 @@ public class BlockSizer {
      * @return a positive value representing the block size in bytes if available, -1 otherwise
      * @throws IOException if an I/O error occurs
      */
-    public long getBlockSize(InputStream stream) throws IOException {
+    public long getBlockSize(@NonNull InputStream stream) throws IOException {
         return stream.available();
     }
 
@@ -51,8 +51,7 @@ public class BlockSizer {
      * @return a positive value representing the block size in bytes if available, -1 otherwise
      * @throws IOException if an I/O error occurs
      */
-    public long getBlockSize(OutputStream stream) throws IOException {
-        Objects.requireNonNull(stream);
+    public long getBlockSize(@NonNull OutputStream stream) throws IOException {
         return stream instanceof BufferedOutputStream ? DEFAULT_BUFFER_OUTPUT_STREAM_SIZE : UNKNOWN_SIZE;
     }
 }
