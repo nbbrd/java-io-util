@@ -1,16 +1,15 @@
 package _test.io;
 
+import nbbrd.io.IOIterator;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.function.Supplier;
-import nbbrd.io.IOIterator;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+
+import static org.assertj.core.api.Assertions.*;
 
 /**
  *

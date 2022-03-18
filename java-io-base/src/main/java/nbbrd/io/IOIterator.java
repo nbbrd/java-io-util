@@ -18,18 +18,17 @@ package nbbrd.io;
 
 import internal.io.IOIterators;
 import internal.io.JdkWithIO;
+import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.function.IOConsumer;
 import nbbrd.io.function.IOPredicate;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.function.IOUnaryOperator;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Spliterators;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -53,7 +52,6 @@ public interface IOIterator<E> {
 
     @JdkWithIO
     default void forEachRemainingWithIO(@NonNull IOConsumer<? super E> action) throws IOException {
-        Objects.requireNonNull(action);
         while (hasNextWithIO()) {
             action.acceptWithIO(nextWithIO());
         }

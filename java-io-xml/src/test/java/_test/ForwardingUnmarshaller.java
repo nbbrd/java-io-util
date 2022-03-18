@@ -16,13 +16,14 @@
  */
 package _test;
 
-import java.io.File;
-import java.io.InputStream;
-import java.io.Reader;
+import org.xml.sax.InputSource;
+
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.stream.XMLStreamReader;
-import org.xml.sax.InputSource;
+import java.io.File;
+import java.io.InputStream;
+import java.io.Reader;
 
 /**
  *

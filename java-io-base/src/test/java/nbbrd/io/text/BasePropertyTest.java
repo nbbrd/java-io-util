@@ -1,10 +1,9 @@
 package nbbrd.io.text;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import lombok.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.junit.jupiter.api.Test;
 
-import java.util.Objects;
 import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -31,7 +30,7 @@ public class BasePropertyTest {
     private static class MockedBaseProperty extends BaseProperty {
 
         @lombok.Getter
-        @lombok.NonNull
+        @NonNull
         private String key;
     }
 
@@ -40,7 +39,6 @@ public class BasePropertyTest {
     }
 
     static Function<? super String, ? extends CharSequence> getterOf(@NonNull String key, @Nullable Object value) {
-        Objects.requireNonNull(key);
         return input -> input.equals(key) && value != null ? value.toString() : null;
     }
 }

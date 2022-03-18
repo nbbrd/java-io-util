@@ -1,19 +1,18 @@
 package nbbrd.io.function;
 
 import internal.io.JdkWithIO;
+import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Objects;
 import java.util.function.BiConsumer;
 
 /**
  * Represents an operation that accepts two input arguments and returns no
  * result.  This is the two-arity specialization of {@link IOConsumer}.
  * Unlike most other functional interfaces, {@code IOBiConsumer} is expected
- * to operate via side-effects.
+ * to operate via side effects.
  *
  * <p>This is a <a href="package-summary.html">functional interface</a>
  * whose functional method is {@link #acceptWithIO(Object, Object)}.
@@ -47,8 +46,7 @@ public interface IOBiConsumer<T, U> {
      * @throws NullPointerException if {@code after} is null
      */
     @JdkWithIO
-    default IOBiConsumer<T, U> andThen(IOBiConsumer<? super T, ? super U> after) {
-        Objects.requireNonNull(after);
+    default @NonNull IOBiConsumer<T, U> andThen(@NonNull IOBiConsumer<? super T, ? super U> after) {
         return (l, r) -> {
             acceptWithIO(l, r);
             after.acceptWithIO(l, r);

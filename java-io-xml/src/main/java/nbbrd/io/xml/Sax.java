@@ -17,11 +17,11 @@
 package nbbrd.io.xml;
 
 import internal.io.text.LegacyFiles;
+import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IOSupplier;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.xml.sax.*;
 import org.xml.sax.helpers.DefaultHandler;
 
@@ -117,30 +117,30 @@ public class Sax {
 
         }
 
-        @lombok.NonNull
+        @NonNull
         @lombok.Builder.Default
         private final IOSupplier<? extends XMLReader> factory = Sax::createReader;
 
-        @lombok.NonNull
+        @NonNull
         private final ContentHandler contentHandler;
 
-        @lombok.NonNull
+        @NonNull
         @lombok.Builder.Default
         private final DTDHandler dtdHandler = DEFAULT_HANDLER;
 
-        @lombok.NonNull
+        @NonNull
         @lombok.Builder.Default
         private final EntityResolver entityResolver = DEFAULT_HANDLER;
 
-        @lombok.NonNull
+        @NonNull
         @lombok.Builder.Default
         private final ErrorHandler errorHandler = DEFAULT_HANDLER;
 
-        @lombok.NonNull
+        @NonNull
         @lombok.Builder.Default
         private final IORunnable before = IORunnable.noOp();
 
-        @lombok.NonNull
+        @NonNull
         private final IOSupplier<? extends T> after;
 
         @lombok.Getter
@@ -155,28 +155,22 @@ public class Sax {
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            Objects.requireNonNull(source, "source");
-            Objects.requireNonNull(encoding, "encoding");
             LegacyFiles.checkSource(source);
             return parse(newInputSource(source, encoding));
         }
 
         @Override
         public @NonNull T parseReader(@NonNull Reader resource) throws IOException {
-            Objects.requireNonNull(resource, "resource");
             return parse(new InputSource(resource));
         }
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
-            Objects.requireNonNull(resource, "resource");
             return parse(new InputSource(resource));
         }
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
-            Objects.requireNonNull(resource, "resource");
-            Objects.requireNonNull(encoding, "encoding");
             InputSource input = new InputSource(resource);
             input.setEncoding(encoding.name());
             return parse(input);

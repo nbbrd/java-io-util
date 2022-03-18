@@ -1,12 +1,14 @@
 package _test.io;
 
-import java.io.IOException;
-import java.util.NoSuchElementException;
+import lombok.NonNull;
 import nbbrd.io.IOIterator;
 import nbbrd.io.function.IOPredicate;
 import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.function.IOUnaryOperator;
+
+import java.io.IOException;
+import java.util.NoSuchElementException;
 
 /**
  *
@@ -17,16 +19,16 @@ import nbbrd.io.function.IOUnaryOperator;
 @lombok.With
 public class IOIteratorFactory<E> implements IOSupplier<IOIterator<E>> {
 
-    @lombok.NonNull
+    @NonNull
     private IOSupplier<E> seed;
 
-    @lombok.NonNull
+    @NonNull
     private IOPredicate<? super E> hasNext;
 
-    @lombok.NonNull
+    @NonNull
     private IOUnaryOperator<E> next;
 
-    @lombok.NonNull
+    @NonNull
     private IORunnable remove;
 
     @Override

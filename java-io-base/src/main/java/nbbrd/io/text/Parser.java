@@ -17,8 +17,8 @@
 package nbbrd.io.text;
 
 import internal.io.text.InternalParser;
+import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.File;
@@ -29,7 +29,10 @@ import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalQuery;
-import java.util.*;
+import java.util.Date;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.ToIntFunction;
@@ -59,7 +62,7 @@ public interface Parser<T> {
     @Nullable T parse(@Nullable CharSequence input);
 
     /**
-     * Returns an {@link Optional} containing the object that has bean created
+     * Returns an {@link Optional} containing the object that has been created
      * by the parsing if this parsing was possible.<p>
      * Use this instead of {@link #parse(java.lang.CharSequence)} to increase
      * readability and prevent NullPointerExceptions.
@@ -76,7 +79,6 @@ public interface Parser<T> {
      * @return
      */
     default @NonNull Parser<T> orElse(@NonNull Parser<T> other) {
-        Objects.requireNonNull(other);
         return o -> {
             T result = parse(o);
             return result != null ? result : other.parse(o);
@@ -84,27 +86,22 @@ public interface Parser<T> {
     }
 
     default <X> @NonNull Parser<X> andThen(@NonNull Function<? super T, ? extends X> after) {
-        Objects.requireNonNull(after);
         return o -> after.apply(parse(o));
     }
 
     @SuppressWarnings("unchecked")
     @StaticFactoryMethod
-    static <T> @NonNull Parser<T> onDateTimeFormatter(@NonNull DateTimeFormatter formatter, TemporalQuery<T>... queries) {
-        Objects.requireNonNull(formatter);
-        Objects.requireNonNull(queries);
+    static <T> @NonNull Parser<T> onDateTimeFormatter(@NonNull DateTimeFormatter formatter, @NonNull TemporalQuery<T>... queries) {
         return o -> InternalParser.parseTemporalAccessor(formatter, queries, o);
     }
 
     @StaticFactoryMethod
     static @NonNull Parser<Date> onDateFormat(@NonNull DateFormat dateFormat) {
-        Objects.requireNonNull(dateFormat);
         return o -> InternalParser.parseDate(dateFormat, o);
     }
 
     @StaticFactoryMethod
     static @NonNull Parser<Number> onNumberFormat(@NonNull NumberFormat numberFormat) {
-        Objects.requireNonNull(numberFormat);
         return o -> InternalParser.parseNumber(numberFormat, o);
     }
 
@@ -167,14 +164,12 @@ public interface Parser<T> {
 
     @StaticFactoryMethod
     static <T extends Enum<T>> @NonNull Parser<T> onEnum(@NonNull Class<T> type) {
-        Objects.requireNonNull(type);
         return o -> InternalParser.parseEnum(type, o);
     }
 
     @StaticFactoryMethod
     static <T extends Enum<T>> @NonNull Parser<T> onEnum(@NonNull Class<T> type, @NonNull ToIntFunction<T> function) {
         final T[] values = type.getEnumConstants();
-        Objects.requireNonNull(function);
         return onInteger().andThen(code -> InternalParser.parse(values, function, code));
     }
 
@@ -195,7 +190,6 @@ public interface Parser<T> {
 
     @StaticFactoryMethod
     static @NonNull Parser<List<String>> onStringList(@NonNull Function<CharSequence, @NonNull Stream<String>> splitter) {
-        Objects.requireNonNull(splitter);
         return o -> InternalParser.parseStringList(splitter, o);
     }
 
@@ -216,8 +210,6 @@ public interface Parser<T> {
 
     @StaticFactoryMethod
     static <T> @NonNull Parser<T> of(@NonNull Function<? super CharSequence, ? extends T> parser, @NonNull Consumer<? super Throwable> onError) {
-        Objects.requireNonNull(parser);
-        Objects.requireNonNull(onError);
         return o -> InternalParser.parseFailsafe(parser, onError, o);
     }
 

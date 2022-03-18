@@ -16,8 +16,8 @@
  */
 package _test;
 
-import java.util.function.Supplier;
 import javax.xml.stream.XMLStreamException;
+import java.util.function.Supplier;
 
 /**
  *

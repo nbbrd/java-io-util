@@ -1,6 +1,6 @@
 package nbbrd.io.sys;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import lombok.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.net.MalformedURLException;
@@ -50,10 +50,10 @@ public final class SystemProperties {
 
     public static final SystemProperties DEFAULT = of(System.getProperties(), FileSystems.getDefault());
 
-    @lombok.NonNull
+    @NonNull
     private final Properties source;
 
-    @lombok.NonNull
+    @NonNull
     private final FileSystem fileSystem;
 
     /**

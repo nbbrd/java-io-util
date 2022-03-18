@@ -16,16 +16,17 @@
  */
 package _test;
 
-import java.io.File;
-import java.io.OutputStream;
-import java.io.Writer;
+import org.w3c.dom.Node;
+import org.xml.sax.ContentHandler;
+
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import javax.xml.stream.XMLEventWriter;
 import javax.xml.stream.XMLStreamWriter;
 import javax.xml.transform.Result;
-import org.w3c.dom.Node;
-import org.xml.sax.ContentHandler;
+import java.io.File;
+import java.io.OutputStream;
+import java.io.Writer;
 
 /**
  *

@@ -4,32 +4,28 @@ import internal.io.ComposeFileFormatter;
 import internal.io.EncodingFileFormatter;
 import internal.io.FunctionalFileFormatter;
 import internal.io.text.LegacyFiles;
+import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.function.IOBiConsumer;
+import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.zip.GZIPOutputStream;
 
 public interface FileFormatter<T> {
 
     default void formatFile(@NonNull T value, @NonNull File target) throws IOException {
-        Objects.requireNonNull(value, "value");
         LegacyFiles.checkTarget(target);
         formatStream(value, () -> LegacyFiles.newOutputStream(target));
     }
 
     default void formatPath(@NonNull T value, @NonNull Path target) throws IOException {
-        Objects.requireNonNull(value, "value");
-        Objects.requireNonNull(target, "target");
         Optional<File> file = Resource.getFile(target);
         if (file.isPresent()) {
             formatFile(value, file.get());
@@ -39,8 +35,6 @@ public interface FileFormatter<T> {
     }
 
     default void formatStream(@NonNull T value, @NonNull IOSupplier<? extends OutputStream> target) throws IOException {
-        Objects.requireNonNull(value, "value");
-        Objects.requireNonNull(target, "target");
         try (OutputStream resource = LegacyFiles.checkResource(target.getWithIO(), "Missing OutputStream")) {
             formatStream(value, resource);
         }
@@ -48,7 +42,7 @@ public interface FileFormatter<T> {
 
     void formatStream(@NonNull T value, @NonNull OutputStream resource) throws IOException;
 
-    default <V> @NonNull FileFormatter<V> compose(@NonNull Function<? super V, ? extends T> before) {
+    default <V> @NonNull FileFormatter<V> compose(@NonNull IOFunction<? super V, ? extends T> before) {
         return new ComposeFileFormatter<>(this, before);
     }
 

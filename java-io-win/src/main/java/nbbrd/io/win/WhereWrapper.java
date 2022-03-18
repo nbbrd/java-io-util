@@ -16,8 +16,8 @@
  */
 package nbbrd.io.win;
 
+import lombok.NonNull;
 import nbbrd.io.sys.EndOfProcessException;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.IOException;
 

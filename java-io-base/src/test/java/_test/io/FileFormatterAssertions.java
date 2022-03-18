@@ -2,6 +2,7 @@ package _test.io;
 
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
+import lombok.NonNull;
 import nbbrd.io.FileFormatter;
 import nbbrd.io.function.IOSupplier;
 
@@ -12,7 +13,6 @@ import java.io.OutputStream;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystem;
 import java.nio.file.Path;
-import java.util.Objects;
 
 import static _test.io.Util.*;
 import static java.util.Arrays.asList;
@@ -21,11 +21,11 @@ import static org.assertj.core.api.Assertions.*;
 @SuppressWarnings("ConstantConditions")
 public final class FileFormatterAssertions {
 
-    public static <T> void assertFileFormatterCompliance(Path temp, FileFormatter<T> p, T value, byte[] expected) throws IOException {
-        Objects.requireNonNull(temp);
-        Objects.requireNonNull(p);
-        Objects.requireNonNull(value);
-        Objects.requireNonNull(expected);
+    public static <T> void assertFileFormatterCompliance(
+            @NonNull Path temp,
+            @NonNull FileFormatter<T> p,
+            @NonNull T value,
+            @NonNull byte[] expected) throws IOException {
 
         checkDefaultProvider(temp);
 

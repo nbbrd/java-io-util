@@ -16,11 +16,15 @@
  */
 package internal.io.text;
 
-import static internal.io.text.NumberFormats.*;
+import org.junit.jupiter.api.Test;
+
 import java.text.NumberFormat;
 import java.util.Locale;
-import static org.assertj.core.api.Assertions.*;
-import org.junit.jupiter.api.Test;
+
+import static internal.io.text.NumberFormats.parseAll;
+import static internal.io.text.NumberFormats.simplify;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 /**
  *

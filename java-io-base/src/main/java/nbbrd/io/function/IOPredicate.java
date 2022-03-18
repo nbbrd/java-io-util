@@ -17,8 +17,8 @@
 package nbbrd.io.function;
 
 import internal.io.JdkWithIO;
+import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -62,7 +62,6 @@ public interface IOPredicate<T> {
      */
     @JdkWithIO
     default @NonNull IOPredicate<T> and(@NonNull IOPredicate<? super T> other) {
-        Objects.requireNonNull(other);
         return (t) -> testWithIO(t) && other.testWithIO(t);
     }
 
@@ -96,7 +95,6 @@ public interface IOPredicate<T> {
      */
     @JdkWithIO
     default @NonNull IOPredicate<T> or(@NonNull IOPredicate<? super T> other) {
-        Objects.requireNonNull(other);
         return (t) -> testWithIO(t) || other.testWithIO(t);
     }
 
@@ -116,7 +114,6 @@ public interface IOPredicate<T> {
 
     @StaticFactoryMethod
     static <T> @NonNull IOPredicate<T> checked(@NonNull Predicate<T> predicate) {
-        Objects.requireNonNull(predicate);
         return (o) -> {
             try {
                 return predicate.test(o);

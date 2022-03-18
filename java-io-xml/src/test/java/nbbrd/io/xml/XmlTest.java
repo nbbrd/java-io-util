@@ -18,6 +18,7 @@ package nbbrd.io.xml;
 
 import _test.sample.Person;
 import internal.io.text.LegacyFiles.BufferedFileInputStream;
+import lombok.NonNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -25,7 +26,6 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.Objects;
 
 import static _test.sample.XmlFormatterAssertions.assertXmlFormatterCompliance;
 import static _test.sample.XmlParserAssertions.assertXmlParserCompliance;
@@ -99,8 +99,7 @@ public class XmlTest {
         }
 
         @Override
-        public T parseReader(Reader resource) throws IOException {
-            Objects.requireNonNull(resource, "resource");
+        public @NonNull T parseReader(@NonNull Reader resource) throws IOException {
             String xml = readtoString(resource);
             if (isJohnDoe(xml)) {
                 return johnDoe;
@@ -112,8 +111,7 @@ public class XmlTest {
         }
 
         @Override
-        public T parseStream(InputStream resource) throws IOException {
-            Objects.requireNonNull(resource, "resource");
+        public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
             ByteArrayOutputStream tmp = new ByteArrayOutputStream();
             byte[] buffer = new byte[512];
             int count = 0;
@@ -133,9 +131,7 @@ public class XmlTest {
         }
 
         @Override
-        public T parseStream(InputStream resource, Charset encoding) throws IOException {
-            Objects.requireNonNull(resource, "resource");
-            Objects.requireNonNull(encoding, "encoding");
+        public @NonNull T parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
             String xml = readtoString(new InputStreamReader(resource, encoding));
             if (isJohnDoe(xml)) {
                 return johnDoe;
@@ -185,15 +181,12 @@ public class XmlTest {
         }
 
         @Override
-        public Charset getDefaultEncoding() {
+        public @NonNull Charset getDefaultEncoding() {
             return StandardCharsets.UTF_8;
         }
 
         @Override
-        public void formatWriter(T value, Writer resource) throws IOException {
-            Objects.requireNonNull(value, "value");
-            Objects.requireNonNull(resource, "resource");
-
+        public void formatWriter(@NonNull T value, @NonNull Writer resource) throws IOException {
             if (!johnDoe.equals(value)) {
                 throw new IOException();
             }
@@ -202,10 +195,7 @@ public class XmlTest {
         }
 
         @Override
-        public void formatStream(T value, OutputStream resource) throws IOException {
-            Objects.requireNonNull(value, "value");
-            Objects.requireNonNull(resource, "resource");
-
+        public void formatStream(@NonNull T value, @NonNull OutputStream resource) throws IOException {
             if (!johnDoe.equals(value)) {
                 throw new IOException();
             }
@@ -214,11 +204,7 @@ public class XmlTest {
         }
 
         @Override
-        public void formatStream(T value, OutputStream resource, Charset encoding) throws IOException {
-            Objects.requireNonNull(value, "value");
-            Objects.requireNonNull(resource, "resource");
-            Objects.requireNonNull(encoding, "encoding");
-
+        public void formatStream(@NonNull T value, @NonNull OutputStream resource, @NonNull Charset encoding) throws IOException {
             if (!johnDoe.equals(value)) {
                 throw new IOException();
             }

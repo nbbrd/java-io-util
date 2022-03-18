@@ -1,5 +1,6 @@
 package _test.io;
 
+import lombok.NonNull;
 import nbbrd.io.function.IOSupplier;
 
 import java.io.IOException;
@@ -7,7 +8,7 @@ import java.io.IOException;
 @lombok.RequiredArgsConstructor
 public final class CountingIOSupplier<T> implements IOSupplier<T> {
 
-    @lombok.NonNull
+    @NonNull
     private final IOSupplier<T> delegate;
 
     @lombok.Getter

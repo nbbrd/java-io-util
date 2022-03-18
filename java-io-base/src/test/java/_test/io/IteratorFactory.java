@@ -1,5 +1,7 @@
 package _test.io;
 
+import lombok.NonNull;
+
 import java.util.Iterator;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -14,16 +16,16 @@ import java.util.function.UnaryOperator;
 @lombok.With
 public class IteratorFactory<E> implements Supplier<Iterator<E>> {
 
-    @lombok.NonNull
+    @NonNull
     private Supplier<E> seed;
 
-    @lombok.NonNull
+    @NonNull
     private Predicate<? super E> hasNext;
 
-    @lombok.NonNull
+    @NonNull
     private UnaryOperator<E> next;
 
-    @lombok.NonNull
+    @NonNull
     private Runnable remove;
 
     @Override

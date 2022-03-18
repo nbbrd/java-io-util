@@ -1,11 +1,11 @@
 package nbbrd.io.picocsv;
 
 import internal.io.text.LegacyFiles;
+import lombok.NonNull;
 import nbbrd.io.text.TextBuffers;
 import nbbrd.io.text.TextFormatter;
 import nbbrd.io.text.TextParser;
 import nbbrd.picocsv.Csv;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -15,7 +15,6 @@ import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
 
 import static nbbrd.io.text.TextResource.newBufferedReader;
 import static nbbrd.io.text.TextResource.newBufferedWriter;
@@ -36,21 +35,21 @@ public class Picocsv {
             return new Builder<T>().handler(handler);
         }
 
-        @lombok.NonNull
+        @NonNull
+        @lombok.Getter
         @lombok.Builder.Default
         private final Csv.Format format = Csv.Format.DEFAULT;
 
-        @lombok.NonNull
+        @NonNull
+        @lombok.Getter
         @lombok.Builder.Default
         private final Csv.ReaderOptions options = Csv.ReaderOptions.DEFAULT;
 
-        @lombok.NonNull
+        @NonNull
         private final InputHandler<T> handler;
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            Objects.requireNonNull(source, "source");
-            Objects.requireNonNull(encoding, "encoding");
             LegacyFiles.checkSource(source);
             CharsetDecoder decoder = encoding.newDecoder();
             try (InputStream resource = LegacyFiles.newInputStream(source)) {
@@ -60,8 +59,6 @@ public class Picocsv {
 
         @Override
         public @NonNull T parsePath(@NonNull Path source, @NonNull Charset encoding) throws IOException {
-            Objects.requireNonNull(source, "source");
-            Objects.requireNonNull(encoding, "encoding");
             checkIsFile(source);
             CharsetDecoder decoder = encoding.newDecoder();
             try (InputStream resource = Files.newInputStream(source)) {
@@ -71,16 +68,17 @@ public class Picocsv {
 
         @Override
         public @NonNull T parseReader(@NonNull Reader resource) throws IOException {
-            Objects.requireNonNull(resource, "resource");
             return parse(resource, TextBuffers.UNKNOWN);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
-            Objects.requireNonNull(resource, "resource");
-            Objects.requireNonNull(encoding, "encoding");
             CharsetDecoder decoder = encoding.newDecoder();
             return parse(newBufferedReader(resource, decoder), TextBuffers.of(resource, decoder));
+        }
+
+        public @NonNull T parseCsv(Csv.@NonNull Reader resource) throws IOException {
+            return handler.parse(resource);
         }
 
         private T parse(Reader charReader, TextBuffers buffers) throws IOException {
@@ -106,22 +104,21 @@ public class Picocsv {
             return new Builder<T>().handler(handler);
         }
 
-        @lombok.NonNull
+        @NonNull
+        @lombok.Getter
         @lombok.Builder.Default
         private final Csv.Format format = Csv.Format.DEFAULT;
 
-        @lombok.NonNull
+        @NonNull
+        @lombok.Getter
         @lombok.Builder.Default
         private final Csv.WriterOptions options = Csv.WriterOptions.DEFAULT;
 
-        @lombok.NonNull
+        @NonNull
         private final OutputHandler<T> handler;
 
         @Override
         public void formatFile(@NonNull T value, @NonNull File target, @NonNull Charset encoding) throws IOException {
-            Objects.requireNonNull(value, "value");
-            Objects.requireNonNull(target, "target");
-            Objects.requireNonNull(encoding, "encoding");
             LegacyFiles.checkTarget(target);
             CharsetEncoder encoder = encoding.newEncoder();
             try (OutputStream resource = LegacyFiles.newOutputStream(target)) {
@@ -131,9 +128,6 @@ public class Picocsv {
 
         @Override
         public void formatPath(@NonNull T value, @NonNull Path target, @NonNull Charset encoding) throws IOException {
-            Objects.requireNonNull(value, "value");
-            Objects.requireNonNull(target, "target");
-            Objects.requireNonNull(encoding, "encoding");
             checkIsFile(target);
             CharsetEncoder encoder = encoding.newEncoder();
             try (OutputStream resource = Files.newOutputStream(target)) {
@@ -143,18 +137,17 @@ public class Picocsv {
 
         @Override
         public void formatWriter(@NonNull T value, @NonNull Writer resource) throws IOException {
-            Objects.requireNonNull(value, "value");
-            Objects.requireNonNull(resource, "resource");
             format(value, resource, TextBuffers.UNKNOWN);
         }
 
         @Override
         public void formatStream(@NonNull T value, @NonNull OutputStream resource, @NonNull Charset encoding) throws IOException {
-            Objects.requireNonNull(value, "value");
-            Objects.requireNonNull(resource, "resource");
-            Objects.requireNonNull(encoding, "encoding");
             CharsetEncoder encoder = encoding.newEncoder();
             format(value, newBufferedWriter(resource, encoder), TextBuffers.of(resource, encoder));
+        }
+
+        public void formatCsv(@NonNull T value, Csv.@NonNull Writer resource) throws IOException {
+            handler.format(value, resource);
         }
 
         private void format(T value, Writer charWriter, TextBuffers buffers) throws IOException {

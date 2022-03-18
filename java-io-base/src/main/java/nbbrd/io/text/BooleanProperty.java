@@ -1,9 +1,8 @@
 package nbbrd.io.text;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import lombok.NonNull;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -11,7 +10,7 @@ import java.util.function.Function;
 @lombok.RequiredArgsConstructor(staticName = "of")
 public final class BooleanProperty extends BaseProperty {
 
-    @lombok.NonNull
+    @NonNull
     @lombok.Getter
     private final String key;
 
@@ -34,7 +33,6 @@ public final class BooleanProperty extends BaseProperty {
     }
 
     public void set(@NonNull BiConsumer<? super String, ? super String> properties, boolean value) {
-        Objects.requireNonNull(properties);
         if (value != defaultValue) {
             String valueAsString = Formatter.onBoolean().formatAsString(value);
             if (valueAsString != null) properties.accept(key, valueAsString);

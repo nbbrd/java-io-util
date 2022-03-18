@@ -16,17 +16,17 @@
  */
 package nbbrd.io.xml;
 
+import lombok.NonNull;
 import nbbrd.io.FileFormatter;
 import nbbrd.io.FileParser;
+import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.text.TextFormatter;
 import nbbrd.io.text.TextParser;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.function.Function;
 
 /**
  * Set of utilities related to XML.
@@ -40,7 +40,7 @@ public class Xml {
 
         boolean isIgnoreXXE();
 
-        default <V> @NonNull Parser<V> andThen(@NonNull Function<? super T, ? extends V> after) {
+        default <V> @NonNull Parser<V> andThen(@NonNull IOFunction<? super T, ? extends V> after) {
             return new AdaptedParser<>(this, FileParser.super.andThen(after), TextParser.super.andThen(after));
         }
     }
@@ -51,7 +51,7 @@ public class Xml {
 
         @NonNull Charset getDefaultEncoding();
 
-        default <V> @NonNull Formatter<V> compose(@NonNull Function<? super V, ? extends T> before) {
+        default <V> @NonNull Formatter<V> compose(@NonNull IOFunction<? super V, ? extends T> before) {
             return new AdaptedFormatter<>(this, FileFormatter.super.compose(before), TextFormatter.super.compose(before));
         }
     }
@@ -59,13 +59,13 @@ public class Xml {
     @lombok.RequiredArgsConstructor
     private static final class AdaptedParser<V> implements Parser<V> {
 
-        @lombok.NonNull
+        @NonNull
         private final Parser<?> delegate;
 
-        @lombok.NonNull
+        @NonNull
         private final FileParser<V> fileParser;
 
-        @lombok.NonNull
+        @NonNull
         private final TextParser<V> textParser;
 
         @Override
@@ -142,13 +142,13 @@ public class Xml {
     @lombok.RequiredArgsConstructor
     private static final class AdaptedFormatter<V> implements Formatter<V> {
 
-        @lombok.NonNull
+        @NonNull
         private final Formatter<?> delegate;
 
-        @lombok.NonNull
+        @NonNull
         private final FileFormatter<V> fileFormatter;
 
-        @lombok.NonNull
+        @NonNull
         private final TextFormatter<V> textFormatter;
 
         @Override

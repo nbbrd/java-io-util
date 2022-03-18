@@ -16,10 +16,10 @@
  */
 package nbbrd.io.win;
 
+import lombok.NonNull;
 import nbbrd.design.VisibleForTesting;
 import nbbrd.io.sys.EndOfProcessException;
 import nbbrd.io.sys.ProcessReader;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.BufferedReader;
@@ -37,7 +37,6 @@ public class RegWrapper {
     public static final String COMMAND = "reg";
 
     public @NonNull Map<String, List<RegValue>> query(@NonNull String keyName, boolean recursive) throws IOException {
-        Objects.requireNonNull(keyName);
         try (BufferedReader reader = ProcessReader.newReader(getArgs(keyName, recursive))) {
             return parse(reader);
         } catch (EndOfProcessException ex) {
@@ -90,7 +89,7 @@ public class RegWrapper {
     }
 
     @lombok.Value
-    public static final class RegValue {
+    public static class RegValue {
 
         private static final Pattern PATTERN = Pattern.compile("^[ ]{4}(.+)[ ]{4}(REG_(?:SZ|MULTI_SZ|EXPAND_SZ|DWORD|QWORD|BINARY|NONE))[ ]{4}(.*)$");
 
@@ -100,14 +99,11 @@ public class RegWrapper {
             return m.matches() ? new RegValue(m.group(1), RegType.valueOf(m.group(2)), m.group(3)) : null;
         }
 
-        @lombok.NonNull
-        private String name;
+        @NonNull String name;
 
-        @lombok.NonNull
-        private RegType dataType;
+        @NonNull RegType dataType;
 
-        @lombok.NonNull
-        private String value;
+        @NonNull String value;
     }
 
     public enum RegType {

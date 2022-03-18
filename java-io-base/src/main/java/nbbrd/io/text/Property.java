@@ -16,7 +16,7 @@
  */
 package nbbrd.io.text;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import lombok.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Map;
@@ -31,7 +31,7 @@ import java.util.function.Function;
 @lombok.RequiredArgsConstructor(staticName = "of")
 public final class Property<T> extends BaseProperty {
 
-    @lombok.NonNull
+    @NonNull
     @lombok.Getter
     private final String key;
 
@@ -39,10 +39,10 @@ public final class Property<T> extends BaseProperty {
     @lombok.Getter
     private final T defaultValue;
 
-    @lombok.NonNull
+    @NonNull
     private final Parser<T> parser;
 
-    @lombok.NonNull
+    @NonNull
     private final Formatter<T> formatter;
 
     public @Nullable T get(@NonNull Function<? super String, ? extends CharSequence> properties) {
@@ -61,7 +61,6 @@ public final class Property<T> extends BaseProperty {
     }
 
     public void set(@NonNull BiConsumer<? super String, ? super String> properties, @Nullable T value) {
-        Objects.requireNonNull(properties);
         if (!Objects.equals(value, defaultValue)) {
             String valueAsString = formatter.formatAsString(value);
             if (valueAsString != null) properties.accept(key, valueAsString);

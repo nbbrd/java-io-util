@@ -1,5 +1,7 @@
 package internal.io.text;
 
+import lombok.NonNull;
+import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.text.TextParser;
 
@@ -9,54 +11,53 @@ import java.io.InputStream;
 import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
-import java.util.function.Function;
 
 @lombok.AllArgsConstructor
 public final class AndThenTextParser<T, V> implements TextParser<V> {
 
-    @lombok.NonNull
+    @NonNull
     private final TextParser<T> parser;
 
-    @lombok.NonNull
-    private final Function<? super T, ? extends V> after;
+    @NonNull
+    private final IOFunction<? super T, ? extends V> after;
 
     @Override
-    public V parseChars(CharSequence source) throws IOException {
-        return after.apply(parser.parseChars(source));
+    public @NonNull V parseChars(@NonNull CharSequence source) throws IOException {
+        return after.applyWithIO(parser.parseChars(source));
     }
 
     @Override
-    public V parseFile(File source, Charset encoding) throws IOException {
-        return after.apply(parser.parseFile(source, encoding));
+    public @NonNull V parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
+        return after.applyWithIO(parser.parseFile(source, encoding));
     }
 
     @Override
-    public V parsePath(Path source, Charset encoding) throws IOException {
-        return after.apply(parser.parsePath(source, encoding));
+    public @NonNull V parsePath(@NonNull Path source, @NonNull Charset encoding) throws IOException {
+        return after.applyWithIO(parser.parsePath(source, encoding));
     }
 
     @Override
-    public V parseResource(Class<?> type, String name, Charset encoding) throws IOException {
-        return after.apply(parser.parseResource(type, name, encoding));
+    public @NonNull V parseResource(@NonNull Class<?> type, @NonNull String name, @NonNull Charset encoding) throws IOException {
+        return after.applyWithIO(parser.parseResource(type, name, encoding));
     }
 
     @Override
-    public V parseReader(IOSupplier<? extends Reader> source) throws IOException {
-        return after.apply(parser.parseReader(source));
+    public @NonNull V parseReader(@NonNull IOSupplier<? extends Reader> source) throws IOException {
+        return after.applyWithIO(parser.parseReader(source));
     }
 
     @Override
-    public V parseStream(IOSupplier<? extends InputStream> source, Charset encoding) throws IOException {
-        return after.apply(parser.parseStream(source, encoding));
+    public @NonNull V parseStream(@NonNull IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
+        return after.applyWithIO(parser.parseStream(source, encoding));
     }
 
     @Override
-    public V parseReader(Reader resource) throws IOException {
-        return after.apply(parser.parseReader(resource));
+    public @NonNull V parseReader(@NonNull Reader resource) throws IOException {
+        return after.applyWithIO(parser.parseReader(resource));
     }
 
     @Override
-    public V parseStream(InputStream resource, Charset encoding) throws IOException {
-        return after.apply(parser.parseStream(resource, encoding));
+    public @NonNull V parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
+        return after.applyWithIO(parser.parseStream(resource, encoding));
     }
 }

@@ -399,7 +399,7 @@ public class ParserTest {
     }
 
     @SuppressWarnings({"null", "ConstantConditions"})
-    private static <T> void assertCompliance(Parser<T> p, CharSequence input) {
+    public static <T> void assertCompliance(Parser<T> p, CharSequence input) {
         assertThatCode(() -> p.parse(null)).doesNotThrowAnyException();
         assertThatCode(() -> p.parseValue(null)).doesNotThrowAnyException();
 

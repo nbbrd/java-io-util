@@ -17,13 +17,12 @@
 package nbbrd.io.function;
 
 import internal.io.JdkWithIO;
+import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Objects;
 import java.util.function.Supplier;
 
 /**
@@ -57,7 +56,6 @@ public interface IOSupplier<T> {
      * @throws NullPointerException if after is null
      */
     default <V> @NonNull IOSupplier<V> andThen(@NonNull IOFunction<? super T, ? extends V> after) {
-        Objects.requireNonNull(after);
         return () -> after.applyWithIO(getWithIO());
     }
 
@@ -77,7 +75,6 @@ public interface IOSupplier<T> {
 
     @StaticFactoryMethod
     static <T> @NonNull IOSupplier<T> checked(@NonNull Supplier<T> o) {
-        Objects.requireNonNull(o);
         return () -> {
             try {
                 return o.get();

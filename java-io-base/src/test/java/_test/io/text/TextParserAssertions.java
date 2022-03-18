@@ -6,6 +6,7 @@ import _test.io.ResourceId;
 import _test.io.Util;
 import com.google.common.jimfs.Configuration;
 import com.google.common.jimfs.Jimfs;
+import lombok.NonNull;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.text.TextParser;
 
@@ -17,7 +18,6 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
 import java.util.Collection;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.function.Function;
 
@@ -29,12 +29,12 @@ import static org.assertj.core.api.Assertions.*;
 @SuppressWarnings("ConstantConditions")
 public final class TextParserAssertions {
 
-    public static <T> void assertTextParserCompliance(Path temp, TextParser<T> p, T value, Function<Charset, ResourceId> expected, Collection<Charset> encodings, boolean allowEmpty) throws IOException {
-        Objects.requireNonNull(temp);
-        Objects.requireNonNull(p);
-        Objects.requireNonNull(value);
-        Objects.requireNonNull(expected);
-        Objects.requireNonNull(encodings);
+    public static <T> void assertTextParserCompliance(
+            @NonNull Path temp,
+            @NonNull TextParser<T> p,
+            @NonNull T value,
+            @NonNull Function<Charset, ResourceId> expected,
+            @NonNull Collection<Charset> encodings, boolean allowEmpty) throws IOException {
 
         checkDefaultProvider(temp);
 

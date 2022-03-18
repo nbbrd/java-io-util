@@ -17,12 +17,11 @@
 package nbbrd.io.function;
 
 import internal.io.JdkWithIO;
+import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
-import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Objects;
 import java.util.function.Consumer;
 
 /**
@@ -58,7 +57,6 @@ public interface IOConsumer<T> {
      */
     @JdkWithIO
     default @NonNull IOConsumer<T> andThen(@NonNull IOConsumer<? super T> after) {
-        Objects.requireNonNull(after);
         return (T t) -> {
             acceptWithIO(t);
             after.acceptWithIO(t);

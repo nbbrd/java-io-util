@@ -16,11 +16,11 @@
  */
 package nbbrd.io;
 
+import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.function.IOConsumer;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IORunnable;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.*;
@@ -28,7 +28,6 @@ import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.*;
 import java.util.Collections;
-import java.util.Objects;
 import java.util.Optional;
 
 /**
@@ -49,30 +48,7 @@ public class Resource {
 
         @StaticFactoryMethod
         static <K> @NonNull Loader<K> of(@NonNull IOFunction<? super K, ? extends InputStream> loader, @NonNull Closeable closer) {
-            Objects.requireNonNull(loader);
-            Objects.requireNonNull(closer);
-            return new Loader<K>() {
-                boolean closed = false;
-
-                @Override
-                public InputStream load(K key) throws IOException {
-                    Objects.requireNonNull(key);
-                    if (closed) {
-                        throw new IllegalStateException("Closed");
-                    }
-                    InputStream result = loader.applyWithIO(key);
-                    if (result == null) {
-                        throw new IOException("Null stream");
-                    }
-                    return result;
-                }
-
-                @Override
-                public void close() throws IOException {
-                    closed = true;
-                    closer.close();
-                }
-            };
+            return new FunctionalLoader<>(loader, closer);
         }
     }
 
@@ -113,7 +89,6 @@ public class Resource {
 
     @SuppressWarnings("ThrowableResultIgnored")
     public void ensureClosed(@NonNull Throwable exception, @Nullable Closeable closeable) {
-        Objects.requireNonNull(exception);
         if (closeable != null) {
             try {
                 closeable.close();
@@ -155,6 +130,32 @@ public class Resource {
             try (FileSystem fs = FileSystems.newFileSystem(uri, Collections.emptyMap())) {
                 action.acceptWithIO(fs.provider().getPath(uri));
             }
+        }
+    }
+
+    @lombok.RequiredArgsConstructor
+    private static final class FunctionalLoader<K> implements Loader<K> {
+
+        private final @NonNull IOFunction<? super K, ? extends InputStream> loader;
+        private final @NonNull Closeable closer;
+        private boolean closed = false;
+
+        @Override
+        public @NonNull InputStream load(@NonNull K key) throws IOException {
+            if (closed) {
+                throw new IllegalStateException("Closed");
+            }
+            InputStream result = loader.applyWithIO(key);
+            if (result == null) {
+                throw new IOException("Null stream");
+            }
+            return result;
+        }
+
+        @Override
+        public void close() throws IOException {
+            closed = true;
+            closer.close();
         }
     }
 }

@@ -16,9 +16,10 @@
  */
 package _test;
 
+import nbbrd.io.function.IORunnable;
+
 import java.io.IOException;
 import java.io.Reader;
-import nbbrd.io.function.IORunnable;
 
 /**
  *

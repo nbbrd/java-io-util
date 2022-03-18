@@ -17,13 +17,13 @@
 package nbbrd.io.xml.bind;
 
 import internal.io.text.LegacyFiles;
+import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.xml.Sax;
 import nbbrd.io.xml.Stax;
 import nbbrd.io.xml.Xml;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.xml.sax.SAXParseException;
 
 import javax.xml.bind.*;
@@ -33,7 +33,6 @@ import javax.xml.stream.XMLStreamReader;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 
 /**
  * @author Philippe Charles
@@ -42,7 +41,6 @@ import java.util.Objects;
 public class Jaxb {
 
     public static @NonNull Unmarshaller createUnmarshaller(@NonNull Class<?> type) throws IOException {
-        Objects.requireNonNull(type);
         try {
             return JAXBContext.newInstance(type).createUnmarshaller();
         } catch (JAXBException ex) {
@@ -51,7 +49,6 @@ public class Jaxb {
     }
 
     public static @NonNull Unmarshaller createUnmarshaller(@NonNull JAXBContext context) throws IOException {
-        Objects.requireNonNull(context);
         try {
             return context.createUnmarshaller();
         } catch (JAXBException ex) {
@@ -60,7 +57,6 @@ public class Jaxb {
     }
 
     public static @NonNull Marshaller createMarshaller(@NonNull Class<?> type) throws IOException {
-        Objects.requireNonNull(type);
         try {
             return JAXBContext.newInstance(type).createMarshaller();
         } catch (JAXBException ex) {
@@ -69,7 +65,6 @@ public class Jaxb {
     }
 
     public static @NonNull Marshaller createMarshaller(@NonNull JAXBContext context) throws IOException {
-        Objects.requireNonNull(context);
         try {
             return context.createMarshaller();
         } catch (JAXBException ex) {
@@ -83,13 +78,11 @@ public class Jaxb {
 
         @StaticFactoryMethod
         public static <T> @NonNull Parser<T> of(@NonNull Class<T> type) {
-            Objects.requireNonNull(type);
             return Parser.<T>builder().factory(() -> createUnmarshaller(type)).build();
         }
 
         @StaticFactoryMethod
         public static <T> @NonNull Parser<T> of(@NonNull JAXBContext context) {
-            Objects.requireNonNull(context);
             return Parser.<T>builder().factory(() -> createUnmarshaller(context)).build();
         }
 
@@ -97,14 +90,14 @@ public class Jaxb {
 
         }
 
-        @lombok.NonNull
+        @NonNull
         private final IOSupplier<? extends Unmarshaller> factory;
 
         @lombok.Getter
         @lombok.Builder.Default
         private final boolean ignoreXXE = false;
 
-        @lombok.NonNull
+        @NonNull
         @lombok.Builder.Default
         private final IOSupplier<? extends XMLInputFactory> xxeFactory = Parser::getStaxFactory;
 
@@ -120,8 +113,6 @@ public class Jaxb {
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            Objects.requireNonNull(source, "source");
-            Objects.requireNonNull(encoding, "encoding");
             LegacyFiles.checkSource(source);
             Unmarshaller engine = factory.getWithIO();
 
@@ -132,7 +123,6 @@ public class Jaxb {
 
         @Override
         public @NonNull T parseReader(@NonNull Reader resource) throws IOException {
-            Objects.requireNonNull(resource, "resource");
             Unmarshaller engine = factory.getWithIO();
 
             return cast(!ignoreXXE
@@ -142,7 +132,6 @@ public class Jaxb {
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
-            Objects.requireNonNull(resource, "resource");
             Unmarshaller engine = factory.getWithIO();
 
             return cast(!ignoreXXE
@@ -152,8 +141,6 @@ public class Jaxb {
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
-            Objects.requireNonNull(resource, "resource");
-            Objects.requireNonNull(encoding, "encoding");
             Unmarshaller engine = factory.getWithIO();
 
             return cast(!ignoreXXE
@@ -256,27 +243,25 @@ public class Jaxb {
 
         @StaticFactoryMethod
         public static <T> @NonNull Formatter<T> of(@NonNull Class<T> type) {
-            Objects.requireNonNull(type);
             return Formatter.<T>builder().factory(() -> createMarshaller(type)).build();
         }
 
         @StaticFactoryMethod
         public static <T> @NonNull Formatter<T> of(@NonNull JAXBContext context) {
-            Objects.requireNonNull(context);
             return Formatter.<T>builder().factory(() -> createMarshaller(context)).build();
         }
 
         public final static class Builder<T> {
         }
 
-        @lombok.NonNull
+        @NonNull
         private final IOSupplier<? extends Marshaller> factory;
 
         @lombok.Getter
         @lombok.Builder.Default
         private final boolean formatted = false;
 
-        @lombok.NonNull
+        @NonNull
         @lombok.Builder.Default
         private final Charset encoding = StandardCharsets.UTF_8;
 
@@ -287,7 +272,6 @@ public class Jaxb {
 
         @Override
         public void formatFile(@NonNull T value, @NonNull File target) throws IOException {
-            Objects.requireNonNull(value, "value");
             LegacyFiles.checkTarget(target);
             try {
                 getEngine(getDefaultEncoding()).marshal(value, target);
@@ -298,8 +282,6 @@ public class Jaxb {
 
         @Override
         public void formatWriter(@NonNull T value, @NonNull Writer resource) throws IOException {
-            Objects.requireNonNull(value, "value");
-            Objects.requireNonNull(resource, "resource");
             try {
                 getEngine(getDefaultEncoding()).marshal(value, resource);
             } catch (JAXBException ex) {
@@ -309,8 +291,6 @@ public class Jaxb {
 
         @Override
         public void formatStream(@NonNull T value, @NonNull OutputStream resource) throws IOException {
-            Objects.requireNonNull(value, "value");
-            Objects.requireNonNull(resource, "resource");
             try {
                 getEngine(getDefaultEncoding()).marshal(value, resource);
             } catch (JAXBException ex) {
@@ -320,9 +300,6 @@ public class Jaxb {
 
         @Override
         public void formatStream(@NonNull T value, @NonNull OutputStream resource, @NonNull Charset encoding) throws IOException {
-            Objects.requireNonNull(value, "value");
-            Objects.requireNonNull(resource, "resource");
-            Objects.requireNonNull(encoding, "encoding");
             try {
                 getEngine(encoding).marshal(value, resource);
             } catch (JAXBException ex) {

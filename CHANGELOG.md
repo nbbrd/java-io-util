@@ -5,7 +5,16 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.0.19] - 2022-03-18
+
+### Added
+
+- Add convenient CSV methods
+- Add bridge between Text* and Parser/Formatter
+
+### Changed
+
+- Replace composition functions with IO functions
 
 ## [0.0.18] - 2022-03-15
 
@@ -151,7 +160,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Changed
 
-- Improve XXE desambiguation
+- Improve XXE disambiguation
 - Improve XML error reporting
 
 ### Fixed
@@ -164,7 +173,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Initial release
 
-[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.18...HEAD
+[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.19...HEAD
+[0.0.19]: https://github.com/nbbrd/java-io-util/compare/v0.0.18...v0.0.19
 [0.0.18]: https://github.com/nbbrd/java-io-util/compare/v0.0.17...v0.0.18
 [0.0.17]: https://github.com/nbbrd/java-io-util/compare/v0.0.16...v0.0.17
 [0.0.16]: https://github.com/nbbrd/java-io-util/compare/v0.0.15...v0.0.16

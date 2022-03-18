@@ -17,13 +17,12 @@
 package nbbrd.io.function;
 
 import internal.io.JdkWithIO;
+import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.Objects;
 import java.util.function.Function;
 
 /**
@@ -61,7 +60,6 @@ public interface IOFunction<T, R> {
      */
     @JdkWithIO
     default <V> @NonNull IOFunction<V, R> compose(@NonNull IOFunction<? super V, ? extends T> before) {
-        Objects.requireNonNull(before);
         return (V v) -> applyWithIO(before.applyWithIO(v));
     }
 
@@ -81,7 +79,6 @@ public interface IOFunction<T, R> {
      */
     @JdkWithIO
     default <V> @NonNull IOFunction<T, V> andThen(@NonNull IOFunction<? super R, ? extends V> after) {
-        Objects.requireNonNull(after);
         return (T t) -> after.applyWithIO(applyWithIO(t));
     }
 
@@ -101,7 +98,6 @@ public interface IOFunction<T, R> {
 
     @StaticFactoryMethod
     static <T, R> @NonNull IOFunction<T, R> checked(@NonNull Function<T, R> func) {
-        Objects.requireNonNull(func);
         return (o) -> {
             try {
                 return func.apply(o);
