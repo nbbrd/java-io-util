@@ -8,8 +8,8 @@ While not being rocket science, its purpose is to be useful, well documented and
 ```mermaid
 flowchart BT
 
-    x-jaxb{{<i>javax.xml.bind:jaxb-api}}
-    x-picocsv{{<i><a href='https://github.com/nbbrd/picocsv'>com.github.nbbrd.picocsv:picocsv}}
+    x-jaxb{{javax.xml.bind:jaxb-api}}
+    x-picocsv{{<a href='https://github.com/nbbrd/picocsv'>com.github.nbbrd.picocsv:picocsv}}
 
     base
     xml
@@ -23,4 +23,7 @@ flowchart BT
     win --> base
     picocsv --> base
     picocsv -.-> x-picocsv
+
+    classDef x fill:#00000000,stroke:#00000000,font-style:italic
+    class x-jaxb,x-picocsv x
 ```
