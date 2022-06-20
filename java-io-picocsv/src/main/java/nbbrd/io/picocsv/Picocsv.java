@@ -2,6 +2,7 @@ package nbbrd.io.picocsv;
 
 import internal.io.text.LegacyFiles;
 import lombok.NonNull;
+import nbbrd.io.net.MediaType;
 import nbbrd.io.text.TextBuffers;
 import nbbrd.io.text.TextFormatter;
 import nbbrd.io.text.TextParser;
@@ -11,6 +12,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
@@ -21,6 +23,8 @@ import static nbbrd.io.text.TextResource.newBufferedWriter;
 
 @lombok.experimental.UtilityClass
 public class Picocsv {
+
+    public static final MediaType CSV_UTF_8 = MediaType.builder().type("text").subtype("csv").build().withCharset(StandardCharsets.UTF_8);
 
     @FunctionalInterface
     public interface InputHandler<T> {
