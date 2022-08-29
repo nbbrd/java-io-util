@@ -11,6 +11,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Add `MediaType` object to handle Internet Media Type (aka MIME Type or Content Type)
 
+### Fixed
+
+- Fix dependency inheritance in BOM
+
 ## [0.0.19] - 2022-03-18
 
 ### Added
