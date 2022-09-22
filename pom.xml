@@ -11,6 +11,7 @@
     <name>java-io</name>
     <description>Common IO utilities</description>
     <url>https://github.com/nbbrd/java-io-util</url>
+    <inceptionYear>2017</inceptionYear>
 
     <licenses>
         <license>
@@ -39,8 +40,8 @@
         <module>java-io-win</module>
         <module>java-io-xml</module>
         <module>java-io-xml-bind</module>
-        <module>java-io-bom</module>
         <module>java-io-picocsv</module>
+        <module>java-io-bom</module>
     </modules>
 
     <dependencyManagement>
