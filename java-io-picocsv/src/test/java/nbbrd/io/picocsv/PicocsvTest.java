@@ -2,6 +2,7 @@ package nbbrd.io.picocsv;
 
 import _test.io.ResourceId;
 import lombok.NonNull;
+import nbbrd.io.function.IOSupplier;
 import nbbrd.picocsv.Csv;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -46,13 +47,28 @@ public class PicocsvTest {
                 .options(LENIENT)
                 .build();
 
-        assertThatNullPointerException().isThrownBy(() -> x.parseCsv(null));
+        assertThatNullPointerException().isThrownBy(() -> x.parseCsv((Csv.Reader) null));
 
         try (BufferedReader chars = RESOURCE_ID.open(UTF_8)) {
             try (Csv.Reader csv = Csv.Reader.of(x.getFormat(), x.getOptions(), chars, DEFAULT_CHAR_BUFFER_SIZE)) {
                 assertThat(x.parseCsv(csv))
                         .containsExactlyElementsOf(USERS);
             }
+        }
+    }
+
+    @Test
+    public void testParseCsvFromSupplier() throws IOException {
+        Picocsv.Parser<List<User>> x = Picocsv.Parser
+                .builder(User::parse)
+                .options(LENIENT)
+                .build();
+
+        assertThatNullPointerException().isThrownBy(() -> x.parseCsv((IOSupplier<Csv.Reader>) null));
+
+        try (BufferedReader chars = RESOURCE_ID.open(UTF_8)) {
+            assertThat(x.parseCsv(() -> Csv.Reader.of(x.getFormat(), x.getOptions(), chars, DEFAULT_CHAR_BUFFER_SIZE)))
+                    .containsExactlyElementsOf(USERS);
         }
     }
 
@@ -78,7 +94,7 @@ public class PicocsvTest {
                 .build();
 
         assertThatNullPointerException().isThrownBy(() -> x.formatCsv(null, Csv.Writer.of(Csv.Format.DEFAULT, Csv.WriterOptions.DEFAULT, new StringWriter(), DEFAULT_CHAR_BUFFER_SIZE)));
-        assertThatNullPointerException().isThrownBy(() -> x.formatCsv(Collections.emptyList(), null));
+        assertThatNullPointerException().isThrownBy(() -> x.formatCsv(Collections.emptyList(), (Csv.Writer) null));
 
         String expected = RESOURCE_ID.copyByLineToString(UTF_8, Csv.Format.UNIX_SEPARATOR);
 
@@ -86,6 +102,24 @@ public class PicocsvTest {
             try (Csv.Writer csv = Csv.Writer.of(x.getFormat(), x.getOptions(), chars, DEFAULT_CHAR_BUFFER_SIZE)) {
                 x.formatCsv(USERS, csv);
             }
+            assertThat(chars.toString()).isEqualTo(expected);
+        }
+    }
+
+    @Test
+    public void testFormatCsvFromSupplier() throws IOException {
+        Picocsv.Formatter<List<User>> x = Picocsv.Formatter
+                .builder(User::format)
+                .format(UNIX)
+                .build();
+
+        assertThatNullPointerException().isThrownBy(() -> x.formatCsv(null, Csv.Writer.of(Csv.Format.DEFAULT, Csv.WriterOptions.DEFAULT, new StringWriter(), DEFAULT_CHAR_BUFFER_SIZE)));
+        assertThatNullPointerException().isThrownBy(() -> x.formatCsv(Collections.emptyList(), (IOSupplier<Csv.Writer>) null));
+
+        String expected = RESOURCE_ID.copyByLineToString(UTF_8, Csv.Format.UNIX_SEPARATOR);
+
+        try (StringWriter chars = new StringWriter()) {
+            x.formatCsv(USERS, () -> Csv.Writer.of(x.getFormat(), x.getOptions(), chars, DEFAULT_CHAR_BUFFER_SIZE));
             assertThat(chars.toString()).isEqualTo(expected);
         }
     }

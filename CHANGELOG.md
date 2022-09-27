@@ -10,6 +10,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Add `MediaType` object to handle Internet Media Type (aka MIME Type or Content Type)
+- Add convenient methods to supply resources in Picocsv
 
 ### Fixed
 

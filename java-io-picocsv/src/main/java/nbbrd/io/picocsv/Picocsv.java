@@ -2,6 +2,7 @@ package nbbrd.io.picocsv;
 
 import internal.io.text.LegacyFiles;
 import lombok.NonNull;
+import nbbrd.io.function.IOSupplier;
 import nbbrd.io.net.MediaType;
 import nbbrd.io.text.TextBuffers;
 import nbbrd.io.text.TextFormatter;
@@ -81,6 +82,12 @@ public class Picocsv {
             return parse(newBufferedReader(resource, decoder), TextBuffers.of(resource, decoder));
         }
 
+        public @NonNull T parseCsv(IOSupplier<Csv.@NonNull Reader> source) throws IOException {
+            try (Csv.Reader resource = source.getWithIO()) {
+                return parseCsv(resource);
+            }
+        }
+
         public @NonNull T parseCsv(Csv.@NonNull Reader resource) throws IOException {
             return handler.parse(resource);
         }
@@ -148,6 +155,12 @@ public class Picocsv {
         public void formatStream(@NonNull T value, @NonNull OutputStream resource, @NonNull Charset encoding) throws IOException {
             CharsetEncoder encoder = encoding.newEncoder();
             format(value, newBufferedWriter(resource, encoder), TextBuffers.of(resource, encoder));
+        }
+
+        public void formatCsv(@NonNull T value, IOSupplier<Csv.@NonNull Writer> source) throws IOException {
+            try (Csv.Writer resource = source.getWithIO()) {
+                formatCsv(value, resource);
+            }
         }
 
         public void formatCsv(@NonNull T value, Csv.@NonNull Writer resource) throws IOException {
