@@ -2,6 +2,8 @@ package nbbrd.io.picocsv;
 
 import internal.io.text.LegacyFiles;
 import lombok.NonNull;
+import nbbrd.io.function.IOSupplier;
+import nbbrd.io.net.MediaType;
 import nbbrd.io.text.TextBuffers;
 import nbbrd.io.text.TextFormatter;
 import nbbrd.io.text.TextParser;
@@ -11,6 +13,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
 import java.nio.file.Files;
@@ -21,6 +24,8 @@ import static nbbrd.io.text.TextResource.newBufferedWriter;
 
 @lombok.experimental.UtilityClass
 public class Picocsv {
+
+    public static final MediaType CSV_UTF_8 = MediaType.builder().type("text").subtype("csv").build().withCharset(StandardCharsets.UTF_8);
 
     @FunctionalInterface
     public interface InputHandler<T> {
@@ -75,6 +80,12 @@ public class Picocsv {
         public @NonNull T parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
             CharsetDecoder decoder = encoding.newDecoder();
             return parse(newBufferedReader(resource, decoder), TextBuffers.of(resource, decoder));
+        }
+
+        public @NonNull T parseCsv(IOSupplier<Csv.@NonNull Reader> source) throws IOException {
+            try (Csv.Reader resource = source.getWithIO()) {
+                return parseCsv(resource);
+            }
         }
 
         public @NonNull T parseCsv(Csv.@NonNull Reader resource) throws IOException {
@@ -144,6 +155,12 @@ public class Picocsv {
         public void formatStream(@NonNull T value, @NonNull OutputStream resource, @NonNull Charset encoding) throws IOException {
             CharsetEncoder encoder = encoding.newEncoder();
             format(value, newBufferedWriter(resource, encoder), TextBuffers.of(resource, encoder));
+        }
+
+        public void formatCsv(@NonNull T value, IOSupplier<Csv.@NonNull Writer> source) throws IOException {
+            try (Csv.Writer resource = source.getWithIO()) {
+                formatCsv(value, resource);
+            }
         }
 
         public void formatCsv(@NonNull T value, Csv.@NonNull Writer resource) throws IOException {

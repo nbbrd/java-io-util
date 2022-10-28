@@ -21,11 +21,13 @@ import nbbrd.io.FileFormatter;
 import nbbrd.io.FileParser;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
+import nbbrd.io.net.MediaType;
 import nbbrd.io.text.TextFormatter;
 import nbbrd.io.text.TextParser;
 
 import java.io.*;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
 /**
@@ -35,6 +37,9 @@ import java.nio.file.Path;
  */
 @lombok.experimental.UtilityClass
 public class Xml {
+
+    public static final MediaType XML_UTF_8 = MediaType.builder().type("text").subtype("xml").build().withCharset(StandardCharsets.UTF_8);
+    public static final MediaType APPLICATION_XML_UTF_8 = MediaType.builder().type("application").subtype("xml").build().withCharset(StandardCharsets.UTF_8);
 
     public interface Parser<T> extends FileParser<T>, TextParser<T> {
 

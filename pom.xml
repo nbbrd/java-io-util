@@ -5,12 +5,13 @@
 
     <groupId>com.github.nbbrd.java-io-util</groupId>
     <artifactId>java-io-parent</artifactId>
-    <version>0.0.19</version>
+    <version>0.0.20</version>
     <packaging>pom</packaging>
 
     <name>java-io</name>
     <description>Common IO utilities</description>
     <url>https://github.com/nbbrd/java-io-util</url>
+    <inceptionYear>2017</inceptionYear>
 
     <licenses>
         <license>
@@ -39,8 +40,8 @@
         <module>java-io-win</module>
         <module>java-io-xml</module>
         <module>java-io-xml-bind</module>
-        <module>java-io-bom</module>
         <module>java-io-picocsv</module>
+        <module>java-io-bom</module>
     </modules>
 
     <dependencyManagement>
@@ -49,21 +50,21 @@
             <dependency>
                 <groupId>org.checkerframework</groupId>
                 <artifactId>checker-qual</artifactId>
-                <version>3.21.3</version>
+                <version>3.26.0</version>
             </dependency>
 
             <!-- test libraries -->
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.8.2</version>
+                <version>5.9.1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
-                <version>3.22.0</version>
+                <version>3.23.1</version>
             </dependency>
             <dependency>
                 <groupId>com.google.jimfs</groupId>
@@ -73,13 +74,19 @@
             <dependency>
                 <groupId>com.github.tomakehurst</groupId>
                 <artifactId>wiremock-jre8-standalone</artifactId>
-                <version>2.32.0</version>
+                <version>2.34.0</version>
             </dependency>
             <dependency>
                 <!-- slf4j required by wiremock-jre8-standalone -->
                 <groupId>org.slf4j</groupId>
                 <artifactId>slf4j-nop</artifactId>
                 <version>1.7.36</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.slf4j</groupId>
+                        <artifactId>slf4j-api</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
 
             <!-- other -->
@@ -95,6 +102,74 @@
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <!-- Enforce reproducible builds -->
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>3.2.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.10.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>3.0.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>3.0.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>3.3.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>3.3.0</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>3.12.1</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.0.0-M7</version>
+                </plugin>
+                <!-- Other plugins -->
+                <plugin>
+                    <groupId>com.github.nbbrd.heylogs</groupId>
+                    <artifactId>heylogs-maven-plugin</artifactId>
+                    <version>0.4.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>com.github.nbbrd.heylogs</groupId>
+                <artifactId>heylogs-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>check-changelog</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
     <profiles>
         <!-- Base build java8 -->
@@ -114,18 +189,7 @@
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <version>3.10.1</version>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>3.2.2</version>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-surefire-plugin</artifactId>
-                        <version>3.0.0-M5</version>
                         <configuration>
                             <useModulePath>false</useModulePath>
                         </configuration>
@@ -143,8 +207,8 @@
                 </property>
             </activation>
             <properties>
-                <lombok.version>1.18.22</lombok.version>
-                <java-design.version>1.2.2</java-design.version>
+                <lombok.version>1.18.24</lombok.version>
+                <java-design.version>1.3.1</java-design.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -272,17 +336,17 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-enforcer-plugin</artifactId>
-                        <version>3.0.0</version>
+                        <version>3.1.0</version>
                         <dependencies>
                             <dependency>
                                 <groupId>org.kordamp.maven</groupId>
                                 <artifactId>pomchecker-enforcer-rules</artifactId>
-                                <version>1.2.0</version>
+                                <version>1.3.0</version>
                             </dependency>
                             <dependency>
                                 <groupId>org.codehaus.mojo</groupId>
                                 <artifactId>extra-enforcer-rules</artifactId>
-                                <version>1.5.1</version>
+                                <version>1.6.1</version>
                             </dependency>
                         </dependencies>
                         <executions>
@@ -293,18 +357,30 @@
                                 </goals>
                                 <configuration>
                                     <rules>
+                                        <!-- Built-In Rules -->
+                                        <banDuplicatePomDependencyVersions/>
+                                        <dependencyConvergence/>
+                                        <reactorModuleConvergence/>
                                         <requireMavenVersion>
-                                            <version>3.3.9</version>
+                                            <version>3.6.0</version>
                                         </requireMavenVersion>
-                                        <DependencyConvergence/>
+                                        <requireNoRepositories>
+                                            <allowSnapshotRepositories>true</allowSnapshotRepositories>
+                                        </requireNoRepositories>
+                                        <requirePluginVersions/>
                                         <requireReleaseDeps>
                                             <onlyWhenRelease>true</onlyWhenRelease>
                                         </requireReleaseDeps>
-                                        <CheckMavenCentral
+                                        <requireUpperBoundDeps/>
+                                        <!-- pomchecker-enforcer-rules -->
+                                        <checkMavenCentral
                                                 implementation="org.kordamp.maven.enforcer.checker.CheckMavenCentral">
                                             <release>false</release>
                                             <strict>false</strict>
-                                        </CheckMavenCentral>
+                                        </checkMavenCentral>
+                                        <!-- extra-enforcer-rules -->
+                                        <banCircularDependencies/>
+                                        <banDuplicateClasses/>
                                         <enforceBytecodeVersion>
                                             <maxJdkVersion>8</maxJdkVersion>
                                             <ignoredScopes>
@@ -365,7 +441,7 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>0.8.7</version>
+                        <version>0.8.8</version>
                         <executions>
                             <execution>
                                 <goals>
@@ -398,7 +474,7 @@
                     <plugin>
                         <groupId>com.amashchenko.maven.plugin</groupId>
                         <artifactId>gitflow-maven-plugin</artifactId>
-                        <version>1.18.0</version>
+                        <version>1.19.0</version>
                         <configuration>
                             <gitFlowConfig>
                                 <versionTagPrefix>v</versionTagPrefix>
@@ -430,7 +506,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.3.2</version>
+                        <version>3.4.1</version>
                         <executions>
                             <execution>
                                 <id>attach-javadocs</id>
@@ -474,7 +550,7 @@
                     <plugin>
                         <groupId>org.sonatype.plugins</groupId>
                         <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.12</version>
+                        <version>1.6.13</version>
                         <extensions>true</extensions>
                         <configuration>
                             <serverId>ossrh</serverId>
@@ -500,7 +576,7 @@
                     <plugin>
                         <groupId>org.sonatype.plugins</groupId>
                         <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.12</version>
+                        <version>1.6.13</version>
                         <extensions>true</extensions>
                         <configuration>
                             <serverId>ossrh</serverId>

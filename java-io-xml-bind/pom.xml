@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.github.nbbrd.java-io-util</groupId>
         <artifactId>java-io-parent</artifactId>
-        <version>0.0.19</version>
+        <version>0.0.20</version>
     </parent>
 
     <artifactId>java-io-xml-bind</artifactId>
@@ -83,6 +83,13 @@
             <groupId>com.google.jimfs</groupId>
             <artifactId>jimfs</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <!-- already included in wiremock-jre8-standalone -->
+                    <artifactId>jsr305</artifactId>
+                    <groupId>com.google.code.findbugs</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>com.github.tomakehurst</groupId>

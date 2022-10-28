@@ -23,6 +23,7 @@ module nbbrd.io.base {
 
     exports nbbrd.io;
     exports nbbrd.io.function;
+    exports nbbrd.io.net;
     exports nbbrd.io.sys;
     exports nbbrd.io.text;
     exports nbbrd.io.zip;
