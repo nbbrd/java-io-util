@@ -1,8 +1,8 @@
 package nbbrd.io.sys;
 
-import com.google.common.base.StandardSystemProperty;
 import org.junit.jupiter.api.Test;
 
+import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -99,37 +99,37 @@ public class SystemPropertiesTest {
     public void testDEFAULT() {
         SystemProperties p = SystemProperties.DEFAULT;
 
-        assertThat(p.getJavaVersion()).isEqualTo(StandardSystemProperty.JAVA_VERSION.value());
-        assertThat(p.getJavaVendor()).isEqualTo(StandardSystemProperty.JAVA_VENDOR.value());
-        assertThat(p.getJavaVendorUrl()).hasToString(StandardSystemProperty.JAVA_VENDOR_URL.value());
-        assertThat(p.getJavaHome()).isEqualTo(Paths.get(StandardSystemProperty.JAVA_HOME.value()));
-        assertThat(p.getJavaVmSpecificationVersion()).isEqualTo(StandardSystemProperty.JAVA_VM_SPECIFICATION_VERSION.value());
-        assertThat(p.getJavaVmSpecificationVendor()).isEqualTo(StandardSystemProperty.JAVA_VM_SPECIFICATION_VENDOR.value());
-        assertThat(p.getJavaVmSpecificationName()).isEqualTo(StandardSystemProperty.JAVA_VM_SPECIFICATION_NAME.value());
-        assertThat(p.getJavaVmVersion()).isEqualTo(StandardSystemProperty.JAVA_VM_VERSION.value());
-        assertThat(p.getJavaVmVendor()).isEqualTo(StandardSystemProperty.JAVA_VM_VENDOR.value());
-        assertThat(p.getJavaVmName()).isEqualTo(StandardSystemProperty.JAVA_VM_NAME.value());
-        assertThat(p.getJavaSpecificationVersion()).isEqualTo(StandardSystemProperty.JAVA_SPECIFICATION_VERSION.value());
-        assertThat(p.getJavaSpecificationVendor()).isEqualTo(StandardSystemProperty.JAVA_SPECIFICATION_VENDOR.value());
-        assertThat(p.getJavaSpecificationName()).isEqualTo(StandardSystemProperty.JAVA_SPECIFICATION_NAME.value());
-        assertThat(p.getJavaClassVersion()).isEqualTo(StandardSystemProperty.JAVA_CLASS_VERSION.value());
-        assertThat(p.getJavaClassPath()).containsExactlyElementsOf(splitPath(StandardSystemProperty.JAVA_CLASS_PATH.value()));
-        assertThat(p.getJavaLibraryPath()).containsExactlyElementsOf(splitPath(StandardSystemProperty.JAVA_LIBRARY_PATH.value()));
-        assertThat(p.getJavaIoTmpdir()).isEqualTo(Paths.get(StandardSystemProperty.JAVA_IO_TMPDIR.value()));
-        assertThat(p.getJavaCompiler()).isEqualTo(StandardSystemProperty.JAVA_COMPILER.value());
-        assertThat(p.getOsName()).isEqualTo(StandardSystemProperty.OS_NAME.value());
-        assertThat(p.getOsArch()).isEqualTo(StandardSystemProperty.OS_ARCH.value());
-        assertThat(p.getOsVersion()).isEqualTo(StandardSystemProperty.OS_VERSION.value());
-        assertThat(p.getFileSeparator()).hasToString(StandardSystemProperty.FILE_SEPARATOR.value());
-        assertThat(p.getPathSeparator()).hasToString(StandardSystemProperty.PATH_SEPARATOR.value());
-        assertThat(p.getLineSeparator()).hasToString(StandardSystemProperty.LINE_SEPARATOR.value());
-        assertThat(p.getUserName()).isEqualTo(StandardSystemProperty.USER_NAME.value());
-        assertThat(p.getUserHome()).isEqualTo(Paths.get(StandardSystemProperty.USER_HOME.value()));
-        assertThat(p.getUserDir()).isEqualTo(Paths.get(StandardSystemProperty.USER_DIR.value()));
+        assertThat(p.getJavaVersion()).isEqualTo(System.getProperty("java.version"));
+        assertThat(p.getJavaVendor()).isEqualTo(System.getProperty("java.vendor"));
+        assertThat(p.getJavaVendorUrl()).hasToString(System.getProperty("java.vendor.url"));
+        assertThat(p.getJavaHome()).isEqualTo(Paths.get(System.getProperty("java.home")));
+        assertThat(p.getJavaVmSpecificationVersion()).isEqualTo(System.getProperty("java.vm.specification.version"));
+        assertThat(p.getJavaVmSpecificationVendor()).isEqualTo(System.getProperty("java.vm.specification.vendor"));
+        assertThat(p.getJavaVmSpecificationName()).isEqualTo(System.getProperty("java.vm.specification.name"));
+        assertThat(p.getJavaVmVersion()).isEqualTo(System.getProperty("java.vm.version"));
+        assertThat(p.getJavaVmVendor()).isEqualTo(System.getProperty("java.vm.vendor"));
+        assertThat(p.getJavaVmName()).isEqualTo(System.getProperty("java.vm.name"));
+        assertThat(p.getJavaSpecificationVersion()).isEqualTo(System.getProperty("java.specification.version"));
+        assertThat(p.getJavaSpecificationVendor()).isEqualTo(System.getProperty("java.specification.vendor"));
+        assertThat(p.getJavaSpecificationName()).isEqualTo(System.getProperty("java.specification.name"));
+        assertThat(p.getJavaClassVersion()).isEqualTo(System.getProperty("java.class.version"));
+        assertThat(p.getJavaClassPath()).containsExactlyElementsOf(splitPath(System.getProperty("java.class.path")));
+        assertThat(p.getJavaLibraryPath()).containsExactlyElementsOf(splitPath(System.getProperty("java.library.path")));
+        assertThat(p.getJavaIoTmpdir()).isEqualTo(Paths.get(System.getProperty("java.io.tmpdir")));
+        assertThat(p.getJavaCompiler()).isEqualTo(System.getProperty("java.compiler"));
+        assertThat(p.getOsName()).isEqualTo(System.getProperty("os.name"));
+        assertThat(p.getOsArch()).isEqualTo(System.getProperty("os.arch"));
+        assertThat(p.getOsVersion()).isEqualTo(System.getProperty("os.version"));
+        assertThat(p.getFileSeparator()).hasToString(System.getProperty("file.separator"));
+        assertThat(p.getPathSeparator()).hasToString(System.getProperty("path.separator"));
+        assertThat(p.getLineSeparator()).hasToString(System.getProperty("line.separator"));
+        assertThat(p.getUserName()).isEqualTo(System.getProperty("user.name"));
+        assertThat(p.getUserHome()).isEqualTo(Paths.get(System.getProperty("user.home")));
+        assertThat(p.getUserDir()).isEqualTo(Paths.get(System.getProperty("user.dir")));
     }
 
     private static List<Path> splitPath(String input) {
-        return Stream.of(input.split(StandardSystemProperty.PATH_SEPARATOR.value(), -1))
+        return Stream.of(input.split(File.pathSeparator, -1))
                 .map(Paths::get)
                 .collect(Collectors.toList());
     }

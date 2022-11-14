@@ -1,17 +1,17 @@
 /*
  * Copyright 2017 National Bank of Belgium
- * 
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved 
+ *
+ * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
  * by the European Commission - subsequent versions of the EUPL (the "Licence");
  * You may not use this work except in compliance with the Licence.
  * You may obtain a copy of the Licence at:
- * 
+ *
  * http://ec.europa.eu/idabc/eupl
- * 
- * Unless required by applicable law or agreed to in writing, software 
+ *
+ * Unless required by applicable law or agreed to in writing, software
  * distributed under the Licence is distributed on an "AS IS" basis,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and 
+ * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
 package nbbrd.io;
@@ -19,16 +19,12 @@ package nbbrd.io;
 import _test.io.IOIteratorAssertions;
 import _test.io.IOIteratorFactory;
 import _test.io.IteratorFactory;
-import com.google.common.collect.Iterators;
 import nbbrd.io.function.*;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -36,7 +32,6 @@ import java.util.function.Supplier;
 import static org.assertj.core.api.Assertions.*;
 
 /**
- *
  * @author Philippe Charles
  */
 public class IOIteratorTest {
@@ -83,7 +78,7 @@ public class IOIteratorTest {
     public void testChecked() throws IOException {
         assertThatNullPointerException().isThrownBy(() -> IOIterator.checked(null));
 
-        Supplier<IOIterator<Integer>> sample = () -> IOIterator.checked(Iterators.forArray(1, 2, 3));
+        Supplier<IOIterator<Integer>> sample = () -> IOIterator.checked(Arrays.asList(1, 2, 3).iterator());
 
         IOIteratorAssertions.assertApi(sample);
 
@@ -135,7 +130,7 @@ public class IOIteratorTest {
                 .toIterable()
                 .isEmpty();
 
-        Iterator<Integer> original = Iterators.forArray(1, 2, 3);
+        Iterator<Integer> original = Arrays.asList(1, 2, 3).iterator();
         assertThat(IOIterator.unchecked(IOIterator.checked(original)))
                 .isSameAs(original);
 

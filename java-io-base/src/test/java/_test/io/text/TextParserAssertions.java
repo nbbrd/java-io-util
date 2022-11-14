@@ -4,8 +4,6 @@ import _test.io.CountingIOSupplier;
 import _test.io.CountingInputStream;
 import _test.io.ResourceId;
 import _test.io.Util;
-import com.google.common.jimfs.Configuration;
-import com.google.common.jimfs.Jimfs;
 import lombok.NonNull;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.text.TextParser;
@@ -13,7 +11,6 @@ import nbbrd.io.text.TextParser;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.AccessDeniedException;
-import java.nio.file.FileSystem;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.attribute.FileTime;
@@ -23,7 +20,6 @@ import java.util.function.Function;
 
 import static _test.io.Util.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.*;
 
 @SuppressWarnings("ConstantConditions")
@@ -143,14 +139,11 @@ public final class TextParserAssertions {
                 .isInstanceOf(AccessDeniedException.class)
                 .withMessageContaining(dir.toString());
 
-        try (FileSystem inMemoryFS = Jimfs.newFileSystem(Configuration.unix())) {
-            for (Charset encoding : encodings) {
-                ResourceId id = expected.apply(encoding);
-                for (Path target : asList(id.copyTo(temp), id.copyTo(inMemoryFS.getPath("/")))) {
-                    assertThat(p.parsePath(target, encoding))
-                            .isEqualTo(value);
-                }
-            }
+        for (Charset encoding : encodings) {
+            ResourceId id = expected.apply(encoding);
+            Path target = id.copyTo(temp);
+            assertThat(p.parsePath(target, encoding))
+                    .isEqualTo(value);
         }
     }
 

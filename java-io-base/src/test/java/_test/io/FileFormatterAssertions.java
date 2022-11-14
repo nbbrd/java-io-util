@@ -1,7 +1,5 @@
 package _test.io;
 
-import com.google.common.jimfs.Configuration;
-import com.google.common.jimfs.Jimfs;
 import lombok.NonNull;
 import nbbrd.io.FileFormatter;
 import nbbrd.io.function.IOSupplier;
@@ -11,11 +9,9 @@ import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.AccessDeniedException;
-import java.nio.file.FileSystem;
 import java.nio.file.Path;
 
 import static _test.io.Util.*;
-import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.*;
 
 @SuppressWarnings("ConstantConditions")
@@ -84,13 +80,12 @@ public final class FileFormatterAssertions {
                 .isInstanceOf(AccessDeniedException.class)
                 .withMessageContaining(dir.toString());
 
-        try (FileSystem inMemoryFS = Jimfs.newFileSystem(Configuration.unix())) {
-            for (Path target : asList(newFile(temp), newFile(inMemoryFS.getPath("/")))) {
-                p.formatPath(value, target);
-                assertThat(target)
-                        .exists().isReadable()
-                        .hasBinaryContent(expected);
-            }
+        {
+            Path target = newFile(temp);
+            p.formatPath(value, target);
+            assertThat(target)
+                    .exists().isReadable()
+                    .hasBinaryContent(expected);
         }
     }
 
