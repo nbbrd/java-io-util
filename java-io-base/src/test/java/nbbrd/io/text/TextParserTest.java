@@ -8,10 +8,15 @@ import java.io.*;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static _test.io.text.TextParserAssertions.assertTextParserCompliance;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
+import static java.util.stream.Collectors.joining;
+import static java.util.stream.Collectors.toList;
+import static nbbrd.io.text.TextParser.onParsingLines;
 import static nbbrd.io.text.TextParser.onParsingReader;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
@@ -22,6 +27,7 @@ public class TextParserTest {
     public void testCompliance(@TempDir Path temp) throws IOException {
         ResourceId resourceId = new ResourceId(TextParserTest.class, "hello.txt");
         assertTextParserCompliance(temp, onParsingReader(TextParserTest::toUpperCase), "WORLD", encoding -> resourceId, singleton(UTF_8), true);
+        assertTextParserCompliance(temp, onParsingLines(lines -> lines.map(String::toUpperCase).collect(joining())), "WORLD", encoding -> resourceId, singleton(UTF_8), true);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -43,14 +49,39 @@ public class TextParserTest {
 
     @SuppressWarnings("ConstantConditions")
     @Test
-    public void testOnParsingReader() {
+    public void testOnParsingReader() throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> onParsingReader(null))
                 .withMessageContaining("function");
 
         assertThatNullPointerException()
-                .isThrownBy(() -> onParsingReader(o -> null).parseReader(new StringReader("")))
+                .isThrownBy(() -> onParsingReader(o -> null).parseChars(""))
                 .withMessageContaining("result");
+
+        assertThat(onParsingReader(TextParserTest::toUpperCase).parseChars("hello\nworld"))
+                .isEqualTo("HELLO\nWORLD");
+
+        assertThat(onParsingReader((Readable lower) -> (CharSequence) "upper").parseChars(""))
+                .describedAs("Check lower & upper bounded types")
+                .isEqualTo("upper");
+    }
+
+    @Test
+    public void testOnParsingLines() throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> onParsingLines(null))
+                .withMessageContaining("function");
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> onParsingLines(o -> null).parseChars(""))
+                .withMessageContaining("result");
+
+        assertThat(onParsingLines(lines -> lines.map(String::toUpperCase).collect(toList())).parseChars("hello\nworld"))
+                .containsExactly("HELLO", "WORLD");
+
+        assertThat(onParsingLines((AutoCloseable lower) -> (Iterable<String>) singletonList("upper")).parseChars(""))
+                .describedAs("Check lower & upper bounded types")
+                .containsExactly("upper");
     }
 
     @Test

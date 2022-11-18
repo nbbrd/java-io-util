@@ -4,12 +4,10 @@ import lombok.NonNull;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.text.TextParser;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Objects;
+import java.util.stream.Stream;
 
 @lombok.RequiredArgsConstructor
 public final class FunctionalTextParser<T> implements TextParser<T> {
@@ -27,5 +25,13 @@ public final class FunctionalTextParser<T> implements TextParser<T> {
         try (InputStreamReader reader = new InputStreamReader(resource, encoding)) {
             return parseReader(reader);
         }
+    }
+
+    public static @NonNull Stream<String> asLines(@NonNull Reader reader) {
+        return asBufferedReader(reader).lines();
+    }
+
+    public static @NonNull BufferedReader asBufferedReader(@NonNull Reader reader) {
+        return reader instanceof BufferedReader ? (BufferedReader) reader : new BufferedReader(reader);
     }
 }

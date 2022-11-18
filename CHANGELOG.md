@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Add convenient method to parse lines from text source
+
 ## [0.0.20] - 2022-10-28
 
 ### Added
