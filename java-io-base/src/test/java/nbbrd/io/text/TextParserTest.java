@@ -1,14 +1,15 @@
 package nbbrd.io.text;
 
 import _test.io.ResourceId;
+import internal.io.text.InternalTextResource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static _test.io.text.TextParserAssertions.assertTextParserCompliance;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -115,14 +116,7 @@ public class TextParserTest {
     }
 
     private static String toUpperCase(Reader resource) throws IOException {
-        try (StringWriter writer = new StringWriter()) {
-            BufferedReader reader = new BufferedReader(resource);
-            int c;
-            while ((c = reader.read()) != -1) {
-                writer.write(c);
-            }
-            return writer.toString().toUpperCase();
-        }
+        return InternalTextResource.copyToString(resource).toUpperCase();
     }
 
     private static String fail(Reader resource) throws IOException {

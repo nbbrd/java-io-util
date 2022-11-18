@@ -1,6 +1,7 @@
 package nbbrd.io.text;
 
 import lombok.NonNull;
+import nbbrd.io.Resource;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -12,8 +13,8 @@ import java.util.Optional;
 public class TextResource {
 
     public @NonNull Optional<BufferedReader> getResourceAsBufferedReader(@NonNull Class<?> anchor, @NonNull String name, @NonNull Charset charset) {
-        return Optional.ofNullable(anchor.getResourceAsStream(name))
-                .map(stream -> new BufferedReader(new InputStreamReader(stream, charset)));
+        return Resource.getResourceAsStream(anchor, name)
+                .map(stream -> newBufferedReader(stream, charset.newDecoder()));
     }
 
     public @NonNull BufferedReader newBufferedReader(@NonNull InputStream stream, @NonNull CharsetDecoder decoder) {

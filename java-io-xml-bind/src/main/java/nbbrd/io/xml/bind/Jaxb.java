@@ -192,7 +192,7 @@ public class Jaxb {
         }
 
         private static Object parseFileXXE(Unmarshaller engine, File source, XMLInputFactory xxe) throws IOException {
-            try (InputStream resource = LegacyFiles.newInputStream(source)) {
+            try (InputStream resource = LegacyFiles.openInputStream(source)) {
                 XMLStreamReader reader = xxe.createXMLStreamReader(LegacyFiles.toSystemId(source), resource);
                 try {
                     return engine.unmarshal(reader);

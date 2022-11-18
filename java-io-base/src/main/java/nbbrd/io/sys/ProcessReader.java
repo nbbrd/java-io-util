@@ -16,11 +16,15 @@
  */
 package nbbrd.io.sys;
 
+import internal.io.text.InternalTextResource;
 import lombok.NonNull;
+import nbbrd.io.text.TextResource;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.Closeable;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
-import java.util.stream.Collectors;
 
 /**
  * @author Philippe Charles
@@ -33,7 +37,7 @@ public class ProcessReader {
     }
 
     public static @NonNull BufferedReader newReader(@NonNull Process process) {
-        return new BufferedReader(new InputStreamReader(new ProcessInputStream(process), Charset.defaultCharset()));
+        return TextResource.newBufferedReader(new ProcessInputStream(process), Charset.defaultCharset().newDecoder());
     }
 
     public static @NonNull String readToString(@NonNull String... args) throws IOException {
@@ -42,7 +46,7 @@ public class ProcessReader {
 
     public static @NonNull String readToString(@NonNull Process process) throws IOException {
         try (BufferedReader reader = newReader(process)) {
-            return reader.lines().collect(Collectors.joining(System.lineSeparator()));
+            return InternalTextResource.copyByLineToString(reader, System.lineSeparator());
         }
     }
 

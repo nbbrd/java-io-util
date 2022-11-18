@@ -55,9 +55,8 @@ public class Picocsv {
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            LegacyFiles.checkSource(source);
-            CharsetDecoder decoder = encoding.newDecoder();
-            try (InputStream resource = LegacyFiles.newInputStream(source)) {
+            try (InputStream resource = LegacyFiles.openInputStream(source)) {
+                CharsetDecoder decoder = encoding.newDecoder();
                 return parse(newBufferedReader(resource, decoder), TextBuffers.of(source.toPath(), decoder));
             }
         }
@@ -65,8 +64,8 @@ public class Picocsv {
         @Override
         public @NonNull T parsePath(@NonNull Path source, @NonNull Charset encoding) throws IOException {
             checkIsFile(source);
-            CharsetDecoder decoder = encoding.newDecoder();
             try (InputStream resource = Files.newInputStream(source)) {
+                CharsetDecoder decoder = encoding.newDecoder();
                 return parse(newBufferedReader(resource, decoder), TextBuffers.of(source, decoder));
             }
         }
@@ -130,9 +129,8 @@ public class Picocsv {
 
         @Override
         public void formatFile(@NonNull T value, @NonNull File target, @NonNull Charset encoding) throws IOException {
-            LegacyFiles.checkTarget(target);
-            CharsetEncoder encoder = encoding.newEncoder();
-            try (OutputStream resource = LegacyFiles.newOutputStream(target)) {
+            try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
+                CharsetEncoder encoder = encoding.newEncoder();
                 format(value, newBufferedWriter(resource, encoder), TextBuffers.of(target.toPath(), encoder));
             }
         }
@@ -140,8 +138,8 @@ public class Picocsv {
         @Override
         public void formatPath(@NonNull T value, @NonNull Path target, @NonNull Charset encoding) throws IOException {
             checkIsFile(target);
-            CharsetEncoder encoder = encoding.newEncoder();
             try (OutputStream resource = Files.newOutputStream(target)) {
+                CharsetEncoder encoder = encoding.newEncoder();
                 format(value, newBufferedWriter(resource, encoder), TextBuffers.of(target, encoder));
             }
         }

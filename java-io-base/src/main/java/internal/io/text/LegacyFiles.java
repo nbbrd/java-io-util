@@ -17,6 +17,8 @@
 package internal.io.text;
 
 import lombok.NonNull;
+import nbbrd.io.Resource;
+import nbbrd.io.function.IOSupplier;
 
 import java.io.*;
 import java.net.URI;
@@ -30,25 +32,52 @@ import java.nio.file.NoSuchFileException;
 @lombok.experimental.UtilityClass
 public class LegacyFiles {
 
-    @NonNull
-    public static InputStream newInputStream(@NonNull File source) throws IOException {
-        return new BufferedFileInputStream(source);
+    public static InputStream openResource(Class<?> anchor, String name) throws IOException {
+        return Resource.getResourceAsStream(anchor, name)
+                .orElseThrow(() -> new IOException("Missing resource '" + name + "' of '" + anchor.getName() + "'"));
+    }
+
+    public static Reader openReader(CharSequence source) {
+        return new StringReader(source.toString());
+    }
+
+    public static Reader openReader(IOSupplier<? extends Reader> source) throws IOException {
+        return checkResource(source.getWithIO(), "Missing Reader");
+    }
+
+    public static InputStream openInputStream(IOSupplier<? extends InputStream> source) throws IOException {
+        return checkResource(source.getWithIO(), "Missing InputStream");
     }
 
     @NonNull
-    public static OutputStream newOutputStream(@NonNull File target) throws IOException {
-        return new BufferedOutputStream(new FileOutputStream(target));
+    public static InputStream openInputStream(@NonNull File source) throws IOException {
+        return new BufferedInputStreamWithFile(checkSource(source));
     }
 
-    public static void checkSource(@NonNull File source) throws FileSystemException {
+    public static Writer openWriter(IOSupplier<? extends Writer> source) throws IOException {
+        return checkResource(source.getWithIO(), "Missing Writer");
+    }
+
+    public static OutputStream openOutputStream(IOSupplier<? extends OutputStream> source) throws IOException {
+        return checkResource(source.getWithIO(), "Missing OutputStream");
+    }
+
+    @NonNull
+    public static OutputStream openOutputStream(@NonNull File target) throws IOException {
+        return new BufferedOutputStream(new FileOutputStream(checkTarget(target)));
+    }
+
+    public static File checkSource(@NonNull File source) throws FileSystemException {
         checkExist(source);
         checkIsFile(source);
+        return source;
     }
 
-    public static void checkTarget(@NonNull File target) throws FileSystemException {
+    public static File checkTarget(@NonNull File target) throws FileSystemException {
         if (target.exists()) {
             checkIsFile(target);
         }
+        return target;
     }
 
     public static void checkExist(@NonNull File source) throws FileSystemException {
@@ -60,20 +89,6 @@ public class LegacyFiles {
     public static void checkIsFile(@NonNull File source) throws FileSystemException {
         if (!source.isFile()) {
             throw new AccessDeniedException(source.getPath());
-        }
-    }
-
-    public static final class BufferedFileInputStream extends BufferedInputStream {
-
-        private final File file;
-
-        public BufferedFileInputStream(File source) throws FileNotFoundException {
-            super(new FileInputStream(source));
-            this.file = source;
-        }
-
-        public File getFile() {
-            return file;
         }
     }
 
@@ -89,7 +104,7 @@ public class LegacyFiles {
         }
     }
 
-    public static <T extends Closeable> T checkResource(T resource, String message) throws IOException {
+    private static <T extends Closeable> T checkResource(T resource, String message) throws IOException {
         if (resource == null) {
             throw new IOException(message);
         }

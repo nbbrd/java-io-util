@@ -8,7 +8,10 @@ import nbbrd.io.Resource;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -20,12 +23,15 @@ import java.util.stream.Stream;
 public interface TextParser<T> {
 
     default @NonNull T parseChars(@NonNull CharSequence source) throws IOException {
-        return parseReader(() -> new StringReader(source.toString()));
+        try (Reader reader = LegacyFiles.openReader(source)) {
+            return parseReader(reader);
+        }
     }
 
     default @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-        LegacyFiles.checkSource(source);
-        return parseStream(() -> LegacyFiles.newInputStream(source), encoding);
+        try (InputStream resource = LegacyFiles.openInputStream(source)) {
+            return parseStream(resource, encoding);
+        }
     }
 
     default @NonNull T parsePath(@NonNull Path source, @NonNull Charset encoding) throws IOException {
@@ -36,17 +42,19 @@ public interface TextParser<T> {
     }
 
     default @NonNull T parseResource(@NonNull Class<?> type, @NonNull String name, @NonNull Charset encoding) throws IOException {
-        return parseStream(() -> LegacyFiles.checkResource(type.getResourceAsStream(name), "Missing resource '" + name + "' of '" + type.getName() + "'"), encoding);
+        try (InputStream resource = LegacyFiles.openResource(type, name)) {
+            return parseStream(resource, encoding);
+        }
     }
 
     default @NonNull T parseReader(@NonNull IOSupplier<? extends Reader> source) throws IOException {
-        try (Reader resource = LegacyFiles.checkResource(source.getWithIO(), "Missing Reader")) {
+        try (Reader resource = LegacyFiles.openReader(source)) {
             return parseReader(resource);
         }
     }
 
     default @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
-        try (InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream")) {
+        try (InputStream resource = LegacyFiles.openInputStream(source)) {
             return parseStream(resource, encoding);
         }
     }
@@ -87,6 +95,6 @@ public interface TextParser<T> {
 
     @StaticFactoryMethod
     static <T> @NonNull TextParser<T> onParsingLines(@NonNull Function<? super Stream<String>, ? extends T> function) {
-        return new FunctionalTextParser<>(IOFunction.checked(function).compose(FunctionalTextParser::asLines));
+        return new FunctionalTextParser<>(IOFunction.checked(function).compose(InternalTextResource::asLines));
     }
 }

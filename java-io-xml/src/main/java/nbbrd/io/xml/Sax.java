@@ -149,14 +149,12 @@ public class Sax {
 
         @Override
         public @NonNull T parseFile(@NonNull File source) throws IOException {
-            LegacyFiles.checkSource(source);
-            return parse(newInputSource(source));
+            return parse(newInputSource(LegacyFiles.checkSource(source)));
         }
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            LegacyFiles.checkSource(source);
-            return parse(newInputSource(source, encoding));
+            return parse(newInputSource(LegacyFiles.checkSource(source), encoding));
         }
 
         @Override

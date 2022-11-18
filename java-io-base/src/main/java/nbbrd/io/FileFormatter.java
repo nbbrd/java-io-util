@@ -21,8 +21,9 @@ import java.util.zip.GZIPOutputStream;
 public interface FileFormatter<T> {
 
     default void formatFile(@NonNull T value, @NonNull File target) throws IOException {
-        LegacyFiles.checkTarget(target);
-        formatStream(value, () -> LegacyFiles.newOutputStream(target));
+        try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
+            formatStream(value, resource);
+        }
     }
 
     default void formatPath(@NonNull T value, @NonNull Path target) throws IOException {
@@ -35,7 +36,7 @@ public interface FileFormatter<T> {
     }
 
     default void formatStream(@NonNull T value, @NonNull IOSupplier<? extends OutputStream> target) throws IOException {
-        try (OutputStream resource = LegacyFiles.checkResource(target.getWithIO(), "Missing OutputStream")) {
+        try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
             formatStream(value, resource);
         }
     }
