@@ -30,7 +30,9 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.*;
 import java.nio.charset.Charset;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 /**
@@ -222,8 +224,27 @@ public class Sax {
     }
 
     private static boolean isEOF(SAXParseException ex) {
-        return ex.getMessage() != null && ex.getMessage().contains("end of file");
+        return ex.getMessage() != null && isEOFMessage(ex.getMessage());
     }
+
+    private static boolean isEOFMessage(String message) {
+        return EOF_MESSAGES.computeIfAbsent(Locale.getDefault(), Sax::loadEOFMessage).equals(message);
+    }
+
+    private static String loadEOFMessage(Locale locale) {
+        try {
+            XMLReader reader = DEFAULT_FACTORY.newSAXParser().getXMLReader();
+            reader.setErrorHandler(new DefaultHandler());
+            reader.parse(new InputSource(new StringReader("")));
+        } catch (IOException | SAXException | ParserConfigurationException e) {
+            if (e instanceof SAXParseException) {
+                return e.getMessage();
+            }
+        }
+        return "Premature end of file.";
+    }
+
+    private static final ConcurrentHashMap<Locale, String> EOF_MESSAGES = new ConcurrentHashMap<>();
 
     private static File getFileOrNull(SAXParseException ex) {
         String result = ex.getSystemId();

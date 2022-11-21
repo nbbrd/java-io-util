@@ -28,7 +28,9 @@ import javax.xml.stream.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Philippe Charles
@@ -581,8 +583,31 @@ public class Stax {
     }
 
     private static boolean isEOF(XMLStreamException ex) {
-        return ex.getLocation() != null && ex.getMessage() != null && ex.getMessage().contains("end of file");
+        return ex.getLocation() != null && isEOFMessage(ex.getMessage());
     }
+
+
+    private static boolean isEOFMessage(String message) {
+        return EOF_MESSAGES.computeIfAbsent(Locale.getDefault(), Stax::loadEOFMessage).equals(message);
+    }
+
+    private static String loadEOFMessage(Locale locale) {
+        try {
+            XMLStreamReader reader = XMLInputFactory.newFactory().createXMLStreamReader(new StringReader(""));
+            try {
+                while (reader.hasNext()) {
+                    reader.next();
+                }
+            } finally {
+                reader.close();
+            }
+        } catch (XMLStreamException e) {
+            return e.getMessage();
+        }
+        return "Premature end of file.";
+    }
+
+    private static final ConcurrentHashMap<Locale, String> EOF_MESSAGES = new ConcurrentHashMap<>();
 
     private static File getFileOrNull(XMLStreamException ex) {
         String result = ex.getLocation().getSystemId();

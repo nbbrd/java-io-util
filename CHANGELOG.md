@@ -11,6 +11,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Add convenient method to parse lines from text source
 
+### Fixed
+
+- Fix EOF detection on XML files
+
 ## [0.0.20] - 2022-10-28
 
 ### Added
