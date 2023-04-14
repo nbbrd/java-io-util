@@ -35,7 +35,7 @@ public class NumberFormatsTest {
     @Test
     public void testParseAll() {
         assertThatNullPointerException().isThrownBy(() -> parseAll(null, ""));
-        assertThatNullPointerException().isThrownBy(() -> parseAll(NumberFormat.getInstance(), null));
+        assertThatNullPointerException().isThrownBy(() -> parseAll(NumberFormat.getInstance(Locale.ROOT), null));
 
         assertThat(NumberFormat.getInstance(Locale.ROOT))
                 .satisfies(format -> {

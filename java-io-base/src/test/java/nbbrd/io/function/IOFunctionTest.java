@@ -23,6 +23,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Locale;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.*;
@@ -32,7 +33,7 @@ import static org.assertj.core.api.Assertions.*;
  */
 public class IOFunctionTest {
 
-    private final IOFunction<String, String> toUpperCase = String::toUpperCase;
+    private final IOFunction<String, String> toUpperCase = s -> s.toUpperCase(Locale.ROOT);
     private final IOFunction<Object, String> toString = Object::toString;
     private final IOFunction<Object, Object> toError1 = throwing(Error1::new);
     private final IOFunction<Object, Object> toError2 = throwing(Error2::new);
@@ -42,7 +43,7 @@ public class IOFunctionTest {
     public void testFunctionCompose() throws IOException {
         assertThatNullPointerException().isThrownBy(() -> toUpperCase.compose(null));
 
-        assertThat(toUpperCase.compose(toString).applyWithIO(Byte.class)).isEqualTo(Byte.class.toString().toUpperCase());
+        assertThat(toUpperCase.compose(toString).applyWithIO(Byte.class)).isEqualTo(Byte.class.toString().toUpperCase(Locale.ROOT));
         assertThatThrownBy(() -> toError1.compose(toString).applyWithIO(Byte.class)).isInstanceOf(Error1.class);
         assertThatThrownBy(() -> toString.compose(toError2).applyWithIO(Byte.class)).isInstanceOf(Error2.class);
         assertThatThrownBy(() -> toError1.compose(toError2).applyWithIO(Byte.class)).isInstanceOf(Error2.class);
@@ -53,7 +54,7 @@ public class IOFunctionTest {
     public void testFunctionAndThen() throws IOException {
         assertThatNullPointerException().isThrownBy(() -> toUpperCase.andThen(null));
 
-        assertThat(toString.andThen(toUpperCase).applyWithIO(Byte.class)).isEqualTo(Byte.class.toString().toUpperCase());
+        assertThat(toString.andThen(toUpperCase).applyWithIO(Byte.class)).isEqualTo(Byte.class.toString().toUpperCase(Locale.ROOT));
         assertThatThrownBy(() -> toError1.andThen(toString).applyWithIO(Byte.class)).isInstanceOf(Error1.class);
         assertThatThrownBy(() -> toString.andThen(toError2).applyWithIO(Byte.class)).isInstanceOf(Error2.class);
         assertThatThrownBy(() -> toError1.andThen(toError2).applyWithIO(Byte.class)).isInstanceOf(Error1.class);

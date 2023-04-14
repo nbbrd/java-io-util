@@ -8,6 +8,7 @@ import java.io.Writer;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static _test.io.text.TextFormatterAssertions.assertTextFormatterCompliance;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -82,7 +83,7 @@ public class TextFormatterTest {
     }
 
     private static void toUpperCase(String value, Writer resource) throws IOException {
-        resource.write(value.toUpperCase());
+        resource.write(value.toUpperCase(Locale.ROOT));
     }
 
     private static void fail(String value, Writer resource) throws IOException {

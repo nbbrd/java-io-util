@@ -208,7 +208,7 @@ public class Sax {
         try {
             reader.setFeature(feature, false);
         } catch (SAXNotRecognizedException | SAXNotSupportedException ex) {
-            log.log(Level.FINE, ex, () -> String.format("Failed to disable feature '%s'", feature));
+            log.log(Level.FINE, ex, () -> String.format(Locale.ROOT, "Failed to disable feature '%s'", feature));
         }
     }
 

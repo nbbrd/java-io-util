@@ -131,7 +131,7 @@ public class Stax {
 
         @NonNull
         @lombok.Builder.Default
-        private final IOSupplier<? extends XMLInputFactory> factory = XMLInputFactory::newFactory;
+        private final IOSupplier<? extends XMLInputFactory> factory = XMLInputFactory::newInstance;
 
         @lombok.Getter
         @lombok.Builder.Default
@@ -231,7 +231,7 @@ public class Stax {
 
         @NonNull
         @lombok.Builder.Default
-        private final IOSupplier<? extends XMLInputFactory> factory = XMLInputFactory::newFactory;
+        private final IOSupplier<? extends XMLInputFactory> factory = XMLInputFactory::newInstance;
 
         @lombok.Getter
         @lombok.Builder.Default
@@ -593,7 +593,7 @@ public class Stax {
 
     private static String loadEOFMessage(Locale locale) {
         try {
-            XMLStreamReader reader = XMLInputFactory.newFactory().createXMLStreamReader(new StringReader(""));
+            XMLStreamReader reader = XMLInputFactory.newInstance().createXMLStreamReader(new StringReader(""));
             try {
                 while (reader.hasNext()) {
                     reader.next();

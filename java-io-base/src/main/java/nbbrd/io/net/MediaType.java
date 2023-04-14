@@ -48,13 +48,13 @@ public class MediaType {
         if (subtypeIndex == -1) {
             throw new IllegalArgumentException("Missing subtype");
         }
-        String type = input.substring(0, subtypeIndex).toLowerCase();
+        String type = input.substring(0, subtypeIndex).toLowerCase(Locale.ROOT);
         if (isEmptyOrTrimable(type)) {
             throw new IllegalArgumentException("Type is empty or trimable");
         }
 
         int paramsIndex = input.indexOf(';', subtypeIndex);
-        String subType = input.substring(subtypeIndex + 1, paramsIndex != -1 ? paramsIndex : input.length()).toLowerCase();
+        String subType = input.substring(subtypeIndex + 1, paramsIndex != -1 ? paramsIndex : input.length()).toLowerCase(Locale.ROOT);
         if (isEmptyOrTrimable(subType)) {
             throw new IllegalArgumentException("Subtype is empty or trimable");
         }

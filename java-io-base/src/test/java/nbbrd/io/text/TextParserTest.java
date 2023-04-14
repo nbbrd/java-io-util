@@ -10,6 +10,7 @@ import java.io.Reader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static _test.io.text.TextParserAssertions.assertTextParserCompliance;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -28,7 +29,7 @@ public class TextParserTest {
     public void testCompliance(@TempDir Path temp) throws IOException {
         ResourceId resourceId = new ResourceId(TextParserTest.class, "hello.txt");
         assertTextParserCompliance(temp, onParsingReader(TextParserTest::toUpperCase), "WORLD", encoding -> resourceId, singleton(UTF_8), true);
-        assertTextParserCompliance(temp, onParsingLines(lines -> lines.map(String::toUpperCase).collect(joining())), "WORLD", encoding -> resourceId, singleton(UTF_8), true);
+        assertTextParserCompliance(temp, onParsingLines(lines -> lines.map(s -> s.toUpperCase(Locale.ROOT)).collect(joining())), "WORLD", encoding -> resourceId, singleton(UTF_8), true);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -77,7 +78,7 @@ public class TextParserTest {
                 .isThrownBy(() -> onParsingLines(o -> null).parseChars(""))
                 .withMessageContaining("result");
 
-        assertThat(onParsingLines(lines -> lines.map(String::toUpperCase).collect(toList())).parseChars("hello\nworld"))
+        assertThat(onParsingLines(lines -> lines.map(s -> s.toUpperCase(Locale.ROOT)).collect(toList())).parseChars("hello\nworld"))
                 .containsExactly("HELLO", "WORLD");
 
         assertThat(onParsingLines((AutoCloseable lower) -> (Iterable<String>) singletonList("upper")).parseChars(""))
@@ -116,7 +117,7 @@ public class TextParserTest {
     }
 
     private static String toUpperCase(Reader resource) throws IOException {
-        return InternalTextResource.copyToString(resource).toUpperCase();
+        return InternalTextResource.copyToString(resource).toUpperCase(Locale.ROOT);
     }
 
     private static String fail(Reader resource) throws IOException {

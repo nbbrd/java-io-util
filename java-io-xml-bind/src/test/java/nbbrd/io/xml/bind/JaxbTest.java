@@ -61,7 +61,7 @@ public class JaxbTest {
 
     private final IOSupplier<Unmarshaller> validUnmarshaller = () -> Jaxb.createUnmarshaller(Person.class);
     private final IOSupplier<Marshaller> validMarshaller = () -> Jaxb.createMarshaller(Person.class);
-    private final IOSupplier<XMLInputFactory> validXxeFactory = XMLInputFactory::newFactory;
+    private final IOSupplier<XMLInputFactory> validXxeFactory = XMLInputFactory::newInstance;
 
     @Test
     @SuppressWarnings("null")

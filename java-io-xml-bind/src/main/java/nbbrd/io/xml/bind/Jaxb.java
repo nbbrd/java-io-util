@@ -154,7 +154,7 @@ public class Jaxb {
         }
 
         private static XMLInputFactory getStaxFactory() {
-            XMLInputFactory result = XMLInputFactory.newFactory();
+            XMLInputFactory result = XMLInputFactory.newInstance();
             Stax.preventXXE(result);
             return result;
         }
