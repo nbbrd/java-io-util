@@ -18,15 +18,19 @@ package nbbrd.io.zip;
 
 import nbbrd.io.Resource;
 import nbbrd.io.function.IOPredicate;
+import nbbrd.io.text.TextResource;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -53,10 +57,10 @@ public class ZipTest {
             assertThatNullPointerException().isThrownBy(() -> loader.load(null));
             assertThatIOException().isThrownBy(() -> loader.load("xyz"));
             try (InputStream stream = loader.load("hello.txt")) {
-                assertThat(new BufferedReader(new InputStreamReader(stream)).lines()).containsExactly("hello");
+                assertThat(TextResource.newBufferedReader(stream, UTF_8.newDecoder()).lines()).containsExactly("hello");
             }
             try (InputStream stream = loader.load("folder1/world.txt")) {
-                assertThat(new BufferedReader(new InputStreamReader(stream)).lines()).containsExactly("world");
+                assertThat(TextResource.newBufferedReader(stream, UTF_8.newDecoder()).lines()).containsExactly("world");
             }
         }
 
@@ -78,10 +82,10 @@ public class ZipTest {
                 assertThatNullPointerException().isThrownBy(() -> loader.load(null));
                 assertThatIOException().isThrownBy(() -> loader.load("xyz"));
                 try (InputStream stream = loader.load("hello.txt")) {
-                    assertThat(new BufferedReader(new InputStreamReader(stream)).lines()).containsExactly("hello");
+                    assertThat(TextResource.newBufferedReader(stream, UTF_8.newDecoder()).lines()).containsExactly("hello");
                 }
                 try (InputStream stream = loader.load("folder1/world.txt")) {
-                    assertThat(new BufferedReader(new InputStreamReader(stream)).lines()).containsExactly("world");
+                    assertThat(TextResource.newBufferedReader(stream, UTF_8.newDecoder()).lines()).containsExactly("world");
                 }
             }
         }
@@ -92,7 +96,7 @@ public class ZipTest {
                 assertThatIOException().isThrownBy(() -> loader.load("xyz"));
                 assertThatIOException().isThrownBy(() -> loader.load("hello.txt"));
                 try (InputStream stream = loader.load("folder1/world.txt")) {
-                    assertThat(new BufferedReader(new InputStreamReader(stream)).lines()).containsExactly("world");
+                    assertThat(TextResource.newBufferedReader(stream, UTF_8.newDecoder()).lines()).containsExactly("world");
                 }
             }
         }

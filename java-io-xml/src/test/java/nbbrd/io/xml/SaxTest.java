@@ -66,32 +66,37 @@ public class SaxTest {
 
     @Test
     public void testXXE() throws IOException {
-        Sax.Parser<Person> p = Sax.Parser.of(PersonHandler.INSTANCE, PersonHandler.INSTANCE::build);
+        PersonHandler handler = new PersonHandler();
+        Sax.Parser<Person> p = Sax.Parser.of(handler, handler::build);
         XmlParserAssertions.testXXE(wire, p, p.withIgnoreXXE(true));
     }
 
     @Test
     @SuppressWarnings("null")
     public void testParserOf(@TempDir Path temp) throws Exception {
-        assertThatNullPointerException().isThrownBy(() -> Sax.Parser.of(null, PersonHandler.INSTANCE::build));
-        assertThatNullPointerException().isThrownBy(() -> Sax.Parser.of(PersonHandler.INSTANCE, null));
+        PersonHandler handler = new PersonHandler();
 
-        assertXmlParserCompliance(temp, Sax.Parser.of(PersonHandler.INSTANCE, PersonHandler.INSTANCE::build));
+        assertThatNullPointerException().isThrownBy(() -> Sax.Parser.of(null, handler::build));
+        assertThatNullPointerException().isThrownBy(() -> Sax.Parser.of(handler, null));
+
+        assertXmlParserCompliance(temp, Sax.Parser.of(handler, handler::build));
     }
 
     @Test
     @SuppressWarnings("null")
     public void testParserBuilder(@TempDir Path temp) throws Exception {
+        PersonHandler handler = new PersonHandler();
+
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.builder().build());
         assertThatNullPointerException().isThrownBy(() -> Sax.Parser.builder().contentHandler(null).build());
-        assertThatNullPointerException().isThrownBy(() -> Sax.Parser.builder().contentHandler(PersonHandler.INSTANCE).after(null).build());
+        assertThatNullPointerException().isThrownBy(() -> Sax.Parser.builder().contentHandler(handler).after(null).build());
 
         for (boolean ignoreXXE : BOOLS) {
             assertXmlParserCompliance(temp, Sax.Parser.<Person>builder()
                             .factory(validFactory)
-                            .contentHandler(PersonHandler.INSTANCE)
-                            .before(PersonHandler.INSTANCE::clear)
-                            .after(PersonHandler.INSTANCE::build)
+                            .contentHandler(handler)
+                            .before(handler::clear)
+                            .after(handler::build)
                             .ignoreXXE(ignoreXXE)
                             .build()
             );
@@ -101,7 +106,9 @@ public class SaxTest {
     @Test
     @SuppressWarnings("null")
     public void testParserWither() {
-        Sax.Parser<Person> parser = Sax.Parser.of(PersonHandler.INSTANCE, PersonHandler.INSTANCE::build);
+        PersonHandler handler = new PersonHandler();
+
+        Sax.Parser<Person> parser = Sax.Parser.of(handler, handler::build);
 
         assertThatNullPointerException()
                 .isThrownBy(() -> parser.withAfter(null));
@@ -127,6 +134,8 @@ public class SaxTest {
 
     @Test
     public void testParserSafety() throws IOException {
+        PersonHandler handler = new PersonHandler();
+
         List<Meta<IOSupplier<XMLReader>>> factories = Meta.<IOSupplier<XMLReader>>builder()
                 .valid("Ok", validFactory)
                 .invalid("Null", IOSupplier.of(null))
@@ -136,7 +145,7 @@ public class SaxTest {
                 .build();
 
         List<Meta<ContentHandler>> handlers = Meta.<ContentHandler>builder()
-                .valid("Ok", PersonHandler.INSTANCE)
+                .valid("Ok", handler)
                 .invalid("Ko", FailingHandler.INSTANCE)
                 .build();
 
@@ -154,7 +163,7 @@ public class SaxTest {
 
         for (boolean xxe : BOOLS) {
             for (Meta<IOSupplier<XMLReader>> factory : factories) {
-                for (Meta<ContentHandler> handler : handlers) {
+                for (Meta<ContentHandler> content : handlers) {
                     for (Meta<IORunnable> before : befores) {
                         for (Meta<IOSupplier<Person>> after : afters) {
 
@@ -162,12 +171,12 @@ public class SaxTest {
                                     .<Person>builder()
                                     .ignoreXXE(!xxe)
                                     .factory(factory.getTarget())
-                                    .contentHandler(handler.getTarget())
+                                    .contentHandler(content.getTarget())
                                     .before(before.getTarget())
                                     .after(after.getTarget())
                                     .build();
 
-                            assertParserSafety(parser, Meta.lookupExpectedException(factory, handler, before, after));
+                            assertParserSafety(parser, Meta.lookupExpectedException(factory, content, before, after));
                         }
                     }
                 }
@@ -176,8 +185,6 @@ public class SaxTest {
     }
 
     private static final class PersonHandler extends DefaultHandler {
-
-        private static final PersonHandler INSTANCE = new PersonHandler();
 
         enum Tag {
             UNKNOWN, FIRST, LAST;

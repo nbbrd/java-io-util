@@ -1,10 +1,14 @@
 package nbbrd.io;
 
 import _test.io.ResourceId;
+import internal.io.text.InternalTextResource;
+import nbbrd.io.text.TextResource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
 import java.nio.file.Path;
 
 import static _test.io.FileParserAssertions.assertFileParserCompliance;
@@ -45,14 +49,8 @@ public class FileParserTest {
     private final FileParser<String> stringParser = FileParser.onParsingStream(FileParserTest::parseToString);
 
     private static String parseToString(InputStream resource) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(resource, UTF_8))) {
-            try (StringWriter writer = new StringWriter()) {
-                int c;
-                while ((c = reader.read()) != -1) {
-                    writer.write(c);
-                }
-                return writer.toString();
-            }
+        try (Reader reader = TextResource.newBufferedReader(resource, UTF_8.newDecoder())) {
+            return InternalTextResource.copyToString(reader);
         }
     }
 }

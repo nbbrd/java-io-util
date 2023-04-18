@@ -1,10 +1,11 @@
 package nbbrd.io.sys;
 
+import internal.io.text.InternalTextResource;
+import nbbrd.io.text.TextResource;
+
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.charset.Charset;
-import java.util.stream.Collectors;
 
 public final class EndOfProcessException extends IOException {
 
@@ -25,8 +26,8 @@ public final class EndOfProcessException extends IOException {
     }
 
     private static String readErrorStream(Process process) throws IOException {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream(), Charset.defaultCharset()))) {
-            return reader.lines().collect(Collectors.joining(System.lineSeparator()));
+        try (BufferedReader reader = TextResource.newBufferedReader(process.getErrorStream(), Charset.defaultCharset().newDecoder())) {
+            return InternalTextResource.copyByLineToString(reader, System.lineSeparator());
         }
     }
 }

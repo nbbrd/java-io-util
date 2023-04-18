@@ -1,7 +1,5 @@
 package _test.io;
 
-import com.google.common.jimfs.Configuration;
-import com.google.common.jimfs.Jimfs;
 import lombok.NonNull;
 import nbbrd.io.FileParser;
 import nbbrd.io.function.IOSupplier;
@@ -11,13 +9,11 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.AccessDeniedException;
-import java.nio.file.FileSystem;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.UUID;
 
 import static _test.io.Util.*;
-import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.*;
 
 @SuppressWarnings("ConstantConditions")
@@ -98,11 +94,10 @@ public final class FileParserAssertions {
                 .isInstanceOf(AccessDeniedException.class)
                 .withMessageContaining(dir.toString());
 
-        try (FileSystem inMemoryFS = Jimfs.newFileSystem(Configuration.unix())) {
-            for (Path target : asList(expected.copyTo(temp), expected.copyTo(inMemoryFS.getPath("/")))) {
-                assertThat(p.parsePath(target))
-                        .isEqualTo(value);
-            }
+        {
+            Path target = expected.copyTo(temp);
+            assertThat(p.parsePath(target))
+                    .isEqualTo(value);
         }
     }
 

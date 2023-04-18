@@ -17,6 +17,7 @@
 package nbbrd.io.win;
 
 import nbbrd.io.sys.OS;
+import nbbrd.io.text.TextResource;
 import nbbrd.io.win.RegWrapper.RegType;
 import nbbrd.io.win.RegWrapper.RegValue;
 import org.assertj.core.api.Assumptions;
@@ -25,7 +26,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -112,6 +113,7 @@ public class RegWrapperTest {
     }
 
     static BufferedReader open(String resourceName) {
-        return new BufferedReader(new InputStreamReader(RegWrapperTest.class.getResourceAsStream(resourceName)));
+        return TextResource.getResourceAsBufferedReader(RegWrapperTest.class, resourceName, Charset.defaultCharset())
+                .orElseThrow(RuntimeException::new);
     }
 }

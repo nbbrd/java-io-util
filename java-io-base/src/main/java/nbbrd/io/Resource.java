@@ -83,8 +83,8 @@ public class Resource {
     }
 
     @NonNull
-    public Optional<InputStream> getResourceAsStream(@NonNull Class<?> type, @NonNull String name) {
-        return Optional.ofNullable(type.getResourceAsStream(name));
+    public Optional<InputStream> getResourceAsStream(@NonNull Class<?> anchor, @NonNull String name) {
+        return Optional.ofNullable(anchor.getResourceAsStream(name));
     }
 
     @SuppressWarnings("ThrowableResultIgnored")

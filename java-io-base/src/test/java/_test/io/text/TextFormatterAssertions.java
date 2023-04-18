@@ -1,8 +1,6 @@
 package _test.io.text;
 
 import _test.io.CountingIOSupplier;
-import com.google.common.jimfs.Configuration;
-import com.google.common.jimfs.Jimfs;
 import lombok.NonNull;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.text.TextFormatter;
@@ -10,7 +8,6 @@ import nbbrd.io.text.TextFormatter;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.AccessDeniedException;
-import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -18,7 +15,6 @@ import java.util.function.Function;
 
 import static _test.io.Util.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.*;
 
 @SuppressWarnings("ConstantConditions")
@@ -140,17 +136,14 @@ public final class TextFormatterAssertions {
                 .isInstanceOf(AccessDeniedException.class)
                 .withMessageContaining(dir.toString());
 
-        try (FileSystem inMemoryFS = Jimfs.newFileSystem(Configuration.unix())) {
-            for (Charset encoding : encodings) {
-                for (Path target : asList(newFile(temp), newFile(inMemoryFS.getPath("/")))) {
-                    p.formatPath(value, target, encoding);
-                    assertThat(target)
-                            .exists().isReadable()
-                            .usingCharset(encoding)
-                            .hasContent(expected.apply(encoding));
-                    Files.delete(target);
-                }
-            }
+        for (Charset encoding : encodings) {
+            Path target = newFile(temp);
+            p.formatPath(value, target, encoding);
+            assertThat(target)
+                    .exists().isReadable()
+                    .usingCharset(encoding)
+                    .hasContent(expected.apply(encoding));
+            Files.delete(target);
         }
     }
 

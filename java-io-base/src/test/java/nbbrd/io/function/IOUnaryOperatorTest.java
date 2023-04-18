@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.util.Locale;
 import java.util.function.Supplier;
 
 import static org.assertj.core.api.Assertions.*;
@@ -31,7 +32,7 @@ import static org.assertj.core.api.Assertions.*;
  */
 public class IOUnaryOperatorTest {
 
-    private final IOUnaryOperator<String> toUpperCase = String::toUpperCase;
+    private final IOUnaryOperator<String> toUpperCase = s -> s.toUpperCase(Locale.ROOT);
     private final IOUnaryOperator<Object> toError1 = throwing(Error1::new);
 
     @Test

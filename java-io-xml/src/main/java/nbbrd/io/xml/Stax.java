@@ -28,7 +28,9 @@ import javax.xml.stream.*;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Philippe Charles
@@ -129,7 +131,7 @@ public class Stax {
 
         @NonNull
         @lombok.Builder.Default
-        private final IOSupplier<? extends XMLInputFactory> factory = XMLInputFactory::newFactory;
+        private final IOSupplier<? extends XMLInputFactory> factory = XMLInputFactory::newInstance;
 
         @lombok.Getter
         @lombok.Builder.Default
@@ -137,33 +139,31 @@ public class Stax {
 
         @Override
         public @NonNull T parseFile(@NonNull File source) throws IOException {
-            LegacyFiles.checkSource(source);
-            InputStream resource = LegacyFiles.newInputStream(source);
+            InputStream resource = LegacyFiles.openInputStream(source);
             return parse(o -> o.createXMLStreamReader(LegacyFiles.toSystemId(source), resource), resource);
         }
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            LegacyFiles.checkSource(source);
-            InputStream resource = LegacyFiles.newInputStream(source);
+            InputStream resource = LegacyFiles.openInputStream(source);
             return parse(o -> o.createXMLStreamReader(LegacyFiles.toSystemId(source), resource), resource);
         }
 
         @Override
         public @NonNull T parseReader(@NonNull IOSupplier<? extends Reader> source) throws IOException {
-            Reader resource = LegacyFiles.checkResource(source.getWithIO(), "Missing Reader");
+            Reader resource = LegacyFiles.openReader(source);
             return parse(o -> o.createXMLStreamReader(resource), resource);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source) throws IOException {
-            InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream");
+            InputStream resource = LegacyFiles.openInputStream(source);
             return parse(o -> o.createXMLStreamReader(resource), resource);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
-            InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream");
+            InputStream resource = LegacyFiles.openInputStream(source);
             return parse(o -> o.createXMLStreamReader(resource, encoding.name()), resource);
         }
 
@@ -231,7 +231,7 @@ public class Stax {
 
         @NonNull
         @lombok.Builder.Default
-        private final IOSupplier<? extends XMLInputFactory> factory = XMLInputFactory::newFactory;
+        private final IOSupplier<? extends XMLInputFactory> factory = XMLInputFactory::newInstance;
 
         @lombok.Getter
         @lombok.Builder.Default
@@ -239,33 +239,31 @@ public class Stax {
 
         @Override
         public @NonNull T parseFile(@NonNull File source) throws IOException {
-            LegacyFiles.checkSource(source);
-            InputStream resource = LegacyFiles.newInputStream(source);
+            InputStream resource = LegacyFiles.openInputStream(source);
             return parse(o -> o.createXMLEventReader(LegacyFiles.toSystemId(source), resource), resource);
         }
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            LegacyFiles.checkSource(source);
-            InputStream resource = LegacyFiles.newInputStream(source);
+            InputStream resource = LegacyFiles.openInputStream(source);
             return parse(o -> o.createXMLEventReader(LegacyFiles.toSystemId(source), resource), resource);
         }
 
         @Override
         public @NonNull T parseReader(@NonNull IOSupplier<? extends Reader> source) throws IOException {
-            Reader resource = LegacyFiles.checkResource(source.getWithIO(), "Missing Reader");
+            Reader resource = LegacyFiles.openReader(source);
             return parse(o -> o.createXMLEventReader(resource), resource);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source) throws IOException {
-            InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream");
+            InputStream resource = LegacyFiles.openInputStream(source);
             return parse(o -> o.createXMLEventReader(resource), resource);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
-            InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream");
+            InputStream resource = LegacyFiles.openInputStream(source);
             return parse(o -> o.createXMLEventReader(resource, encoding.name()), resource);
         }
 
@@ -353,22 +351,21 @@ public class Stax {
 
         @Override
         public void formatFile(@NonNull T value, @NonNull File target) throws IOException {
-            LegacyFiles.checkTarget(target);
-            try (OutputStream resource = LegacyFiles.newOutputStream(target)) {
+            try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
                 format(value, o -> o.createXMLStreamWriter(resource, getDefaultEncoding().name()), getDefaultEncoding());
             }
         }
 
         @Override
         public void formatWriter(@NonNull T value, @NonNull IOSupplier<? extends Writer> target) throws IOException {
-            try (Writer resource = LegacyFiles.checkResource(target.getWithIO(), "Missing Writer")) {
+            try (Writer resource = LegacyFiles.openWriter(target)) {
                 format(value, o -> o.createXMLStreamWriter(resource), getDefaultEncoding());
             }
         }
 
         @Override
         public void formatStream(@NonNull T value, @NonNull IOSupplier<? extends OutputStream> target) throws IOException {
-            try (OutputStream resource = LegacyFiles.checkResource(target.getWithIO(), "Missing OutputStream")) {
+            try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
                 format(value, o -> o.createXMLStreamWriter(resource, getDefaultEncoding().name()), getDefaultEncoding());
             }
         }
@@ -454,22 +451,21 @@ public class Stax {
 
         @Override
         public void formatFile(@NonNull T value, @NonNull File target) throws IOException {
-            LegacyFiles.checkTarget(target);
-            try (OutputStream resource = LegacyFiles.newOutputStream(target)) {
+            try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
                 format(value, o -> o.createXMLEventWriter(resource, getDefaultEncoding().name()), getDefaultEncoding());
             }
         }
 
         @Override
         public void formatWriter(@NonNull T value, @NonNull IOSupplier<? extends Writer> target) throws IOException {
-            try (Writer resource = LegacyFiles.checkResource(target.getWithIO(), "Missing Writer")) {
+            try (Writer resource = LegacyFiles.openWriter(target)) {
                 format(value, o -> o.createXMLEventWriter(resource), getDefaultEncoding());
             }
         }
 
         @Override
         public void formatStream(@NonNull T value, @NonNull IOSupplier<? extends OutputStream> target) throws IOException {
-            try (OutputStream resource = LegacyFiles.checkResource(target.getWithIO(), "Missing OutputStream")) {
+            try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
                 format(value, o -> o.createXMLEventWriter(resource, getDefaultEncoding().name()), getDefaultEncoding());
             }
         }
@@ -587,8 +583,31 @@ public class Stax {
     }
 
     private static boolean isEOF(XMLStreamException ex) {
-        return ex.getLocation() != null && ex.getMessage() != null && ex.getMessage().contains("end of file");
+        return ex.getLocation() != null && isEOFMessage(ex.getMessage());
     }
+
+
+    private static boolean isEOFMessage(String message) {
+        return EOF_MESSAGES.computeIfAbsent(Locale.getDefault(), Stax::loadEOFMessage).equals(message);
+    }
+
+    private static String loadEOFMessage(Locale locale) {
+        try {
+            XMLStreamReader reader = XMLInputFactory.newInstance().createXMLStreamReader(new StringReader(""));
+            try {
+                while (reader.hasNext()) {
+                    reader.next();
+                }
+            } finally {
+                reader.close();
+            }
+        } catch (XMLStreamException e) {
+            return e.getMessage();
+        }
+        return "Premature end of file.";
+    }
+
+    private static final ConcurrentHashMap<Locale, String> EOF_MESSAGES = new ConcurrentHashMap<>();
 
     private static File getFileOrNull(XMLStreamException ex) {
         String result = ex.getLocation().getSystemId();

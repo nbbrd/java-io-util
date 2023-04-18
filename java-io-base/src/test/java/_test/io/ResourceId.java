@@ -1,5 +1,6 @@
 package _test.io;
 
+import internal.io.text.InternalTextResource;
 import lombok.NonNull;
 import nbbrd.io.Resource;
 import nbbrd.io.text.TextResource;
@@ -7,7 +8,7 @@ import nbbrd.io.text.TextResource;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.StringWriter;
+import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -39,27 +40,14 @@ public class ResourceId {
     }
 
     public String copyToString(Charset encoding) throws IOException {
-        try (StringWriter writer = new StringWriter()) {
-            try (BufferedReader reader = open(encoding)) {
-                int c;
-                while ((c = reader.read()) != -1) {
-                    writer.write(c);
-                }
-                return writer.toString();
-            }
+        try (Reader reader = open(encoding)) {
+            return InternalTextResource.copyToString(reader);
         }
     }
 
     public String copyByLineToString(Charset encoding, String separator) throws IOException {
-        try (StringWriter writer = new StringWriter()) {
-            try (BufferedReader reader = open(encoding)) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    writer.write(line);
-                    writer.write(separator);
-                }
-                return writer.toString();
-            }
+        try (Reader reader = open(encoding)) {
+            return InternalTextResource.copyByLineToString(reader, separator);
         }
     }
 }

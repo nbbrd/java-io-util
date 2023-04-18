@@ -5,7 +5,7 @@
     <parent>
         <groupId>com.github.nbbrd.java-io-util</groupId>
         <artifactId>java-io-parent</artifactId>
-        <version>0.0.20</version>
+        <version>0.0.21</version>
     </parent>
 
     <artifactId>java-io-base</artifactId>
@@ -44,11 +44,6 @@
             <artifactId>assertj-core</artifactId>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>com.google.jimfs</groupId>
-            <artifactId>jimfs</artifactId>
-            <scope>test</scope>
-        </dependency>        
     </dependencies>
 
     <build>

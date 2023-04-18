@@ -15,14 +15,14 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
-import java.util.function.Function;
 import java.util.zip.GZIPInputStream;
 
 public interface FileParser<T> {
 
     default @NonNull T parseFile(@NonNull File source) throws IOException {
-        LegacyFiles.checkSource(source);
-        return parseStream(() -> LegacyFiles.newInputStream(source));
+        try (InputStream resource = LegacyFiles.openInputStream(source)) {
+            return parseStream(resource);
+        }
     }
 
     default @NonNull T parsePath(@NonNull Path source) throws IOException {
@@ -33,11 +33,13 @@ public interface FileParser<T> {
     }
 
     default @NonNull T parseResource(@NonNull Class<?> type, @NonNull String name) throws IOException {
-        return parseStream(() -> LegacyFiles.checkResource(type.getResourceAsStream(name), "Missing resource '" + name + "' of '" + type.getName() + "'"));
+        try (InputStream resource = LegacyFiles.openResource(type, name)) {
+            return parseStream(resource);
+        }
     }
 
     default @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source) throws IOException {
-        try (InputStream resource = LegacyFiles.checkResource(source.getWithIO(), "Missing InputStream")) {
+        try (InputStream resource = LegacyFiles.openInputStream(source)) {
             return parseStream(resource);
         }
     }

@@ -7,6 +7,16 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.0.21] - 2023-04-18
+
+### Added
+
+- Add convenient method to parse lines from text source
+
+### Fixed
+
+- Fix EOF detection on XML files
+
 ## [0.0.20] - 2022-10-28
 
 ### Added
@@ -186,7 +196,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Initial release
 
-[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.20...HEAD
+[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.21...HEAD
+[0.0.21]: https://github.com/nbbrd/java-io-util/compare/v0.0.20...v0.0.21
 [0.0.20]: https://github.com/nbbrd/java-io-util/compare/v0.0.19...v0.0.20
 [0.0.19]: https://github.com/nbbrd/java-io-util/compare/v0.0.18...v0.0.19
 [0.0.18]: https://github.com/nbbrd/java-io-util/compare/v0.0.17...v0.0.18

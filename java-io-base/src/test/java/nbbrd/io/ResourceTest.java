@@ -18,8 +18,6 @@ package nbbrd.io;
 
 import _test.io.Error1;
 import _test.io.Error2;
-import com.google.common.jimfs.Configuration;
-import com.google.common.jimfs.Jimfs;
 import nbbrd.io.function.IOConsumer;
 import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IORunnableTest;
@@ -32,9 +30,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import static org.assertj.core.api.Assertions.*;
 
@@ -51,9 +53,16 @@ public class ResourceTest {
         File ok = Files.createFile(temp.resolve("exampleFile")).toFile();
         assertThat(Resource.getFile(ok.toPath())).contains(ok);
 
-        try (FileSystem fs = Jimfs.newFileSystem(Configuration.unix())) {
-            Path ko = fs.getPath("/").resolve("hello");
-            Files.createFile(ko);
+        Path zipFile = temp.resolve("test.zip");
+        try (ZipOutputStream stream = new ZipOutputStream(Files.newOutputStream(zipFile))) {
+            ZipEntry entry = new ZipEntry("hello.txt");
+            stream.putNextEntry(entry);
+            stream.write("abc".getBytes(StandardCharsets.UTF_8));
+            stream.closeEntry();
+        }
+
+        try (FileSystem fs = FileSystems.newFileSystem(zipFile, (ClassLoader) null)) {
+            Path ko = fs.getPath("hello.txt");
             assertThat(Resource.getFile(ko)).isEmpty();
         }
     }

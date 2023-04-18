@@ -31,8 +31,9 @@ public interface TextFormatter<T> {
     }
 
     default void formatFile(@NonNull T value, @NonNull File target, @NonNull Charset encoding) throws IOException {
-        LegacyFiles.checkTarget(target);
-        formatStream(value, () -> LegacyFiles.newOutputStream(target), encoding);
+        try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
+            formatStream(value, resource, encoding);
+        }
     }
 
     default void formatPath(@NonNull T value, @NonNull Path target, @NonNull Charset encoding) throws IOException {
@@ -45,13 +46,13 @@ public interface TextFormatter<T> {
     }
 
     default void formatWriter(@NonNull T value, @NonNull IOSupplier<? extends Writer> target) throws IOException {
-        try (Writer resource = LegacyFiles.checkResource(target.getWithIO(), "Missing Writer")) {
+        try (Writer resource = LegacyFiles.openWriter(target)) {
             formatWriter(value, resource);
         }
     }
 
     default void formatStream(@NonNull T value, @NonNull IOSupplier<? extends OutputStream> target, @NonNull Charset encoding) throws IOException {
-        try (OutputStream resource = LegacyFiles.checkResource(target.getWithIO(), "Missing OutputStream")) {
+        try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
             formatStream(value, resource, encoding);
         }
     }

@@ -63,14 +63,14 @@ public class StaxTest {
             .options(WireMockConfiguration.options().dynamicPort())
             .build();
 
-    private final IOSupplier<XMLInputFactory> validInputFactory = XMLInputFactory::newFactory;
-    private final IOSupplier<XMLOutputFactory> validOutputFactory = XMLOutputFactory::newFactory;
+    private final IOSupplier<XMLInputFactory> validInputFactory = XMLInputFactory::newInstance;
+    private final IOSupplier<XMLOutputFactory> validOutputFactory = XMLOutputFactory::newInstance;
 
     @Test
     @SuppressWarnings("null")
     public void testPreventXXE() {
         assertThatNullPointerException().isThrownBy(() -> Stax.preventXXE(null));
-        assertThatCode(() -> Stax.preventXXE(XMLInputFactory.newFactory())).doesNotThrowAnyException();
+        assertThatCode(() -> Stax.preventXXE(XMLInputFactory.newInstance())).doesNotThrowAnyException();
     }
 
     @Test
@@ -102,7 +102,7 @@ public class StaxTest {
         Stax.StreamParser<CloseablePerson> x = Stax.StreamParser
                 .<CloseablePerson>builder()
                 .handler(CloseablePerson::new)
-                .factory(() -> new ForwardingXMLInputFactory(XMLInputFactory.newFactory()).onStreamReader(reader -> new ForwardingXMLStreamReader(reader).onClose(() -> readerClosed.set(true))))
+                .factory(() -> new ForwardingXMLInputFactory(XMLInputFactory.newInstance()).onStreamReader(reader -> new ForwardingXMLStreamReader(reader).onClose(() -> readerClosed.set(true))))
                 .build();
 
         Charset encoding = StandardCharsets.UTF_8;
