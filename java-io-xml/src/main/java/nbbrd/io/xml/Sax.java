@@ -233,15 +233,19 @@ public class Sax {
 
     private static String loadEOFMessage(Locale locale) {
         try {
-            XMLReader reader = DEFAULT_FACTORY.newSAXParser().getXMLReader();
-            reader.setErrorHandler(new DefaultHandler());
-            reader.parse(new InputSource(new StringReader("")));
+            parseEmptyContent(locale);
         } catch (IOException | SAXException | ParserConfigurationException e) {
             if (e instanceof SAXParseException) {
                 return e.getMessage();
             }
         }
         return "Premature end of file.";
+    }
+
+    private static void parseEmptyContent(Locale ignore) throws SAXException, ParserConfigurationException, IOException {
+        XMLReader reader = DEFAULT_FACTORY.newSAXParser().getXMLReader();
+        reader.setErrorHandler(new DefaultHandler());
+        reader.parse(new InputSource(new StringReader("")));
     }
 
     private static final ConcurrentHashMap<Locale, String> EOF_MESSAGES = new ConcurrentHashMap<>();

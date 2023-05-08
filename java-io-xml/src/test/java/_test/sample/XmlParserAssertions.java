@@ -27,6 +27,7 @@ import nbbrd.io.xml.Xml;
 
 import java.io.EOFException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
@@ -50,21 +51,36 @@ public final class XmlParserAssertions {
         ResourceId resourceId = new ResourceId(Person.class, "/nbbrd/io/xml/johndoe.xml");
 
         assertTextParserCompliance(temp, p, JOHN_DOE, encoding -> resourceId, singleton(UTF_8), false);
-
-        assertThatIOException()
-                .isThrownBy(() -> p.parseChars(CHARS_EMPTY))
-                .isInstanceOf(EOFException.class);
-
         assertFileParserCompliance(temp, p, JOHN_DOE, resourceId, false);
 
+        assertXmlParserComplianceWithEOF(p);
+
+        assertXmlParserComplianceWithEncodings(p);
+    }
+
+    private static void assertXmlParserComplianceWithEOF(Xml.Parser<Person> p) {
+        for (String truncatedSource : new String[]{CHARS_EMPTY, "\n"}) {
+            assertThatIOException()
+                    .isThrownBy(() -> p.parseChars(truncatedSource))
+                    .isInstanceOf(EOFException.class);
+        }
+//        assertThatIOException()
+//                .isThrownBy(() -> p.parseChars("<?xml version=\"1.0\" encoding=\"UTF-"))
+//                .isInstanceOf(EOFException.class);
+    }
+
+    private static void assertXmlParserComplianceWithEncodings(Xml.Parser<Person> p) throws IOException {
         for (Charset encoding : ENCODINGS) {
             assertThat(p.parseFile(Person.getFile(encoding)))
                     .isEqualTo(JOHN_DOE);
-        }
 
-        for (Charset encoding : ENCODINGS) {
             assertThat(p.parsePath(Person.getPath(encoding)))
                     .isEqualTo(JOHN_DOE);
+
+            try (InputStream stream = Person.getStream(encoding)) {
+                assertThat(p.parseStream(stream))
+                        .isEqualTo(JOHN_DOE);
+            }
         }
     }
 

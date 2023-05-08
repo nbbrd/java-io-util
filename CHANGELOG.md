@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix EOF detection on non-empty XML files
+
 ## [0.0.21] - 2023-04-18
 
 ### Added

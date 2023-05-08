@@ -104,10 +104,7 @@ public class XmlTest {
             if (isJohnDoe(xml)) {
                 return johnDoe;
             }
-            if (xml.equals("")) {
-                throw new EOFException();
-            }
-            throw new IOException();
+            throw new EOFException();
         }
 
         @Override

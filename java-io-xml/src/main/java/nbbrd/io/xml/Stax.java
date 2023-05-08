@@ -588,24 +588,36 @@ public class Stax {
 
 
     private static boolean isEOFMessage(String message) {
-        return EOF_MESSAGES.computeIfAbsent(Locale.getDefault(), Stax::loadEOFMessage).equals(message);
+        return message.contains(EOF_MESSAGES.computeIfAbsent(Locale.getDefault(), Stax::loadEOFMessage));
     }
 
     private static String loadEOFMessage(Locale locale) {
         try {
-            XMLStreamReader reader = XMLInputFactory.newInstance().createXMLStreamReader(new StringReader(""));
-            try {
-                while (reader.hasNext()) {
-                    reader.next();
-                }
-            } finally {
-                reader.close();
-            }
+            parseEmptyContent(locale);
         } catch (XMLStreamException e) {
-            return e.getMessage();
+            return extractEOFMessage(e);
         }
         return "Premature end of file.";
     }
+
+    private static void parseEmptyContent(Locale ignore) throws XMLStreamException {
+        XMLStreamReader reader = XMLInputFactory.newInstance().createXMLStreamReader(new StringReader(""));
+        try {
+            while (reader.hasNext()) {
+                reader.next();
+            }
+        } finally {
+            reader.close();
+        }
+    }
+
+    private static String extractEOFMessage(XMLStreamException e) {
+        String text = e.getMessage();
+        int index = text.indexOf(EOF_MESSAGE_PREFIX);
+        return index != -1 ? text.substring(index + EOF_MESSAGE_PREFIX.length()) : text;
+    }
+
+    private static final String EOF_MESSAGE_PREFIX = "Message: ";
 
     private static final ConcurrentHashMap<Locale, String> EOF_MESSAGES = new ConcurrentHashMap<>();
 
