@@ -72,6 +72,10 @@ public class Person {
         return FILES.get(encoding).toPath();
     }
 
+    public static InputStream getStream(Charset encoding) throws IOException {
+        return Files.newInputStream(FILES.get(encoding).toPath());
+    }
+
     public static String getString(Charset encoding, boolean formatted) {
         return formatted ? JOHN_DOE_FORMATTED_CHARS.get(encoding) : JOHN_DOE_CHARS.get(encoding);
     }

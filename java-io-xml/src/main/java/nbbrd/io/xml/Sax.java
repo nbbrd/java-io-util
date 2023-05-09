@@ -60,7 +60,7 @@ public class Sax {
         } catch (ParserConfigurationException ex) {
             throw wrapConfigException(ex);
         } catch (SAXException ex) {
-            throw toIOException(ex);
+            throw wrapSAXException(ex);
         }
     }
 
@@ -90,10 +90,7 @@ public class Sax {
     }
 
     public static @NonNull IOException toIOException(@NonNull SAXException ex) {
-        if (ex instanceof SAXParseException) {
-            return wrapParseException((SAXParseException) ex);
-        }
-        return WrappedIOException.wrap(ex);
+        return wrapSAXException(ex);
     }
 
     @lombok.With
@@ -151,47 +148,52 @@ public class Sax {
 
         @Override
         public @NonNull T parseFile(@NonNull File source) throws IOException {
-            return parse(newInputSource(LegacyFiles.checkSource(source)));
+            return doParse(newInputSource(LegacyFiles.checkSource(source)));
         }
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            return parse(newInputSource(LegacyFiles.checkSource(source), encoding));
+            return doParse(newInputSource(LegacyFiles.checkSource(source), encoding));
         }
 
         @Override
         public @NonNull T parseReader(@NonNull Reader resource) throws IOException {
-            return parse(new InputSource(resource));
+            return doParse(new InputSource(resource));
         }
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
-            return parse(new InputSource(resource));
+            return doParse(new InputSource(resource));
         }
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
             InputSource input = new InputSource(resource);
             input.setEncoding(encoding.name());
-            return parse(input);
+            return doParse(input);
         }
 
-        private T parse(InputSource input) throws IOException {
-            XMLReader engine = factory.getWithIO();
-            if (!ignoreXXE) {
-                preventXXE(engine);
-            }
-            engine.setContentHandler(contentHandler);
-            engine.setDTDHandler(dtdHandler);
-            engine.setEntityResolver(entityResolver);
-            engine.setErrorHandler(errorHandler);
+        private T doParse(InputSource input) throws IOException {
+            XMLReader engine = getEngine();
             before.runWithIO();
             try {
                 engine.parse(input);
             } catch (SAXException ex) {
-                throw toIOException(ex);
+                throw wrapSAXException(ex);
             }
             return after.getWithIO();
+        }
+
+        private XMLReader getEngine() throws IOException {
+            XMLReader result = factory.getWithIO();
+            if (!ignoreXXE) {
+                preventXXE(result);
+            }
+            result.setContentHandler(contentHandler);
+            result.setDTDHandler(dtdHandler);
+            result.setEntityResolver(entityResolver);
+            result.setErrorHandler(errorHandler);
+            return result;
         }
     }
 
@@ -212,46 +214,61 @@ public class Sax {
         }
     }
 
+    private static IOException wrapSAXException(SAXException ex) {
+        if (ex instanceof SAXParseException) {
+            return wrapParseException((SAXParseException) ex);
+        }
+        return WrappedIOException.wrap(ex);
+    }
+
     private static IOException wrapConfigException(ParserConfigurationException ex) {
         return WrappedIOException.wrap(ex);
     }
 
     private static IOException wrapParseException(SAXParseException ex) {
-        if (isEOF(ex)) {
+        if (SaxEOF.isEOF(ex)) {
             return new EOFException(Objects.toString(getFileOrNull(ex)));
         }
         return WrappedIOException.wrap(ex);
     }
 
-    private static boolean isEOF(SAXParseException ex) {
-        return ex.getMessage() != null && isEOFMessage(ex.getMessage());
-    }
-
-    private static boolean isEOFMessage(String message) {
-        return EOF_MESSAGES.computeIfAbsent(Locale.getDefault(), Sax::loadEOFMessage).equals(message);
-    }
-
-    private static String loadEOFMessage(Locale locale) {
-        try {
-            XMLReader reader = DEFAULT_FACTORY.newSAXParser().getXMLReader();
-            reader.setErrorHandler(new DefaultHandler());
-            reader.parse(new InputSource(new StringReader("")));
-        } catch (IOException | SAXException | ParserConfigurationException e) {
-            if (e instanceof SAXParseException) {
-                return e.getMessage();
-            }
-        }
-        return "Premature end of file.";
-    }
-
-    private static final ConcurrentHashMap<Locale, String> EOF_MESSAGES = new ConcurrentHashMap<>();
-
     private static File getFileOrNull(SAXParseException ex) {
-        String result = ex.getSystemId();
-        return result != null && result.startsWith("file:/") ? LegacyFiles.fromSystemId(result) : null;
+        String systemId = ex.getSystemId();
+        if (systemId == null) return null;
+        return LegacyFiles.fromSystemId(systemId);
     }
 
     private static final String SAX_FEATURES_EXTERNAL_GENERAL_ENTITIES = "http://xml.org/sax/features/external-general-entities";
     private static final String SAX_FEATURES_EXTERNAL_PARAMETER_ENTITIES = "http://xml.org/sax/features/external-parameter-entities";
     private static final String XERCES_FEATURES_NONVALIDATING_LOAD_EXTERNAL_DTD = "http://apache.org/xml/features/nonvalidating/load-external-dtd";
+
+    private static final class SaxEOF {
+
+        private static boolean isEOF(SAXParseException ex) {
+            return ex.getMessage() != null && isEOFMessage(ex.getMessage());
+        }
+
+        private static boolean isEOFMessage(String message) {
+            return EOF_MESSAGE_BY_LOCALE.computeIfAbsent(Locale.getDefault(), SaxEOF::loadEOFMessage).equals(message);
+        }
+
+        private static String loadEOFMessage(Locale locale) {
+            try {
+                parseEmptyContent(locale);
+            } catch (IOException | SAXException | ParserConfigurationException e) {
+                if (e instanceof SAXParseException) {
+                    return e.getMessage();
+                }
+            }
+            return "Premature end of file.";
+        }
+
+        private static void parseEmptyContent(Locale ignore) throws SAXException, ParserConfigurationException, IOException {
+            XMLReader reader = DEFAULT_FACTORY.newSAXParser().getXMLReader();
+            reader.setErrorHandler(new DefaultHandler());
+            reader.parse(new InputSource(new StringReader("")));
+        }
+
+        private static final ConcurrentHashMap<Locale, String> EOF_MESSAGE_BY_LOCALE = new ConcurrentHashMap<>();
+    }
 }
