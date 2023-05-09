@@ -22,6 +22,7 @@ import nbbrd.io.function.IOSupplier;
 
 import java.io.*;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileSystemException;
 import java.nio.file.NoSuchFileException;
@@ -92,16 +93,18 @@ public class LegacyFiles {
         }
     }
 
-    public String toSystemId(File file) {
+    public String toSystemId(@NonNull File file) {
         return file.toURI().toASCIIString();
     }
 
-    public File fromSystemId(String systemId) {
-        try {
-            return new File(URI.create(systemId));
-        } catch (IllegalArgumentException ex) {
-            return null;
+    public File fromSystemId(@NonNull String systemId) {
+        if (systemId.startsWith("file:/")) {
+            try {
+                return new File(new URI(systemId));
+            } catch (URISyntaxException ignore) {
+            }
         }
+        return null;
     }
 
     private static <T extends Closeable> T checkResource(T resource, String message) throws IOException {

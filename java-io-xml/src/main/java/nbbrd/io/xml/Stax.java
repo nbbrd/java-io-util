@@ -21,6 +21,7 @@ import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.Resource;
 import nbbrd.io.WrappedIOException;
+import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IOSupplier;
 
@@ -31,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 /**
  * @author Philippe Charles
@@ -50,10 +52,7 @@ public class Stax {
     }
 
     public static @NonNull IOException toIOException(@NonNull XMLStreamException ex) {
-        if (isEOF(ex)) {
-            return new EOFException(Objects.toString(getFileOrNull(ex)));
-        }
-        return WrappedIOException.wrap(ex);
+        return wrapXMLStreamException(ex);
     }
 
     @FunctionalInterface
@@ -140,46 +139,46 @@ public class Stax {
         @Override
         public @NonNull T parseFile(@NonNull File source) throws IOException {
             InputStream resource = LegacyFiles.openInputStream(source);
-            return parse(o -> o.createXMLStreamReader(LegacyFiles.toSystemId(source), resource), resource);
+            return doParseOrClose(o -> o.createXMLStreamReader(LegacyFiles.toSystemId(source), resource), resource);
         }
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
             InputStream resource = LegacyFiles.openInputStream(source);
-            return parse(o -> o.createXMLStreamReader(LegacyFiles.toSystemId(source), resource), resource);
+            return doParseOrClose(o -> o.createXMLStreamReader(LegacyFiles.toSystemId(source), resource), resource);
         }
 
         @Override
         public @NonNull T parseReader(@NonNull IOSupplier<? extends Reader> source) throws IOException {
             Reader resource = LegacyFiles.openReader(source);
-            return parse(o -> o.createXMLStreamReader(resource), resource);
+            return doParseOrClose(o -> o.createXMLStreamReader(resource), resource);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source) throws IOException {
             InputStream resource = LegacyFiles.openInputStream(source);
-            return parse(o -> o.createXMLStreamReader(resource), resource);
+            return doParseOrClose(o -> o.createXMLStreamReader(resource), resource);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
             InputStream resource = LegacyFiles.openInputStream(source);
-            return parse(o -> o.createXMLStreamReader(resource, encoding.name()), resource);
+            return doParseOrClose(o -> o.createXMLStreamReader(resource, encoding.name()), resource);
         }
 
         @Override
         public @NonNull T parseReader(@NonNull Reader resource) throws IOException {
-            return parse(o -> o.createXMLStreamReader(resource), NOTHING_TO_CLOSE);
+            return doParseOrClose(o -> o.createXMLStreamReader(resource), NOTHING_TO_CLOSE);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
-            return parse(o -> o.createXMLStreamReader(resource), NOTHING_TO_CLOSE);
+            return doParseOrClose(o -> o.createXMLStreamReader(resource), NOTHING_TO_CLOSE);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
-            return parse(o -> o.createXMLStreamReader(resource, encoding.name()), NOTHING_TO_CLOSE);
+            return doParseOrClose(o -> o.createXMLStreamReader(resource, encoding.name()), NOTHING_TO_CLOSE);
         }
 
         @NonNull
@@ -187,17 +186,18 @@ public class Stax {
             return doParse(handler, input, onClose);
         }
 
-        private T parse(XFunction<XMLInputFactory, XMLStreamReader> supplier, Closeable onClose) throws IOException {
+        private T doParseOrClose(StaxFunction<XMLInputFactory, XMLStreamReader> supplier, Closeable onClose) throws IOException {
             try {
-                XMLStreamReader input = supplier.apply(getInputEngine(factory, ignoreXXE));
-                return parse(input, () -> closeBoth(input::close, onClose));
-            } catch (XMLStreamException ex) {
-                Resource.ensureClosed(ex, onClose);
-                throw toIOException(ex);
+                XMLStreamReader input = asIOFunction(supplier).applyWithIO(getEngine());
+                return doParse(handler, input, asCloseable(input::close, onClose));
             } catch (Error | RuntimeException | IOException ex) {
                 Resource.ensureClosed(ex, onClose);
                 throw ex;
             }
+        }
+
+        private XMLInputFactory getEngine() throws IOException {
+            return getInputEngine(factory, ignoreXXE);
         }
     }
 
@@ -240,63 +240,60 @@ public class Stax {
         @Override
         public @NonNull T parseFile(@NonNull File source) throws IOException {
             InputStream resource = LegacyFiles.openInputStream(source);
-            return parse(o -> o.createXMLEventReader(LegacyFiles.toSystemId(source), resource), resource);
+            return doParseOrClose(o -> o.createXMLEventReader(LegacyFiles.toSystemId(source), resource), resource);
         }
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
             InputStream resource = LegacyFiles.openInputStream(source);
-            return parse(o -> o.createXMLEventReader(LegacyFiles.toSystemId(source), resource), resource);
+            return doParseOrClose(o -> o.createXMLEventReader(LegacyFiles.toSystemId(source), resource), resource);
         }
 
         @Override
         public @NonNull T parseReader(@NonNull IOSupplier<? extends Reader> source) throws IOException {
             Reader resource = LegacyFiles.openReader(source);
-            return parse(o -> o.createXMLEventReader(resource), resource);
+            return doParseOrClose(o -> o.createXMLEventReader(resource), resource);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source) throws IOException {
             InputStream resource = LegacyFiles.openInputStream(source);
-            return parse(o -> o.createXMLEventReader(resource), resource);
+            return doParseOrClose(o -> o.createXMLEventReader(resource), resource);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
             InputStream resource = LegacyFiles.openInputStream(source);
-            return parse(o -> o.createXMLEventReader(resource, encoding.name()), resource);
+            return doParseOrClose(o -> o.createXMLEventReader(resource, encoding.name()), resource);
         }
 
         @Override
         public @NonNull T parseReader(@NonNull Reader resource) throws IOException {
-            return parse(o -> o.createXMLEventReader(resource), NOTHING_TO_CLOSE);
+            return doParseOrClose(o -> o.createXMLEventReader(resource), NOTHING_TO_CLOSE);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
-            return parse(o -> o.createXMLEventReader(resource), NOTHING_TO_CLOSE);
+            return doParseOrClose(o -> o.createXMLEventReader(resource), NOTHING_TO_CLOSE);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
-            return parse(o -> o.createXMLEventReader(resource, encoding.name()), NOTHING_TO_CLOSE);
+            return doParseOrClose(o -> o.createXMLEventReader(resource, encoding.name()), NOTHING_TO_CLOSE);
         }
 
-        private T parse(XMLEventReader input, Closeable onClose) throws IOException {
-            return doParse(handler, input, onClose);
-        }
-
-        private T parse(XFunction<XMLInputFactory, XMLEventReader> supplier, Closeable onClose) throws IOException {
+        private T doParseOrClose(StaxFunction<XMLInputFactory, XMLEventReader> supplier, Closeable onClose) throws IOException {
             try {
-                XMLEventReader input = supplier.apply(getInputEngine(factory, ignoreXXE));
-                return parse(input, () -> closeBoth(input::close, onClose));
-            } catch (XMLStreamException ex) {
-                Resource.ensureClosed(ex, onClose);
-                throw toIOException(ex);
+                XMLEventReader input = asIOFunction(supplier).applyWithIO(getEngine());
+                return doParse(handler, input, asCloseable(input::close, onClose));
             } catch (Error | RuntimeException | IOException ex) {
                 Resource.ensureClosed(ex, onClose);
                 throw ex;
             }
+        }
+
+        private XMLInputFactory getEngine() throws IOException {
+            return getInputEngine(factory, ignoreXXE);
         }
     }
 
@@ -385,13 +382,13 @@ public class Stax {
             format(value, o -> o.createXMLStreamWriter(resource, encoding.name()), encoding);
         }
 
-        private void format(T value, XFunction<XMLOutputFactory, XMLStreamWriter> supplier, Charset realEncoding) throws IOException {
+        private void format(T value, StaxFunction<XMLOutputFactory, XMLStreamWriter> supplier, Charset realEncoding) throws IOException {
             try {
-                XMLStreamWriter output = supplier.apply(getEngine());
-                doFormat(handler2, value, output, realEncoding, () -> close(output::close));
+                XMLStreamWriter output = supplier.applyWithXMLStream(getEngine());
+                doFormat(handler2, value, output, realEncoding, asCloseable(output::close));
                 output.close();
             } catch (XMLStreamException ex) {
-                throw toIOException(ex);
+                throw wrapXMLStreamException(ex);
             }
         }
 
@@ -485,13 +482,13 @@ public class Stax {
             format(value, o -> o.createXMLEventWriter(resource, encoding.name()), encoding);
         }
 
-        private void format(T value, XFunction<XMLOutputFactory, XMLEventWriter> supplier, Charset realEncoding) throws IOException {
+        private void format(T value, StaxFunction<XMLOutputFactory, XMLEventWriter> supplier, Charset realEncoding) throws IOException {
             try {
-                XMLEventWriter output = supplier.apply(getEngine());
-                doFormat(handler2, value, output, realEncoding, () -> close(output::close));
+                XMLEventWriter output = supplier.applyWithXMLStream(getEngine());
+                doFormat(handler2, value, output, realEncoding, asCloseable(output::close));
                 output.close();
             } catch (XMLStreamException ex) {
-                throw toIOException(ex);
+                throw wrapXMLStreamException(ex);
             }
         }
 
@@ -513,7 +510,7 @@ public class Stax {
             return handler.parse(input, onClose);
         } catch (XMLStreamException ex) {
             Resource.ensureClosed(ex, onClose);
-            throw toIOException(ex);
+            throw wrapXMLStreamException(ex);
         } catch (Error | RuntimeException | IOException ex) {
             Resource.ensureClosed(ex, onClose);
             throw ex;
@@ -525,44 +522,47 @@ public class Stax {
             handler2.format(value, output, encoding);
         } catch (Exception ex) {
             Resource.ensureClosed(ex, onClose);
-            throw toIOException(ex);
+            throw wrapException(ex);
         } catch (Error ex) {
             Resource.ensureClosed(ex, onClose);
             throw ex;
         }
     }
 
-    private static void close(XRunnable first) throws IOException {
-        try {
-            first.run();
-        } catch (XMLStreamException ex) {
-            throw toIOException(ex);
-        }
+    private static Closeable asCloseable(StaxRunnable first) {
+        return () -> {
+            try {
+                first.runWithXMLStream();
+            } catch (XMLStreamException ex) {
+                throw wrapXMLStreamException(ex);
+            }
+        };
     }
 
-    private static void closeBoth(XRunnable first, Closeable second) throws IOException {
-        try {
-            first.run();
-        } catch (XMLStreamException ex) {
-            Resource.ensureClosed(ex, second);
-            throw toIOException(ex);
-        } catch (Error | RuntimeException ex) {
-            Resource.ensureClosed(ex, second);
-            throw ex;
-        }
-        second.close();
+    private static Closeable asCloseable(StaxRunnable first, Closeable second) {
+        return () -> Resource.closeBoth(asCloseable(first), second);
     }
 
-    @FunctionalInterface
-    private interface XRunnable {
-
-        void run() throws XMLStreamException;
+    private static <T, R> IOFunction<T, R> asIOFunction(StaxFunction<T, R> function) {
+        return t -> {
+            try {
+                return function.applyWithXMLStream(t);
+            } catch (XMLStreamException ex) {
+                throw wrapXMLStreamException(ex);
+            }
+        };
     }
 
     @FunctionalInterface
-    private interface XFunction<T, R> {
+    private interface StaxRunnable {
 
-        R apply(T t) throws XMLStreamException;
+        void runWithXMLStream() throws XMLStreamException;
+    }
+
+    @FunctionalInterface
+    private interface StaxFunction<T, R> {
+
+        R applyWithXMLStream(T t) throws XMLStreamException;
     }
 
     private static void disableFeature(XMLInputFactory factory, String feature) {
@@ -572,9 +572,9 @@ public class Stax {
         }
     }
 
-    private static IOException toIOException(Exception ex) {
+    private static IOException wrapException(Exception ex) {
         if (ex instanceof XMLStreamException) {
-            return toIOException((XMLStreamException) ex);
+            return wrapXMLStreamException((XMLStreamException) ex);
         }
         if (ex instanceof IOException) {
             return (IOException) ex;
@@ -582,49 +582,61 @@ public class Stax {
         return WrappedIOException.wrap(ex);
     }
 
-    private static boolean isEOF(XMLStreamException ex) {
-        return ex.getLocation() != null && isEOFMessage(ex.getMessage());
-    }
-
-
-    private static boolean isEOFMessage(String message) {
-        return message.contains(EOF_MESSAGES.computeIfAbsent(Locale.getDefault(), Stax::loadEOFMessage));
-    }
-
-    private static String loadEOFMessage(Locale locale) {
-        try {
-            parseEmptyContent(locale);
-        } catch (XMLStreamException e) {
-            return extractEOFMessage(e);
+    private static IOException wrapXMLStreamException(XMLStreamException ex) {
+        if (StaxEOF.isEOF(ex)) {
+            return new EOFException(Objects.toString(getFileOrNull(ex)));
         }
-        return "Premature end of file.";
+        return WrappedIOException.wrap(ex);
     }
-
-    private static void parseEmptyContent(Locale ignore) throws XMLStreamException {
-        XMLStreamReader reader = XMLInputFactory.newInstance().createXMLStreamReader(new StringReader(""));
-        try {
-            while (reader.hasNext()) {
-                reader.next();
-            }
-        } finally {
-            reader.close();
-        }
-    }
-
-    private static String extractEOFMessage(XMLStreamException e) {
-        String text = e.getMessage();
-        int index = text.indexOf(EOF_MESSAGE_PREFIX);
-        return index != -1 ? text.substring(index + EOF_MESSAGE_PREFIX.length()) : text;
-    }
-
-    private static final String EOF_MESSAGE_PREFIX = "Message: ";
-
-    private static final ConcurrentHashMap<Locale, String> EOF_MESSAGES = new ConcurrentHashMap<>();
 
     private static File getFileOrNull(XMLStreamException ex) {
-        String result = ex.getLocation().getSystemId();
-        return result != null && result.startsWith("file:/") ? LegacyFiles.fromSystemId(result) : null;
+        Location location = ex.getLocation();
+        if (location == null) return null;
+        String systemId = location.getSystemId();
+        if (systemId == null) return null;
+        return LegacyFiles.fromSystemId(systemId);
     }
 
     private static final Closeable NOTHING_TO_CLOSE = IORunnable.noOp().asCloseable();
+
+    private static final class StaxEOF {
+
+        public static boolean isEOF(XMLStreamException ex) {
+            return ex.getLocation() != null && isEOFMessage(ex.getMessage());
+        }
+
+        private static boolean isEOFMessage(String message) {
+            return message.contains(EOF_MESSAGE_BY_LOCALE.computeIfAbsent(Locale.getDefault(), StaxEOF::loadEOFMessage));
+        }
+
+        private static String loadEOFMessage(Locale locale) {
+            try {
+                parseEmptyContent(locale);
+            } catch (XMLStreamException e) {
+                return extractEOFMessage(e);
+            }
+            return "Premature end of file.";
+        }
+
+        private static void parseEmptyContent(Locale ignore) throws XMLStreamException {
+            XMLStreamReader reader = XMLInputFactory.newInstance().createXMLStreamReader(new StringReader(""));
+            try {
+                while (reader.hasNext()) {
+                    reader.next();
+                }
+            } finally {
+                reader.close();
+            }
+        }
+
+        private static String extractEOFMessage(XMLStreamException e) {
+            String text = e.getMessage();
+            int index = text.indexOf(EOF_MESSAGE_PREFIX);
+            return index != -1 ? text.substring(index + EOF_MESSAGE_PREFIX.length()) : text;
+        }
+
+        private static final String EOF_MESSAGE_PREFIX = "Message: ";
+
+        private static final ConcurrentMap<Locale, String> EOF_MESSAGE_BY_LOCALE = new ConcurrentHashMap<>();
+    }
 }
