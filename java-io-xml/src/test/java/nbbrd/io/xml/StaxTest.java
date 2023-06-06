@@ -60,7 +60,10 @@ public class StaxTest {
 
     @RegisterExtension
     final WireMockExtension wire = WireMockExtension.newInstance()
-            .options(WireMockConfiguration.options().dynamicPort())
+            .options(WireMockConfiguration
+                    .options()
+                    .bindAddress("127.0.0.1")
+                    .dynamicPort())
             .build();
 
     private final IOSupplier<XMLInputFactory> validInputFactory = XMLInputFactory::newInstance;
