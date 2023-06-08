@@ -38,6 +38,10 @@ public final class CurlHttpURLConnection extends HttpURLConnection {
         return new Builder().url(url);
     }
 
+    // javadoc workaround
+    public final static class Builder {
+    }
+
     @Getter(AccessLevel.PACKAGE)
     private final Proxy proxy;
 
