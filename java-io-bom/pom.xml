@@ -7,7 +7,7 @@
     <parent>
         <artifactId>java-io-parent</artifactId>
         <groupId>com.github.nbbrd.java-io-util</groupId>
-        <version>0.0.22</version>
+        <version>0.0.23</version>
     </parent>
 
     <artifactId>java-io-bom</artifactId>
@@ -44,6 +44,11 @@
                 <artifactId>java-io-xml-bind</artifactId>
                 <version>${project.version}</version>
             </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>java-io-curl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -52,7 +57,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>flatten-maven-plugin</artifactId>
-                <version>1.4.1</version>
+                <version>1.5.0</version>
                 <configuration>
                     <flattenMode>bom</flattenMode>
                     <outputDirectory>${project.build.directory}</outputDirectory>

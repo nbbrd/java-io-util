@@ -5,7 +5,7 @@
 
     <groupId>com.github.nbbrd.java-io-util</groupId>
     <artifactId>java-io-parent</artifactId>
-    <version>0.0.22</version>
+    <version>0.0.23</version>
     <packaging>pom</packaging>
 
     <name>java-io</name>
@@ -41,6 +41,7 @@
         <module>java-io-xml</module>
         <module>java-io-xml-bind</module>
         <module>java-io-picocsv</module>
+        <module>java-io-curl</module>
         <module>java-io-bom</module>
     </modules>
 
@@ -50,7 +51,7 @@
             <dependency>
                 <groupId>org.checkerframework</groupId>
                 <artifactId>checker-qual</artifactId>
-                <version>3.34.0</version>
+                <version>3.35.0</version>
             </dependency>
 
             <!-- test libraries -->
@@ -261,7 +262,7 @@
                 </property>
             </activation>
             <properties>
-                <lombok.version>1.18.26</lombok.version>
+                <lombok.version>1.18.28</lombok.version>
                 <java-design.version>1.4.0</java-design.version>
             </properties>
             <dependencyManagement>
@@ -400,7 +401,7 @@
                             <dependency>
                                 <groupId>org.codehaus.mojo</groupId>
                                 <artifactId>extra-enforcer-rules</artifactId>
-                                <version>1.6.2</version>
+                                <version>1.7.0</version>
                             </dependency>
                         </dependencies>
                         <executions>
@@ -528,7 +529,7 @@
                     <plugin>
                         <groupId>com.amashchenko.maven.plugin</groupId>
                         <artifactId>gitflow-maven-plugin</artifactId>
-                        <version>1.19.0</version>
+                        <version>1.20.0</version>
                         <configuration>
                             <gitFlowConfig>
                                 <versionTagPrefix>v</versionTagPrefix>
@@ -547,7 +548,7 @@
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-source-plugin</artifactId>
-                        <version>3.2.1</version>
+                        <version>3.3.0</version>
                         <executions>
                             <execution>
                                 <id>attach-sources</id>

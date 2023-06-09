@@ -52,7 +52,10 @@ public class SaxTest {
 
     @RegisterExtension
     final WireMockExtension wire = WireMockExtension.newInstance()
-            .options(WireMockConfiguration.options().dynamicPort())
+            .options(WireMockConfiguration
+                    .options()
+                    .bindAddress("127.0.0.1")
+                    .dynamicPort())
             .build();
 
     private final IOSupplier<XMLReader> validFactory = Sax::createReader;
@@ -93,12 +96,12 @@ public class SaxTest {
 
         for (boolean ignoreXXE : BOOLS) {
             assertXmlParserCompliance(temp, Sax.Parser.<Person>builder()
-                            .factory(validFactory)
-                            .contentHandler(handler)
-                            .before(handler::clear)
-                            .after(handler::build)
-                            .ignoreXXE(ignoreXXE)
-                            .build()
+                    .factory(validFactory)
+                    .contentHandler(handler)
+                    .before(handler::clear)
+                    .after(handler::build)
+                    .ignoreXXE(ignoreXXE)
+                    .build()
             );
         }
     }
