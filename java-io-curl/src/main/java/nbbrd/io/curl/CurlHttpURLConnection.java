@@ -93,6 +93,7 @@ public final class CurlHttpURLConnection extends HttpURLConnection {
 
         String[] request = createCurlCommand();
         Curl.Head responseHead = executeCurlCommand(request);
+
         this.responseCode = responseHead.getStatus().getCode();
         this.responseMessage = responseHead.getStatus().getMessage();
         this.headerFields = responseHead.getHeaders();
@@ -183,9 +184,7 @@ public final class CurlHttpURLConnection extends HttpURLConnection {
     private Curl.Head executeCurlCommand(String[] command) throws IOException {
         try (BufferedReader reader = ProcessReader.newReader(command)) {
             LinkedList<Curl.Head> curlHeads = Curl.Head.parseResponse(reader);
-            return curlHeads.isEmpty()
-                    ? new Curl.Head(new Curl.Status(-1, null), emptySortedMap())
-                    : curlHeads.getLast();
+            return curlHeads.isEmpty() ? NO_HEAD : curlHeads.getLast();
         } catch (EndOfProcessException ex) {
             switch (ex.getExitValue()) {
                 case Curl.CURL_UNSUPPORTED_PROTOCOL:
@@ -251,4 +250,6 @@ public final class CurlHttpURLConnection extends HttpURLConnection {
     private static final InputStream NO_INPUT_STREAM = null;
 
     private static final OutputStream NO_OUTPUT_STREAM = null;
+
+    private static final Curl.Head NO_HEAD = new Curl.Head(new Curl.Status(NO_RESPONSE_CODE, NO_RESPONSE_MESSAGE), emptySortedMap());
 }
