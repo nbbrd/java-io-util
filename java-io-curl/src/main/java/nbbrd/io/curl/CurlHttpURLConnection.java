@@ -12,12 +12,10 @@ import nbbrd.io.sys.SystemProperties;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.*;
-import java.net.HttpURLConnection;
-import java.net.Proxy;
-import java.net.URL;
-import java.net.UnknownHostException;
+import java.net.*;
 import java.nio.file.Files;
 import java.util.*;
+import java.util.function.BiConsumer;
 
 import static java.util.Collections.emptySortedMap;
 
@@ -34,14 +32,6 @@ public final class CurlHttpURLConnection extends HttpURLConnection {
         return builder(url).proxy(proxy).insecure(true).build();
     }
 
-    static @NonNull Builder builder(@NonNull URL url) {
-        return new Builder().url(url);
-    }
-
-    // javadoc workaround
-    public final static class Builder {
-    }
-
     @Getter(AccessLevel.PACKAGE)
     private final Proxy proxy;
 
@@ -54,15 +44,40 @@ public final class CurlHttpURLConnection extends HttpURLConnection {
     @Getter(AccessLevel.PACKAGE)
     private final UUID id;
 
-    private Map<String, List<String>> headerFields = Collections.emptyMap();
+    @Getter(AccessLevel.PACKAGE)
+    private final BiConsumer<String, Exception> onError;
+
+    @Getter(AccessLevel.PACKAGE)
+    private final File inputFile;
+
+    @Getter(AccessLevel.PACKAGE)
+    private final File outputFile;
+
+    private Map<String, List<String>> headerFields = NO_HEADER_FIELDS;
+
+    private InputStream inputStream = NO_INPUT_STREAM;
+
+    private OutputStream outputStream = NO_OUTPUT_STREAM;
+
+
+    static @NonNull Builder builder(@NonNull URL url) {
+        return new Builder().url(url);
+    }
+
+    // javadoc workaround
+    public final static class Builder {
+    }
 
     @lombok.Builder(access = AccessLevel.PACKAGE)
-    private CurlHttpURLConnection(@NonNull URL url, Proxy proxy, boolean insecure, File tempDir, UUID id) {
+    private CurlHttpURLConnection(@NonNull URL url, Proxy proxy, boolean insecure, File tempDir, UUID id, BiConsumer<String, Exception> onError) {
         super(url);
-        this.proxy = proxy != null ? proxy : Proxy.NO_PROXY;
+        this.proxy = proxy != null ? proxy : DEFAULT_PROXY;
         this.insecure = insecure;
-        this.tempDir = tempDir != null ? tempDir : getDefaultTempDir();
+        this.tempDir = tempDir != null ? tempDir : DEFAULT_TEMP_DIR;
         this.id = id != null ? id : UUID.randomUUID();
+        this.onError = onError != null ? onError : DEFAULT_ON_ERROR;
+        this.inputFile = new File(this.tempDir, "curl_" + this.id + "_input.tmp");
+        this.outputFile = new File(this.tempDir, "curl_" + this.id + "_output.tmp");
     }
 
     @Override
@@ -72,17 +87,34 @@ public final class CurlHttpURLConnection extends HttpURLConnection {
 
     @Override
     public void connect() throws IOException {
+        if (connected) {
+            return;
+        }
+
         String[] request = createCurlCommand();
         Curl.Head responseHead = executeCurlCommand(request);
         this.responseCode = responseHead.getStatus().getCode();
         this.responseMessage = responseHead.getStatus().getMessage();
         this.headerFields = responseHead.getHeaders();
+        this.connected = true;
     }
 
     @Override
     public void disconnect() {
-        getInput().delete();
-        getOutput().delete();
+        if (!connected) {
+            return;
+        }
+
+        this.responseCode = NO_RESPONSE_CODE;
+        this.responseMessage = NO_RESPONSE_MESSAGE;
+        this.headerFields = NO_HEADER_FIELDS;
+        this.connected = false;
+
+        cleanupResource(inputStream, inputFile, "input");
+        this.inputStream = NO_INPUT_STREAM;
+
+        cleanupResource(outputStream, outputFile, "output");
+        this.outputStream = NO_OUTPUT_STREAM;
     }
 
     @Override
@@ -97,27 +129,34 @@ public final class CurlHttpURLConnection extends HttpURLConnection {
 
     @Override
     public InputStream getInputStream() throws IOException {
-        return Files.newInputStream(getInput().toPath());
+        if (!doInput) {
+            throw new ProtocolException("Cannot read from URLConnection if doInput=false (call setDoInput(true))");
+        }
+
+        connect();
+
+        if (inputStream == NO_INPUT_STREAM) {
+            inputStream = Files.newInputStream(inputFile.toPath());
+        }
+
+        return inputStream;
     }
 
     @Override
     public OutputStream getOutputStream() throws IOException {
-        return Files.newOutputStream(getOutput().toPath());
-    }
+        if (!doOutput) {
+            throw new ProtocolException("cannot write to a URLConnection if doOutput=false - call setDoOutput(true)");
+        }
 
-    @VisibleForTesting
-    File getInput() {
-        return new File(tempDir, "curl_" + id + "_input.tmp");
-    }
+        if (inputStream != NO_INPUT_STREAM) {
+            throw new ProtocolException("Cannot write output after reading input.");
+        }
 
-    @VisibleForTesting
-    File getOutput() {
-        return new File(tempDir, "curl_" + id + "_output.tmp");
-    }
+        if (outputStream == NO_OUTPUT_STREAM) {
+            outputStream = Files.newOutputStream(outputFile.toPath());
+        }
 
-    @VisibleForTesting
-    boolean isSchannel() {
-        return OS.NAME.equals(OS.Name.WINDOWS);
+        return outputStream;
     }
 
     @VisibleForTesting
@@ -128,15 +167,15 @@ public final class CurlHttpURLConnection extends HttpURLConnection {
                 .url(getURL())
                 .http1_1()
                 .silent(true)
-                .sslRevokeBestEffort(isSchannel())
+                .sslRevokeBestEffort(WINDOWS_SCHANNEL)
                 .insecure(insecure)
                 .proxy(proxy)
-                .output(getInput())
+                .output(inputFile)
                 .dumpHeader("-")
                 .connectTimeout(getConnectTimeout() / 1000f)
                 .maxTime(getReadTimeout() / 1000f)
                 .headers(getRequestProperties())
-                .dataBinary(getDoOutput() ? getOutput() : null)
+                .dataBinary(getDoOutput() ? outputFile : null)
                 .location(getInstanceFollowRedirects())
                 .build();
     }
@@ -163,6 +202,23 @@ public final class CurlHttpURLConnection extends HttpURLConnection {
         }
     }
 
+    private void cleanupResource(Closeable stream, File file, String label) {
+        if (stream != null) {
+            try {
+                stream.close();
+            } catch (IOException ex) {
+                onError.accept("Error while closing stream " + label, ex);
+            }
+        }
+        if (file != null) {
+            try {
+                Files.deleteIfExists(file.toPath());
+            } catch (IOException ex) {
+                onError.accept("Error while deleting file " + label, ex);
+            }
+        }
+    }
+
     private static String getFailureReceivingNetworkDataMessage(Proxy proxy) {
         String result = "Failure in receiving network data.";
         if (Curl.hasProxy(proxy)) {
@@ -176,7 +232,23 @@ public final class CurlHttpURLConnection extends HttpURLConnection {
         return header != null && !header.isEmpty() ? header.get(header.size() - 1) : null;
     }
 
-    private static File getDefaultTempDir() {
-        return Objects.requireNonNull(SystemProperties.DEFAULT.getJavaIoTmpdir()).toFile();
-    }
+    @VisibleForTesting
+    static final boolean WINDOWS_SCHANNEL = OS.NAME.equals(OS.Name.WINDOWS);
+
+    private static final Proxy DEFAULT_PROXY = Proxy.NO_PROXY;
+
+    private static final File DEFAULT_TEMP_DIR = Objects.requireNonNull(SystemProperties.DEFAULT.getJavaIoTmpdir()).toFile();
+
+    private static final BiConsumer<String, Exception> DEFAULT_ON_ERROR = (ignoreMessage, ignoreException) -> {
+    };
+
+    private static final int NO_RESPONSE_CODE = -1;
+
+    private static final String NO_RESPONSE_MESSAGE = null;
+
+    private static final Map<String, List<String>> NO_HEADER_FIELDS = Collections.emptyMap();
+
+    private static final InputStream NO_INPUT_STREAM = null;
+
+    private static final OutputStream NO_OUTPUT_STREAM = null;
 }

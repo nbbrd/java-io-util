@@ -45,6 +45,7 @@ public class CurlHttpURLConnectionTest {
 
     @Test
     public void testBuilder(@TempDir File temp) {
+        //noinspection DataFlowIssue
         assertThatNullPointerException()
                 .isThrownBy(() -> CurlHttpURLConnection.builder(null).build());
 
@@ -62,10 +63,12 @@ public class CurlHttpURLConnectionTest {
     }
 
     @Test
-    public void testOf() throws IOException {
+    public void testFactoryOf() throws IOException {
+        //noinspection DataFlowIssue
         assertThatNullPointerException()
                 .isThrownBy(() -> CurlHttpURLConnection.of(null, proxy123));
 
+        //noinspection DataFlowIssue
         assertThatNullPointerException()
                 .isThrownBy(() -> CurlHttpURLConnection.of(localhost, null));
 
@@ -76,10 +79,12 @@ public class CurlHttpURLConnectionTest {
     }
 
     @Test
-    public void testInsecureForTestOnly() throws IOException {
+    public void testFactoryInsecureForTestOnly() throws IOException {
+        //noinspection DataFlowIssue
         assertThatNullPointerException()
                 .isThrownBy(() -> CurlHttpURLConnection.insecureForTestOnly(null, proxy123));
 
+        //noinspection DataFlowIssue
         assertThatNullPointerException()
                 .isThrownBy(() -> CurlHttpURLConnection.insecureForTestOnly(localhost, null));
 
@@ -103,11 +108,11 @@ public class CurlHttpURLConnectionTest {
         x.setInstanceFollowRedirects(false);
 
         String[] command = x.createCurlCommand();
-        if (x.isSchannel()) {
+        if (CurlHttpURLConnection.WINDOWS_SCHANNEL) {
             assertThat(command)
                     .containsExactly("curl", "--path-as-is", "http://localhost", "--http1.1", "-s", "--ssl-revoke-best-effort",
                             "-x", "http://some_proxy:123",
-                            "-o", x.getInput().toString(),
+                            "-o", x.getInputFile().toString(),
                             "-D", "-",
                             "--connect-timeout", "2",
                             "-m", "3",
@@ -118,7 +123,7 @@ public class CurlHttpURLConnectionTest {
             assertThat(command)
                     .containsExactly("curl", "--path-as-is", "http://localhost", "--http1.1", "-s",
                             "-x", "http://some_proxy:123",
-                            "-o", x.getInput().toString(),
+                            "-o", x.getInputFile().toString(),
                             "-D", "-",
                             "--connect-timeout", "2",
                             "-m", "3",
@@ -177,27 +182,23 @@ public class CurlHttpURLConnectionTest {
         wire.resetAll();
         wire.stubFor(WireMock.get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
 
-        CurlHttpURLConnection x = CurlHttpURLConnection
-                .builder(wireURL(SAMPLE_URL))
-                .insecure(true)
-                .tempDir(temp)
-                .build();
+        HttpURLConnection x = curl(wireURL(SAMPLE_URL), temp);
 
         x.setRequestMethod("GET");
         x.setRequestProperty("key", "value");
 
         x.connect();
-        assertThat(temp.listFiles()).containsExactlyInAnyOrder(x.getInput());
         assertThat(x.getContentType()).isEqualTo(TYPE_XML);
         assertThat(readInputString(x)).isEqualTo(SAMPLE_XML);
         assertThat(x.getHeaderFields()).containsEntry(HTTP_CONTENT_TYPE_HEADER, asList(TYPE_XML));
 
         x.disconnect();
-        assertThat(temp.listFiles()).isEmpty();
 
         wire.verify(1,
                 WireMock.getRequestedFor(WireMock.urlEqualTo(SAMPLE_URL))
                         .withHeader("key", new EqualToPattern("value")));
+
+        assertThat(temp.listFiles()).isEmpty();
     }
 
     @Test
@@ -205,11 +206,7 @@ public class CurlHttpURLConnectionTest {
         wire.resetAll();
         wire.stubFor(WireMock.post(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
 
-        CurlHttpURLConnection x = CurlHttpURLConnection
-                .builder(wireURL(SAMPLE_URL))
-                .insecure(true)
-                .tempDir(temp)
-                .build();
+        HttpURLConnection x = curl(wireURL(SAMPLE_URL), temp);
 
         x.setRequestMethod("POST");
         x.setRequestProperty("key", "value");
@@ -217,18 +214,37 @@ public class CurlHttpURLConnectionTest {
         writeOutputString(x, "hello");
 
         x.connect();
-        assertThat(temp.listFiles()).containsExactlyInAnyOrder(x.getInput(), x.getOutput());
         assertThat(x.getContentType()).isEqualTo(TYPE_XML);
         assertThat(readInputString(x)).isEqualTo(SAMPLE_XML);
         assertThat(x.getHeaderFields()).containsEntry(HTTP_CONTENT_TYPE_HEADER, asList(TYPE_XML));
 
         x.disconnect();
-        assertThat(temp.listFiles()).isEmpty();
 
         wire.verify(1,
                 WireMock.postRequestedFor(WireMock.urlEqualTo(SAMPLE_URL))
                         .withHeader("key", new EqualToPattern("value"))
                         .withRequestBody(new EqualToPattern("hello")));
+
+        assertThat(temp.listFiles()).isEmpty();
+    }
+
+    @Test
+    public void testConnect(@TempDir File temp) throws IOException {
+        wire.resetAll();
+        wire.stubFor(WireMock.get(SAMPLE_URL).willReturn(WireMock.ok()));
+
+        HttpURLConnection x = curl(wireURL(SAMPLE_URL), temp);
+
+        x.connect();
+        assertThatCode(x::connect)
+                .describedAs("Subsequent call to #connect() should not fail")
+                .doesNotThrowAnyException();
+
+        x.disconnect();
+
+        wire.verify(1, WireMock.getRequestedFor(WireMock.urlEqualTo(SAMPLE_URL)));
+
+        assertThat(temp.listFiles()).isEmpty();
     }
 
     @Test
@@ -236,18 +252,57 @@ public class CurlHttpURLConnectionTest {
         wire.resetAll();
         wire.stubFor(WireMock.get(SAMPLE_URL).willReturn(WireMock.ok()));
 
-        CurlHttpURLConnection x = CurlHttpURLConnection
-                .builder(wireURL(SAMPLE_URL))
-                .insecure(true)
-                .tempDir(temp)
-                .build();
-        x.setRequestMethod("GET");
+        HttpURLConnection x = curl(wireURL(SAMPLE_URL), temp);
         x.connect();
-        x.disconnect();
 
+        x.disconnect();
         assertThatCode(x::disconnect)
                 .describedAs("Subsequent call to #disconnect() should not fail")
                 .doesNotThrowAnyException();
+
+        wire.verify(1, WireMock.getRequestedFor(WireMock.urlEqualTo(SAMPLE_URL)));
+
+        assertThat(temp.listFiles()).isEmpty();
+    }
+
+    @Test
+    public void testGetInputStream(@TempDir File temp) throws IOException {
+        wire.resetAll();
+        wire.stubFor(WireMock.get(SAMPLE_URL).willReturn(WireMock.ok()));
+
+        HttpURLConnection x = curl(wireURL(SAMPLE_URL), temp);
+
+        assertThat(x.getInputStream())
+                .isNotNull()
+                .isSameAs(x.getInputStream());
+
+        x.connect();
+        x.disconnect();
+
+        wire.verify(1, WireMock.getRequestedFor(WireMock.urlEqualTo(SAMPLE_URL)));
+
+        assertThat(temp.listFiles()).isEmpty();
+    }
+
+    @Test
+    public void testGetOutputStream(@TempDir File temp) throws IOException {
+        wire.resetAll();
+        wire.stubFor(WireMock.post(SAMPLE_URL).willReturn(WireMock.ok()));
+
+        HttpURLConnection x = curl(wireURL(SAMPLE_URL), temp);
+        x.setRequestMethod("POST");
+        x.setDoOutput(true);
+
+        assertThat(x.getOutputStream())
+                .isNotNull()
+                .isSameAs(x.getOutputStream());
+
+        x.connect();
+        x.disconnect();
+
+        wire.verify(1, WireMock.postRequestedFor(WireMock.urlEqualTo(SAMPLE_URL)));
+
+        assertThat(temp.listFiles()).isEmpty();
     }
 
     @ParameterizedTest
@@ -294,13 +349,9 @@ public class CurlHttpURLConnectionTest {
         wire.resetAll();
         wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML).withFixedDelay(readTimeout * 2)));
 
-        CurlHttpURLConnection x = CurlHttpURLConnection
-                .builder(wireURL(SAMPLE_URL))
-                .insecure(true)
-                .tempDir(temp)
-                .build();
-        x.setReadTimeout(readTimeout);
+        HttpURLConnection x = curl(wireURL(SAMPLE_URL), temp);
 
+        x.setReadTimeout(readTimeout);
         assertThatIOException()
                 .isThrownBy(x::connect)
                 .withMessageContaining("Read timed out");
@@ -308,11 +359,7 @@ public class CurlHttpURLConnectionTest {
 
     @Test
     public void testInvalidHost(@TempDir File temp) throws IOException {
-        CurlHttpURLConnection x = CurlHttpURLConnection
-                .builder(new URL("http://localhoooooost"))
-                .insecure(true)
-                .tempDir(temp)
-                .build();
+        HttpURLConnection x = curl(new URL("http://localhoooooost"), temp);
 
         assertThatIOException()
                 .isThrownBy(x::connect)
@@ -325,6 +372,14 @@ public class CurlHttpURLConnectionTest {
             path = "/" + path;
         }
         return new URL(String.format(Locale.ROOT, "%s%s", wire.baseUrl(), path));
+    }
+
+    private CurlHttpURLConnection curl(URL url, File temp) throws MalformedURLException {
+        return CurlHttpURLConnection
+                .builder(url)
+                .insecure(true)
+                .tempDir(temp)
+                .build();
     }
 
     private final URL localhost = Parser.onURL().parseValue("http://localhost").orElseThrow(RuntimeException::new);
