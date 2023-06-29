@@ -16,6 +16,7 @@
  */
 package nbbrd.io.xml;
 
+import internal.io.UncloseableInputStream;
 import internal.io.text.LegacyFiles;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
@@ -163,12 +164,12 @@ public class Sax {
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
-            return doParse(new InputSource(resource));
+            return doParse(new InputSource(new UncloseableInputStream(resource)));
         }
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
-            InputSource input = new InputSource(resource);
+            InputSource input = new InputSource(new UncloseableInputStream(resource));
             input.setEncoding(encoding.name());
             return doParse(input);
         }

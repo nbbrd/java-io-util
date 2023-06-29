@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix unexpected closing of resources in FileFormatter and FileParser
+
 ## [0.0.23] - 2023-06-09
 
 ### Added

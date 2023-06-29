@@ -5,10 +5,7 @@ import lombok.NonNull;
 import nbbrd.io.Resource;
 import nbbrd.io.text.TextResource;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -33,6 +30,18 @@ public class ResourceId {
             Files.copy(stream, result, StandardCopyOption.REPLACE_EXISTING);
         }
         return result;
+    }
+
+    public byte[] toBytes() throws IOException {
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        try (InputStream input = open()) {
+            byte[] buffer = new byte[8192];
+            int read;
+            while ((read = input.read(buffer, 0, buffer.length)) >= 0) {
+                result.write(buffer, 0, read);
+            }
+        }
+        return result.toByteArray();
     }
 
     public BufferedReader open(Charset encoding) throws IOException {

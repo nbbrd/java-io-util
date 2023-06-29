@@ -11,11 +11,10 @@ import java.util.Objects;
 @lombok.RequiredArgsConstructor
 public final class FunctionalFileParser<T> implements FileParser<T> {
 
-    @NonNull
-    private final IOFunction<? super InputStream, ? extends T> function;
+    private final @NonNull IOFunction<? super InputStream, ? extends T> function;
 
     @Override
     public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
-        return Objects.requireNonNull(function.applyWithIO(resource), "result");
+        return Objects.requireNonNull(function.applyWithIO(new UncloseableInputStream(resource)), "result");
     }
 }

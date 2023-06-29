@@ -16,6 +16,7 @@
  */
 package nbbrd.io.xml.bind;
 
+import internal.io.UncloseableInputStream;
 import internal.io.text.LegacyFiles;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
@@ -135,8 +136,8 @@ public class Jaxb {
             Unmarshaller engine = factory.getWithIO();
 
             return cast(!ignoreXXE
-                    ? parseStreamXXE(engine, resource, xxeFactory.getWithIO())
-                    : parseStream(engine, resource));
+                    ? parseStreamXXE(engine, new UncloseableInputStream(resource), xxeFactory.getWithIO())
+                    : parseStream(engine, new UncloseableInputStream(resource)));
         }
 
         @Override
@@ -144,8 +145,8 @@ public class Jaxb {
             Unmarshaller engine = factory.getWithIO();
 
             return cast(!ignoreXXE
-                    ? parseStreamXXE(engine, resource, xxeFactory.getWithIO())
-                    : parseStream(engine, resource));
+                    ? parseStreamXXE(engine, new UncloseableInputStream(resource), xxeFactory.getWithIO())
+                    : parseStream(engine, new UncloseableInputStream(resource)));
         }
 
         @SuppressWarnings("unchecked")

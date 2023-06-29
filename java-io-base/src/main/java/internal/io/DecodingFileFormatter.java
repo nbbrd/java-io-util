@@ -45,7 +45,7 @@ public final class DecodingFileFormatter<T> implements FileParser<T> {
 
     @Override
     public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
-        try (InputStream decoding = decoder.applyWithIO(resource)) {
+        try (InputStream decoding = decoder.applyWithIO(new UncloseableInputStream(resource))) {
             return parser.parseStream(decoding);
         }
     }
