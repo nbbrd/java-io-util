@@ -16,7 +16,6 @@
  */
 package nbbrd.io.xml.bind;
 
-import internal.io.UncloseableInputStream;
 import internal.io.text.LegacyFiles;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
@@ -34,6 +33,8 @@ import javax.xml.stream.XMLStreamReader;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+
+import static nbbrd.io.Resource.uncloseableInputStream;
 
 /**
  * @author Philippe Charles
@@ -136,8 +137,8 @@ public class Jaxb {
             Unmarshaller engine = factory.getWithIO();
 
             return cast(!ignoreXXE
-                    ? parseStreamXXE(engine, new UncloseableInputStream(resource), xxeFactory.getWithIO())
-                    : parseStream(engine, new UncloseableInputStream(resource)));
+                    ? parseStreamXXE(engine, uncloseableInputStream(resource), xxeFactory.getWithIO())
+                    : parseStream(engine, uncloseableInputStream(resource)));
         }
 
         @Override
@@ -145,8 +146,8 @@ public class Jaxb {
             Unmarshaller engine = factory.getWithIO();
 
             return cast(!ignoreXXE
-                    ? parseStreamXXE(engine, new UncloseableInputStream(resource), xxeFactory.getWithIO())
-                    : parseStream(engine, new UncloseableInputStream(resource)));
+                    ? parseStreamXXE(engine, uncloseableInputStream(resource), xxeFactory.getWithIO())
+                    : parseStream(engine, uncloseableInputStream(resource)));
         }
 
         @SuppressWarnings("unchecked")

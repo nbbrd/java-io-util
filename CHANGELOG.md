@@ -10,6 +10,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Add lock factory to `File*` utilities
+- Add uncloseable stream utilities
 
 ### Fixed
 

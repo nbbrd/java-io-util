@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 
+import static nbbrd.io.Resource.uncloseableInputStream;
+
 @lombok.RequiredArgsConstructor
 public final class DecodingFileFormatter<T> implements FileParser<T> {
 
@@ -45,7 +47,7 @@ public final class DecodingFileFormatter<T> implements FileParser<T> {
 
     @Override
     public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
-        try (InputStream decoding = decoder.applyWithIO(new UncloseableInputStream(resource))) {
+        try (InputStream decoding = decoder.applyWithIO(uncloseableInputStream(resource))) {
             return parser.parseStream(decoding);
         }
     }

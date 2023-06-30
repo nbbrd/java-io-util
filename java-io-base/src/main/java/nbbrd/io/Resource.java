@@ -16,6 +16,8 @@
  */
 package nbbrd.io;
 
+import internal.io.UncloseableInputStream;
+import internal.io.UncloseableOutputStream;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.function.IOConsumer;
@@ -157,5 +159,13 @@ public class Resource {
             closed = true;
             closer.close();
         }
+    }
+
+    public static @NonNull InputStream uncloseableInputStream(@NonNull InputStream delegate) {
+        return new UncloseableInputStream(delegate);
+    }
+
+    public static @NonNull OutputStream uncloseableOutputStream(@NonNull OutputStream delegate) {
+        return new UncloseableOutputStream(delegate);
     }
 }

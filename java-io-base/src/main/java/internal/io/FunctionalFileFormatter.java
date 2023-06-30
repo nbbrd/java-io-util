@@ -7,6 +7,8 @@ import nbbrd.io.function.IOBiConsumer;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import static nbbrd.io.Resource.uncloseableOutputStream;
+
 @lombok.RequiredArgsConstructor
 public final class FunctionalFileFormatter<T> implements FileFormatter<T> {
 
@@ -14,6 +16,6 @@ public final class FunctionalFileFormatter<T> implements FileFormatter<T> {
 
     @Override
     public void formatStream(@NonNull T value, @NonNull OutputStream resource) throws IOException {
-        function.acceptWithIO(value, new UncloseableOutputStream(resource));
+        function.acceptWithIO(value, uncloseableOutputStream(resource));
     }
 }
