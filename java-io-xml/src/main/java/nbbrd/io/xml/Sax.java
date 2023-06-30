@@ -16,6 +16,7 @@
  */
 package nbbrd.io.xml;
 
+import internal.io.text.FileSystemExceptions;
 import internal.io.text.LegacyFiles;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
@@ -150,12 +151,12 @@ public class Sax {
 
         @Override
         public @NonNull T parseFile(@NonNull File source) throws IOException {
-            return doParse(newInputSource(LegacyFiles.checkSource(source)));
+            return doParse(newInputSource(FileSystemExceptions.checkSource(source)));
         }
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            return doParse(newInputSource(LegacyFiles.checkSource(source), encoding));
+            return doParse(newInputSource(FileSystemExceptions.checkSource(source), encoding));
         }
 
         @Override

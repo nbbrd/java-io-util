@@ -14,7 +14,7 @@ import java.nio.channels.FileLock;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
-import static internal.io.text.LegacyFiles.checkTarget;
+import static internal.io.text.FileSystemExceptions.checkTarget;
 
 @lombok.RequiredArgsConstructor
 public final class LockingFileFormatter<T> implements FileFormatter<T> {
@@ -32,7 +32,7 @@ public final class LockingFileFormatter<T> implements FileFormatter<T> {
 
     @Override
     public void formatPath(@NonNull T value, @NonNull Path target) throws IOException {
-        try (FileChannel channel = FileChannel.open(target, StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
+        try (FileChannel channel = FileChannel.open(checkTarget(target), StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
             try (FileLock ignore = channel.lock()) {
                 delegate.formatStream(value, Channels.newOutputStream(channel));
             }

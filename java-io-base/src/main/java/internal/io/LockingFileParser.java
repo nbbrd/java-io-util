@@ -14,7 +14,7 @@ import java.nio.channels.FileLock;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
-import static internal.io.text.LegacyFiles.checkSource;
+import static internal.io.text.FileSystemExceptions.checkSource;
 
 @lombok.RequiredArgsConstructor
 public final class LockingFileParser<T> implements FileParser<T> {
@@ -32,7 +32,7 @@ public final class LockingFileParser<T> implements FileParser<T> {
 
     @Override
     public @NonNull T parsePath(@NonNull Path source) throws IOException {
-        try (FileChannel channel = FileChannel.open(source, StandardOpenOption.READ)) {
+        try (FileChannel channel = FileChannel.open(checkSource(source), StandardOpenOption.READ)) {
             try (FileLock ignore = channel.lock(0, Long.MAX_VALUE, true)) {
                 return delegate.parseStream(Channels.newInputStream(channel));
             }

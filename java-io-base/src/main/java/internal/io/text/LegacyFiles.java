@@ -22,9 +22,6 @@ import nbbrd.io.function.IOSupplier;
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.AccessDeniedException;
-import java.nio.file.FileSystemException;
-import java.nio.file.NoSuchFileException;
 
 /**
  * @author Philippe Charles
@@ -46,7 +43,7 @@ public class LegacyFiles {
 
     @NonNull
     public static InputStream openInputStream(@NonNull File source) throws IOException {
-        return new BufferedInputStreamWithFile(checkSource(source));
+        return new BufferedInputStreamWithFile(FileSystemExceptions.checkSource(source));
     }
 
     public static Writer openWriter(IOSupplier<? extends Writer> source) throws IOException {
@@ -59,32 +56,7 @@ public class LegacyFiles {
 
     @NonNull
     public static OutputStream openOutputStream(@NonNull File target) throws IOException {
-        return new BufferedOutputStream(new FileOutputStream(checkTarget(target)));
-    }
-
-    public static File checkSource(@NonNull File source) throws FileSystemException {
-        checkExist(source);
-        checkIsFile(source);
-        return source;
-    }
-
-    public static File checkTarget(@NonNull File target) throws FileSystemException {
-        if (target.exists()) {
-            checkIsFile(target);
-        }
-        return target;
-    }
-
-    public static void checkExist(@NonNull File source) throws FileSystemException {
-        if (!source.exists()) {
-            throw new NoSuchFileException(source.getPath());
-        }
-    }
-
-    public static void checkIsFile(@NonNull File source) throws FileSystemException {
-        if (!source.isFile()) {
-            throw new AccessDeniedException(source.getPath());
-        }
+        return new BufferedOutputStream(new FileOutputStream(FileSystemExceptions.checkTarget(target)));
     }
 
     public String toSystemId(@NonNull File file) {

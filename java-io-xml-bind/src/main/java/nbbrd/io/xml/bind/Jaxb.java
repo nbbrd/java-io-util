@@ -16,6 +16,7 @@
  */
 package nbbrd.io.xml.bind;
 
+import internal.io.text.FileSystemExceptions;
 import internal.io.text.LegacyFiles;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
@@ -105,7 +106,7 @@ public class Jaxb {
 
         @Override
         public @NonNull T parseFile(@NonNull File source) throws IOException {
-            LegacyFiles.checkSource(source);
+            FileSystemExceptions.checkSource(source);
             Unmarshaller engine = factory.getWithIO();
 
             return cast(!ignoreXXE
@@ -115,7 +116,7 @@ public class Jaxb {
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            LegacyFiles.checkSource(source);
+            FileSystemExceptions.checkSource(source);
             Unmarshaller engine = factory.getWithIO();
 
             return cast(!ignoreXXE
@@ -274,7 +275,7 @@ public class Jaxb {
 
         @Override
         public void formatFile(@NonNull T value, @NonNull File target) throws IOException {
-            LegacyFiles.checkTarget(target);
+            FileSystemExceptions.checkTarget(target);
             try {
                 getEngine(getDefaultEncoding()).marshal(value, target);
             } catch (JAXBException ex) {
