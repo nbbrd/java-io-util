@@ -13,6 +13,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Add uncloseable stream utilities
 - Add resource utilities
 
+### Changed
+
+- Improve path to file conversion
+
 ### Fixed
 
 - Fix unexpected closing of resources in FileFormatter and FileParser

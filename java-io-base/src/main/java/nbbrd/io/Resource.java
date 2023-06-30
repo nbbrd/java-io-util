@@ -77,11 +77,9 @@ public class Resource {
      */
     @NonNull
     public Optional<File> getFile(@NonNull Path path) {
-        try {
-            return Optional.of(path.toFile());
-        } catch (UnsupportedOperationException ex) {
-            return Optional.empty();
-        }
+        return path.getFileSystem() == FileSystems.getDefault()
+                ? Optional.of(new File(path.toString()))
+                : Optional.empty();
     }
 
     /**
