@@ -17,7 +17,6 @@
 package internal.io.text;
 
 import lombok.NonNull;
-import nbbrd.io.Resource;
 import nbbrd.io.function.IOSupplier;
 
 import java.io.*;
@@ -32,11 +31,6 @@ import java.nio.file.NoSuchFileException;
  */
 @lombok.experimental.UtilityClass
 public class LegacyFiles {
-
-    public static InputStream openResource(Class<?> anchor, String name) throws IOException {
-        return Resource.getResourceAsStream(anchor, name)
-                .orElseThrow(() -> new IOException("Missing resource '" + name + "' of '" + anchor.getName() + "'"));
-    }
 
     public static Reader openReader(CharSequence source) {
         return new StringReader(source.toString());

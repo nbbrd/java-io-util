@@ -42,7 +42,7 @@ public interface TextParser<T> {
     }
 
     default @NonNull T parseResource(@NonNull Class<?> type, @NonNull String name, @NonNull Charset encoding) throws IOException {
-        try (InputStream resource = LegacyFiles.openResource(type, name)) {
+        try (InputStream resource = Resource.newInputStream(type, name)) {
             return parseStream(resource, encoding);
         }
     }

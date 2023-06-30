@@ -84,9 +84,20 @@ public class Resource {
         }
     }
 
-    @NonNull
-    public Optional<InputStream> getResourceAsStream(@NonNull Class<?> anchor, @NonNull String name) {
+    /**
+     * @deprecated use {@link #newInputStream(Class, String)} instead.
+     */
+    @Deprecated
+    public @NonNull Optional<InputStream> getResourceAsStream(@NonNull Class<?> anchor, @NonNull String name) {
         return Optional.ofNullable(anchor.getResourceAsStream(name));
+    }
+
+    public static @NonNull InputStream newInputStream(@NonNull Class<?> anchor, @NonNull String name) throws IOException {
+        InputStream result = anchor.getResourceAsStream(name);
+        if (result == null) {
+            throw new IOException("Missing resource '" + name + "' of '" + anchor.getName() + "'");
+        }
+        return result;
     }
 
     @SuppressWarnings("ThrowableResultIgnored")

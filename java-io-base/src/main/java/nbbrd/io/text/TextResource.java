@@ -9,12 +9,22 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CharsetEncoder;
 import java.util.Optional;
 
+import static nbbrd.io.Resource.newInputStream;
+
 @lombok.experimental.UtilityClass
 public class TextResource {
 
+    /**
+     * @deprecated use {@link #newBufferedReader(Class, String, CharsetDecoder)} instead.
+     */
+    @Deprecated
     public @NonNull Optional<BufferedReader> getResourceAsBufferedReader(@NonNull Class<?> anchor, @NonNull String name, @NonNull Charset charset) {
         return Resource.getResourceAsStream(anchor, name)
                 .map(stream -> newBufferedReader(stream, charset.newDecoder()));
+    }
+
+    public @NonNull BufferedReader newBufferedReader(@NonNull Class<?> anchor, @NonNull String name, @NonNull CharsetDecoder decoder) throws IOException {
+        return newBufferedReader(newInputStream(anchor, name), decoder);
     }
 
     public @NonNull BufferedReader newBufferedReader(@NonNull InputStream stream, @NonNull CharsetDecoder decoder) {

@@ -1,12 +1,13 @@
 package nbbrd.io.curl;
 
-import nbbrd.io.Resource;
 import nbbrd.io.sys.ProcessReader;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.Proxy;
@@ -17,7 +18,7 @@ import java.util.TreeMap;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.*;
-import static nbbrd.io.text.TextResource.getResourceAsBufferedReader;
+import static nbbrd.io.text.TextResource.newBufferedReader;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.atIndex;
 
@@ -108,32 +109,30 @@ public class CurlTest {
 
     @Test
     public void testHead() throws IOException {
-        try (InputStream stream = Resource.getResourceAsStream(CurlTest.class, "curlhead.txt").orElseThrow(IOException::new)) {
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, UTF_8))) {
-                assertThat(Curl.Head.parseResponse(reader))
-                        .singleElement()
-                        .isEqualTo(new Curl.Head(
-                                new Curl.Status(200, "OK"),
-                                new TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER) {
-                                    {
-                                        put("Date", singletonList("Wed, 20 Oct 2021 10:58:37 GMT"));
-                                        put("Expires", singletonList("-1"));
-                                        put("Cache-Control", singletonList("private, max-age=0"));
-                                        put("Content-Type", singletonList("text/html; charset=ISO-8859-1"));
-                                        put("P3P", singletonList("CP=\"This is not a P3P policy! See g.co/p3phelp for more info.\""));
-                                        put("Server", singletonList("gws"));
-                                        put("X-XSS-Protection", singletonList("0"));
-                                        put("X-Frame-Options", singletonList("SAMEORIGIN"));
-                                        put("Accept-Ranges", singletonList("none"));
-                                        put("Vary", singletonList("Accept-Encoding"));
-                                        put("Transfer-Encoding", singletonList("chunked"));
-                                    }
+        try (BufferedReader reader = newBufferedReader(CurlTest.class, "curlhead.txt", UTF_8.newDecoder())) {
+            assertThat(Curl.Head.parseResponse(reader))
+                    .singleElement()
+                    .isEqualTo(new Curl.Head(
+                            new Curl.Status(200, "OK"),
+                            new TreeMap<String, List<String>>(String.CASE_INSENSITIVE_ORDER) {
+                                {
+                                    put("Date", singletonList("Wed, 20 Oct 2021 10:58:37 GMT"));
+                                    put("Expires", singletonList("-1"));
+                                    put("Cache-Control", singletonList("private, max-age=0"));
+                                    put("Content-Type", singletonList("text/html; charset=ISO-8859-1"));
+                                    put("P3P", singletonList("CP=\"This is not a P3P policy! See g.co/p3phelp for more info.\""));
+                                    put("Server", singletonList("gws"));
+                                    put("X-XSS-Protection", singletonList("0"));
+                                    put("X-Frame-Options", singletonList("SAMEORIGIN"));
+                                    put("Accept-Ranges", singletonList("none"));
+                                    put("Vary", singletonList("Accept-Encoding"));
+                                    put("Transfer-Encoding", singletonList("chunked"));
                                 }
-                        ));
-            }
+                            }
+                    ));
         }
 
-        try (BufferedReader reader = getResourceAsBufferedReader(CurlTest.class, "curlhead2.txt", UTF_8).orElseThrow(IOException::new)) {
+        try (BufferedReader reader = newBufferedReader(CurlTest.class, "curlhead2.txt", UTF_8.newDecoder())) {
             assertThat(Curl.Head.parseResponse(reader))
                     .hasSize(2)
                     .satisfies(head -> assertThat(head.getStatus().getCode()).isEqualTo(301), atIndex(0))

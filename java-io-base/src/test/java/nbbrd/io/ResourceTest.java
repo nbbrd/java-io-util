@@ -38,6 +38,8 @@ import java.nio.file.Path;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import static nbbrd.io.Resource.getResourceAsStream;
+import static nbbrd.io.Resource.newInputStream;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -46,7 +48,7 @@ import static org.assertj.core.api.Assertions.*;
 public class ResourceTest {
 
     @Test
-    @SuppressWarnings("null")
+    @SuppressWarnings({"null", "DataFlowIssue"})
     public void testGetFile(@TempDir Path temp) throws IOException {
         assertThatNullPointerException().isThrownBy(() -> Resource.getFile(null));
 
@@ -68,19 +70,35 @@ public class ResourceTest {
     }
 
     @Test
-    @SuppressWarnings("null")
+    @SuppressWarnings({"null", "DataFlowIssue", "deprecation"})
     public void testGetResourceAsStream() throws IOException {
-        assertThatNullPointerException().isThrownBy(() -> Resource.getResourceAsStream(null, ""));
-        assertThatNullPointerException().isThrownBy(() -> Resource.getResourceAsStream(ResourceTest.class, null));
+        assertThatNullPointerException().isThrownBy(() -> getResourceAsStream(null, ""));
+        assertThatNullPointerException().isThrownBy(() -> getResourceAsStream(ResourceTest.class, null));
 
-        assertThat(Resource.getResourceAsStream(ResourceTest.class, "hello")).isEmpty();
-        try (InputStream stream = Resource.getResourceAsStream(ResourceTest.class, "/nbbrd/io/zip/test.zip").get()) {
+        assertThat(getResourceAsStream(ResourceTest.class, "hello")).isEmpty();
+        try (InputStream stream = getResourceAsStream(ResourceTest.class, "/nbbrd/io/zip/test.zip").orElseThrow(IOException::new)) {
             assertThat(stream).isNotNull();
         }
     }
 
     @Test
-    @SuppressWarnings("null")
+    @SuppressWarnings({"null", "resource", "DataFlowIssue"})
+    public void testNewInputStream() throws IOException {
+        assertThatNullPointerException().isThrownBy(() -> newInputStream(null, ""));
+        assertThatNullPointerException().isThrownBy(() -> newInputStream(ResourceTest.class, null));
+
+        assertThatIOException()
+                .isThrownBy(() -> newInputStream(ResourceTest.class, "missing_resource"))
+                .withMessageContaining("missing_resource")
+                .withMessageContaining(ResourceTest.class.getName());
+
+        try (InputStream stream = newInputStream(ResourceTest.class, "/nbbrd/io/zip/test.zip")) {
+            assertThat(stream).isNotEmpty();
+        }
+    }
+
+    @Test
+    @SuppressWarnings({"null", "DataFlowIssue"})
     public void testEnsureClosed() throws IOException {
         assertThatNullPointerException().isThrownBy(() -> Resource.ensureClosed(null, IORunnable.noOp().asCloseable()));
 
@@ -139,6 +157,7 @@ public class ResourceTest {
                 .doesNotThrowAnyException();
     }
 
+    @SuppressWarnings("DataFlowIssue")
     @Test
     public void testProcess() throws IOException, URISyntaxException {
         URL url = ResourceTest.class.getResource("/nbbrd/io/zip/test.zip");

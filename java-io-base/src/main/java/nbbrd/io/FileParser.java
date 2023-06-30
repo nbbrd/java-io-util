@@ -34,7 +34,7 @@ public interface FileParser<T> {
     }
 
     default @NonNull T parseResource(@NonNull Class<?> type, @NonNull String name) throws IOException {
-        try (InputStream resource = LegacyFiles.openResource(type, name)) {
+        try (InputStream resource = Resource.newInputStream(type, name)) {
             return parseStream(resource);
         }
     }
