@@ -119,25 +119,47 @@ public final class FileFormatterAssertions {
     }
 
     private static <T> void testFormatStream(FileFormatter<T> p, T value, byte[] expected) throws IOException {
-        {
-            ByteArrayOutputStream nonNullTarget = new ByteArrayOutputStream();
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.formatStream(value, (OutputStream) null))
+                .withMessageContaining("resource");
 
+        try (CloseableOutputStream stream = new CloseableOutputStream()) {
             assertThatNullPointerException()
-                    .isThrownBy(() -> p.formatStream(null, nonNullTarget))
+                    .isThrownBy(() -> p.formatStream(null, stream))
                     .withMessageContaining("value");
-            assertThat(nonNullTarget.toByteArray()).hasSize(0);
 
-            assertThatNullPointerException()
-                    .isThrownBy(() -> p.formatStream(value, (OutputStream) null))
-                    .withMessageContaining("resource");
-            assertThat(nonNullTarget.toByteArray()).hasSize(0);
+            assertThat(stream)
+                    .returns(0, CloseableOutputStream::size)
+                    .returns(false, CloseableOutputStream::isClosed);
         }
 
-        ByteArrayOutputStream resource = new ByteArrayOutputStream();
-        p.formatStream(value, resource);
-        assertThat(resource.toByteArray()).isEqualTo(expected);
+        try (CloseableOutputStream stream = new CloseableOutputStream()) {
+            p.formatStream(value, stream);
+            assertThat(stream)
+                    .returns(expected, CloseableOutputStream::toByteArray)
+                    .returns(false, CloseableOutputStream::isClosed);
+        }
     }
 
     private static final class FileFormatterTestError extends IOException {
+    }
+
+    @lombok.RequiredArgsConstructor
+    private static final class CloseableOutputStream extends ByteArrayOutputStream {
+
+        @lombok.Getter
+        private boolean closed = false;
+
+        @Override
+        public synchronized void reset() {
+            closed = false;
+            super.reset();
+        }
+
+        @Override
+        public void close() throws IOException {
+            closed = true;
+            super.close();
+        }
     }
 }

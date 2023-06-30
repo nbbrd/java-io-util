@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static nbbrd.io.Resource.newInputStream;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -43,7 +44,7 @@ public class ZipTest {
     @BeforeAll
     public static void beforeClass(@TempDir Path temp) throws IOException {
         FILE = Files.createFile(temp.resolve("test.zip")).toFile();
-        try (InputStream stream = Resource.getResourceAsStream(ZipTest.class, "test.zip").get()) {
+        try (InputStream stream = newInputStream(ZipTest.class, "test.zip")) {
             Files.copy(stream, FILE.toPath(), StandardCopyOption.REPLACE_EXISTING);
         }
     }
@@ -77,7 +78,7 @@ public class ZipTest {
         assertThatNullPointerException().isThrownBy(() -> Zip.loaderCopyOf(null, IOPredicate.of(true)));
         assertThatNullPointerException().isThrownBy(() -> Zip.loaderCopyOf(ZipTest.class.getResourceAsStream(""), null));
 
-        try (InputStream file = Resource.getResourceAsStream(ZipTest.class, "test.zip").get()) {
+        try (InputStream file = newInputStream(ZipTest.class, "test.zip")) {
             try (Resource.Loader<String> loader = Zip.loaderCopyOf(file, IOPredicate.of(true))) {
                 assertThatNullPointerException().isThrownBy(() -> loader.load(null));
                 assertThatIOException().isThrownBy(() -> loader.load("xyz"));
@@ -90,7 +91,7 @@ public class ZipTest {
             }
         }
 
-        try (InputStream file = Resource.getResourceAsStream(ZipTest.class, "test.zip").get()) {
+        try (InputStream file = newInputStream(ZipTest.class, "test.zip")) {
             try (Resource.Loader<String> loader = Zip.loaderCopyOf(file, o -> o.getName().startsWith("folder1"))) {
                 assertThatNullPointerException().isThrownBy(() -> loader.load(null));
                 assertThatIOException().isThrownBy(() -> loader.load("xyz"));
@@ -101,7 +102,7 @@ public class ZipTest {
             }
         }
 
-        try (InputStream file = Resource.getResourceAsStream(ZipTest.class, "test.zip").get()) {
+        try (InputStream file = newInputStream(ZipTest.class, "test.zip")) {
             assertThatIllegalStateException().isThrownBy(() -> {
                 Resource.Loader<String> loader = Zip.loaderCopyOf(file, IOPredicate.of(true));
                 loader.close();

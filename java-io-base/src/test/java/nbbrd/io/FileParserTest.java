@@ -2,6 +2,7 @@ package nbbrd.io;
 
 import _test.io.ResourceId;
 import internal.io.text.InternalTextResource;
+import nbbrd.io.function.IOFunction;
 import nbbrd.io.text.TextResource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -14,43 +15,75 @@ import java.nio.file.Path;
 import static _test.io.FileParserAssertions.assertFileParserCompliance;
 import static _test.io.Util.emptyInputStream;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Locale.ROOT;
+import static nbbrd.io.FileParser.*;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 public class FileParserTest {
 
-    @Test
-    public void testCompliance(@TempDir Path temp) throws IOException {
-        ResourceId resourceId = new ResourceId(FileParserTest.class, "text/hello.txt");
-        assertFileParserCompliance(temp, stringParser, "world", resourceId, true);
-    }
-
     @SuppressWarnings("ConstantConditions")
     @Test
-    public void testOnParsingStream() {
+    public void testOnParsingStream(@TempDir Path temp) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> FileParser.onParsingStream(null))
+                .isThrownBy(() -> onParsingStream(null))
                 .withMessageContaining("function");
 
         assertThatNullPointerException()
-                .isThrownBy(() -> FileParser.onParsingStream(o -> null).parseStream(emptyInputStream()))
+                .isThrownBy(() -> onParsingStream(o -> null).parseStream(emptyInputStream()))
                 .withMessageContaining("result");
+
+        IOFunction<InputStream, String> function = deserializeAndClose;
+        String value = "world";
+
+        assertFileParserCompliance(temp,
+                onParsingStream(function),
+                value, new ResourceId(FileParserTest.class, "text/hello.txt"), true);
+
+        assertFileParserCompliance(temp,
+                onParsingStream(function).andThen(upperCase),
+                value.toUpperCase(ROOT), new ResourceId(FileParserTest.class, "text/hello2.txt"), true);
     }
 
     @Test
     public void testOnParsingGzip(@TempDir Path temp) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> FileParser.onParsingGzip(null))
+                .isThrownBy(() -> onParsingGzip(null))
                 .withMessageContaining("parser");
 
-        ResourceId resourceId = new ResourceId(FileParserTest.class, "text/hello.txt.gz");
-        assertFileParserCompliance(temp, FileParser.onParsingGzip(stringParser), "world", resourceId, true);
+        FileParser<String> parser = onParsingStream(deserializeAndClose);
+        String value = "world";
+
+        assertFileParserCompliance(temp,
+                onParsingGzip(parser),
+                value, new ResourceId(FileParserTest.class, "text/hello.txt.gz"), true);
+
+        assertFileParserCompliance(temp,
+                onParsingGzip(parser).andThen(upperCase),
+                value.toUpperCase(ROOT), new ResourceId(FileParserTest.class, "text/hello2.txt.gz"), true);
     }
 
-    private final FileParser<String> stringParser = FileParser.onParsingStream(FileParserTest::parseToString);
+    @Test
+    public void testOnParsingLock(@TempDir Path temp) throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> onParsingLock(null))
+                .withMessageContaining("parser");
 
-    private static String parseToString(InputStream resource) throws IOException {
+        FileParser<String> parser = onParsingStream(deserializeAndClose);
+        String value = "world";
+
+        assertFileParserCompliance(temp,
+                onParsingLock(parser),
+                value, new ResourceId(FileParserTest.class, "text/hello.txt"), true);
+
+        assertFileParserCompliance(temp,
+                onParsingLock(parser).andThen(upperCase),
+                value.toUpperCase(ROOT), new ResourceId(FileParserTest.class, "text/hello2.txt"), true);
+    }
+
+    private final IOFunction<InputStream, String> deserializeAndClose = resource -> {
         try (Reader reader = TextResource.newBufferedReader(resource, UTF_8.newDecoder())) {
             return InternalTextResource.copyToString(reader);
         }
-    }
+    };
+    private final IOFunction<String, String> upperCase = s -> s.toUpperCase(ROOT);
 }

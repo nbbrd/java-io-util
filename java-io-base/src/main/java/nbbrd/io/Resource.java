@@ -16,6 +16,8 @@
  */
 package nbbrd.io;
 
+import internal.io.UncloseableInputStream;
+import internal.io.UncloseableOutputStream;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.function.IOConsumer;
@@ -75,16 +77,25 @@ public class Resource {
      */
     @NonNull
     public Optional<File> getFile(@NonNull Path path) {
-        try {
-            return Optional.of(path.toFile());
-        } catch (UnsupportedOperationException ex) {
-            return Optional.empty();
-        }
+        return path.getFileSystem() == FileSystems.getDefault()
+                ? Optional.of(new File(path.toString()))
+                : Optional.empty();
     }
 
-    @NonNull
-    public Optional<InputStream> getResourceAsStream(@NonNull Class<?> anchor, @NonNull String name) {
+    /**
+     * @deprecated use {@link #newInputStream(Class, String)} instead.
+     */
+    @Deprecated
+    public @NonNull Optional<InputStream> getResourceAsStream(@NonNull Class<?> anchor, @NonNull String name) {
         return Optional.ofNullable(anchor.getResourceAsStream(name));
+    }
+
+    public static @NonNull InputStream newInputStream(@NonNull Class<?> anchor, @NonNull String name) throws IOException {
+        InputStream result = anchor.getResourceAsStream(name);
+        if (result == null) {
+            throw new IOException("Missing resource '" + name + "' of '" + anchor.getName() + "'");
+        }
+        return result;
     }
 
     @SuppressWarnings("ThrowableResultIgnored")
@@ -157,5 +168,13 @@ public class Resource {
             closed = true;
             closer.close();
         }
+    }
+
+    public static @NonNull InputStream uncloseableInputStream(@NonNull InputStream delegate) {
+        return new UncloseableInputStream(delegate);
+    }
+
+    public static @NonNull OutputStream uncloseableOutputStream(@NonNull OutputStream delegate) {
+        return new UncloseableOutputStream(delegate);
     }
 }

@@ -10,6 +10,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
 
+import static nbbrd.io.Resource.uncloseableOutputStream;
+
 @lombok.RequiredArgsConstructor
 public final class EncodingFileFormatter<T> implements FileFormatter<T> {
 
@@ -39,7 +41,7 @@ public final class EncodingFileFormatter<T> implements FileFormatter<T> {
 
     @Override
     public void formatStream(@NonNull T value, @NonNull OutputStream resource) throws IOException {
-        try (OutputStream encoding = encoder.applyWithIO(resource)) {
+        try (OutputStream encoding = encoder.applyWithIO(uncloseableOutputStream(resource))) {
             formatter.formatStream(value, encoding);
         }
     }

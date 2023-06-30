@@ -7,6 +7,22 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.0.24] - 2023-06-30
+
+### Added
+
+- Add lock factory to `File*` utilities
+- Add uncloseable stream utilities
+- Add resource utilities
+
+### Changed
+
+- Improve path to file conversion
+
+### Fixed
+
+- Fix unexpected closing of resources in FileFormatter and FileParser
+
 ## [0.0.23] - 2023-06-09
 
 ### Added
@@ -208,7 +224,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Initial release
 
-[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.23...HEAD
+[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.24...HEAD
+[0.0.24]: https://github.com/nbbrd/java-io-util/compare/v0.0.23...v0.0.24
 [0.0.23]: https://github.com/nbbrd/java-io-util/compare/v0.0.22...v0.0.23
 [0.0.22]: https://github.com/nbbrd/java-io-util/compare/v0.0.21...v0.0.22
 [0.0.21]: https://github.com/nbbrd/java-io-util/compare/v0.0.20...v0.0.21

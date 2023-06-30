@@ -3,6 +3,7 @@ package nbbrd.io;
 import internal.io.ComposeFileFormatter;
 import internal.io.EncodingFileFormatter;
 import internal.io.FunctionalFileFormatter;
+import internal.io.LockingFileFormatter;
 import internal.io.text.LegacyFiles;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
@@ -55,5 +56,10 @@ public interface FileFormatter<T> {
     @StaticFactoryMethod
     static <T> @NonNull FileFormatter<T> onFormattingGzip(@NonNull FileFormatter<T> formatter) {
         return new EncodingFileFormatter<>(formatter, GZIPOutputStream::new);
+    }
+
+    @StaticFactoryMethod
+    static <T> @NonNull FileFormatter<T> onFormattingLock(@NonNull FileFormatter<T> formatter) {
+        return new LockingFileFormatter<>(formatter);
     }
 }

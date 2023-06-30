@@ -17,7 +17,6 @@
 package nbbrd.io.win;
 
 import nbbrd.io.sys.OS;
-import nbbrd.io.text.TextResource;
 import nbbrd.io.win.RegWrapper.RegType;
 import nbbrd.io.win.RegWrapper.RegValue;
 import org.assertj.core.api.Assumptions;
@@ -31,6 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static nbbrd.io.text.TextResource.newBufferedReader;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -99,7 +99,7 @@ public class RegWrapperTest {
                 .extractingByKey(longKey, as(InstanceOfAssertFactories.LIST))
                 .contains(new RegValue("SystemRoot", RegType.REG_SZ, System.getenv("SYSTEMROOT")));
 
-        String missingKey = "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\" + UUID.randomUUID().toString();
+        String missingKey = "HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion\\" + UUID.randomUUID();
         assertThat(RegWrapper.query(missingKey, false)).isEmpty();
 
         String invalidKey = UUID.randomUUID().toString();
@@ -107,13 +107,8 @@ public class RegWrapperTest {
     }
 
     static Map<String, List<RegValue>> parse(String resourceName) throws IOException {
-        try (BufferedReader reader = open(resourceName)) {
+        try (BufferedReader reader = newBufferedReader(RegWrapperTest.class, resourceName, Charset.defaultCharset().newDecoder())) {
             return RegWrapper.parse(reader);
         }
-    }
-
-    static BufferedReader open(String resourceName) {
-        return TextResource.getResourceAsBufferedReader(RegWrapperTest.class, resourceName, Charset.defaultCharset())
-                .orElseThrow(RuntimeException::new);
     }
 }

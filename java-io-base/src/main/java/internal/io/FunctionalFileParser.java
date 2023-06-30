@@ -8,14 +8,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Objects;
 
+import static nbbrd.io.Resource.uncloseableInputStream;
+
 @lombok.RequiredArgsConstructor
 public final class FunctionalFileParser<T> implements FileParser<T> {
 
-    @NonNull
-    private final IOFunction<? super InputStream, ? extends T> function;
+    private final @NonNull IOFunction<? super InputStream, ? extends T> function;
 
     @Override
     public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
-        return Objects.requireNonNull(function.applyWithIO(resource), "result");
+        return Objects.requireNonNull(function.applyWithIO(uncloseableInputStream(resource)), "result");
     }
 }

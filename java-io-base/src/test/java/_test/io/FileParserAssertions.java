@@ -4,10 +4,7 @@ import lombok.NonNull;
 import nbbrd.io.FileParser;
 import nbbrd.io.function.IOSupplier;
 
-import java.io.EOFException;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -147,18 +144,40 @@ public final class FileParserAssertions {
     }
 
     private static <T> void testParseStream(FileParser<T> p, T value, ResourceId expected) throws IOException {
-        {
-            assertThatNullPointerException()
-                    .isThrownBy(() -> p.parseStream((InputStream) null))
-                    .withMessageContaining("resource");
-        }
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.parseStream((InputStream) null))
+                .withMessageContaining("resource");
 
-        try (InputStream resource = expected.open()) {
-            assertThat(p.parseStream(resource))
-                    .isEqualTo(value);
+        byte[] bytes = expected.toBytes();
+
+        try (CloseableInputStream resource = new CloseableInputStream(bytes)) {
+            assertThat(p.parseStream(resource)).isEqualTo(value);
+            assertThat(resource.isClosed()).isFalse();
         }
     }
 
     private static final class FileParserTestError extends IOException {
+    }
+
+    private static final class CloseableInputStream extends ByteArrayInputStream {
+
+        @lombok.Getter
+        private boolean closed = false;
+
+        public CloseableInputStream(byte[] bytes) {
+            super(bytes);
+        }
+
+        @Override
+        public synchronized void reset() {
+            closed = false;
+            super.reset();
+        }
+
+        @Override
+        public void close() throws IOException {
+            closed = true;
+            super.close();
+        }
     }
 }

@@ -158,7 +158,8 @@ public class StaxTest {
                 try (CloseablePerson closeable = x.parseStream(stream)) {
                     assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
                     assertThat(readerClosed).isFalse();
-                    assertThat(streamClosed.get()).isEqualTo(closeable.isEndDocument());
+//                    assertThat(streamClosed.get()).isEqualTo(closeable.isEndDocument());
+                    assertThat(streamClosed.get()).isFalse();
                 }
             }
             assertThat(readerClosed).isTrue();
@@ -170,7 +171,8 @@ public class StaxTest {
                 try (CloseablePerson closeable = x.parseStream(stream, encoding)) {
                     assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
                     assertThat(readerClosed).isFalse();
-                    assertThat(streamClosed.get()).isEqualTo(closeable.isEndDocument());
+//                    assertThat(streamClosed.get()).isEqualTo(closeable.isEndDocument());
+                    assertThat(streamClosed.get()).isFalse();
                 }
             }
             assertThat(readerClosed).isTrue();

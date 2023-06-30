@@ -1,50 +1,80 @@
 package nbbrd.io;
 
+import nbbrd.io.function.IOBiConsumer;
+import nbbrd.io.function.IOFunction;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
 import java.nio.file.Path;
 import java.util.zip.GZIPOutputStream;
 
 import static _test.io.FileFormatterAssertions.assertFileFormatterCompliance;
 import static _test.io.Util.encode;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Locale.ROOT;
+import static nbbrd.io.FileFormatter.*;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 public class FileFormatterTest {
 
-    @Test
-    public void testCompliance(@TempDir Path temp) throws IOException {
-        assertFileFormatterCompliance(temp, stringFormatter, stringValue, stringBytes);
-    }
-
     @SuppressWarnings("ConstantConditions")
     @Test
-    public void testOnFormattingStream() {
+    public void testOnFormattingStream(@TempDir Path temp) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> FileFormatter.onFormattingStream(null))
+                .isThrownBy(() -> onFormattingStream(null))
                 .withMessageContaining("function");
+
+        IOBiConsumer<String, OutputStream> function = serialize.andThen(close);
+        String value = "testOnFormattingStream";
+
+        assertFileFormatterCompliance(temp,
+                onFormattingStream(function),
+                value, value.getBytes(UTF_8));
+
+        assertFileFormatterCompliance(temp,
+                onFormattingStream(function).compose(upperCase),
+                value, value.toUpperCase(ROOT).getBytes(UTF_8));
     }
 
     @Test
     public void testOnFormattingGzip(@TempDir Path temp) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> FileFormatter.onFormattingGzip(null))
+                .isThrownBy(() -> onFormattingGzip(null))
                 .withMessageContaining("formatter");
 
-        assertFileFormatterCompliance(temp, FileFormatter.onFormattingGzip(stringFormatter), stringValue, encode(stringBytes, GZIPOutputStream::new));
+        FileFormatter<String> formatter = onFormattingStream(serialize.andThen(close));
+        String value = "testOnFormattingGzip";
+
+        assertFileFormatterCompliance(temp,
+                onFormattingGzip(formatter),
+                value, encode(value.getBytes(UTF_8), GZIPOutputStream::new));
+
+        assertFileFormatterCompliance(temp,
+                onFormattingGzip(formatter).compose(upperCase),
+                value, encode(value.toUpperCase(ROOT).getBytes(UTF_8), GZIPOutputStream::new));
     }
 
-    private final FileFormatter<String> stringFormatter = FileFormatter.onFormattingStream(FileFormatterTest::formatFromString);
-    private final String stringValue = "world";
-    private final byte[] stringBytes = stringValue.getBytes(UTF_8);
+    @Test
+    public void testOnFormattingLock(@TempDir Path temp) throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> onFormattingLock(null))
+                .withMessageContaining("formatter");
 
-    private static void formatFromString(String value, OutputStream resource) throws IOException {
-        try (OutputStreamWriter writer = new OutputStreamWriter(resource, UTF_8)) {
-            writer.write(value);
-        }
+        FileFormatter<String> formatter = onFormattingStream(serialize.andThen(close));
+        String value = "testOnFormattingLock";
+
+        assertFileFormatterCompliance(temp,
+                onFormattingLock(formatter),
+                value, value.getBytes(UTF_8));
+
+        assertFileFormatterCompliance(temp,
+                onFormattingLock(formatter).compose(upperCase),
+                value, value.toUpperCase(ROOT).getBytes(UTF_8));
     }
+
+    private final IOBiConsumer<String, OutputStream> serialize = (value, resource) -> resource.write(value.getBytes(UTF_8));
+    private final IOBiConsumer<Object, OutputStream> close = (value, resource) -> resource.close();
+    private final IOFunction<String, String> upperCase = s -> s.toUpperCase(ROOT);
 }
