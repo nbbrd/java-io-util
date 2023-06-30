@@ -3,6 +3,7 @@ package nbbrd.io;
 import internal.io.AndThenFileParser;
 import internal.io.DecodingFileFormatter;
 import internal.io.FunctionalFileParser;
+import internal.io.LockingFileParser;
 import internal.io.text.LegacyFiles;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
@@ -58,5 +59,10 @@ public interface FileParser<T> {
     @StaticFactoryMethod
     static <T> @NonNull FileParser<T> onParsingGzip(@NonNull FileParser<T> parser) {
         return new DecodingFileFormatter<>(parser, GZIPInputStream::new);
+    }
+
+    @StaticFactoryMethod
+    static <T> @NonNull FileParser<T> onParsingLock(@NonNull FileParser<T> parser) {
+        return new LockingFileParser<>(parser);
     }
 }

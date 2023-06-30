@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Add lock factory to `File*` utilities
+
 ### Fixed
 
 - Fix unexpected closing of resources in FileFormatter and FileParser

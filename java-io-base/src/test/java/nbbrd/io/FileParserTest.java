@@ -16,8 +16,7 @@ import static _test.io.FileParserAssertions.assertFileParserCompliance;
 import static _test.io.Util.emptyInputStream;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Locale.ROOT;
-import static nbbrd.io.FileParser.onParsingGzip;
-import static nbbrd.io.FileParser.onParsingStream;
+import static nbbrd.io.FileParser.*;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 public class FileParserTest {
@@ -61,6 +60,24 @@ public class FileParserTest {
         assertFileParserCompliance(temp,
                 onParsingGzip(parser).andThen(upperCase),
                 value.toUpperCase(ROOT), new ResourceId(FileParserTest.class, "text/hello2.txt.gz"), true);
+    }
+
+    @Test
+    public void testOnParsingLock(@TempDir Path temp) throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> onParsingLock(null))
+                .withMessageContaining("parser");
+
+        FileParser<String> parser = onParsingStream(deserializeAndClose);
+        String value = "world";
+
+        assertFileParserCompliance(temp,
+                onParsingLock(parser),
+                value, new ResourceId(FileParserTest.class, "text/hello.txt"), true);
+
+        assertFileParserCompliance(temp,
+                onParsingLock(parser).andThen(upperCase),
+                value.toUpperCase(ROOT), new ResourceId(FileParserTest.class, "text/hello2.txt"), true);
     }
 
     private final IOFunction<InputStream, String> deserializeAndClose = resource -> {

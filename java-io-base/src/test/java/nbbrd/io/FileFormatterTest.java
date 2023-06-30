@@ -14,8 +14,7 @@ import static _test.io.FileFormatterAssertions.assertFileFormatterCompliance;
 import static _test.io.Util.encode;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Locale.ROOT;
-import static nbbrd.io.FileFormatter.onFormattingGzip;
-import static nbbrd.io.FileFormatter.onFormattingStream;
+import static nbbrd.io.FileFormatter.*;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 public class FileFormatterTest {
@@ -55,6 +54,24 @@ public class FileFormatterTest {
         assertFileFormatterCompliance(temp,
                 onFormattingGzip(formatter).compose(upperCase),
                 value, encode(value.toUpperCase(ROOT).getBytes(UTF_8), GZIPOutputStream::new));
+    }
+
+    @Test
+    public void testOnFormattingLock(@TempDir Path temp) throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> onFormattingLock(null))
+                .withMessageContaining("formatter");
+
+        FileFormatter<String> formatter = onFormattingStream(serialize.andThen(close));
+        String value = "testOnFormattingLock";
+
+        assertFileFormatterCompliance(temp,
+                onFormattingLock(formatter),
+                value, value.getBytes(UTF_8));
+
+        assertFileFormatterCompliance(temp,
+                onFormattingLock(formatter).compose(upperCase),
+                value, value.toUpperCase(ROOT).getBytes(UTF_8));
     }
 
     private final IOBiConsumer<String, OutputStream> serialize = (value, resource) -> resource.write(value.getBytes(UTF_8));
