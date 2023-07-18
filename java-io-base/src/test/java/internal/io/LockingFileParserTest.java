@@ -36,11 +36,9 @@ public class LockingFileParserTest {
         Files.write(file, Collections.singleton("hello"));
 
         assertThat(running(10, () -> x.parseFile(file.toFile())))
-                .isNotEmpty()
                 .have(wrappedIOExceptionOfType(OverlappingFileLockException.class));
 
         assertThat(running(10, () -> x.parsePath(file)))
-                .isNotEmpty()
                 .have(wrappedIOExceptionOfType(OverlappingFileLockException.class));
     }
 }

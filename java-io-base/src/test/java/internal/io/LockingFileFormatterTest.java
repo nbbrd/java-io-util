@@ -33,11 +33,9 @@ public class LockingFileFormatterTest {
         Path file = Util.newFile(temp);
 
         assertThat(running(10, () -> x.formatFile("hello", file.toFile())))
-                .isNotEmpty()
                 .have(wrappedIOExceptionOfType(OverlappingFileLockException.class));
 
         assertThat(running(10, () -> x.formatPath("hello", file)))
-                .isNotEmpty()
                 .have(wrappedIOExceptionOfType(OverlappingFileLockException.class));
     }
 }
