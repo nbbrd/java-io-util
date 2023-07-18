@@ -24,7 +24,7 @@ public class LockingFileParserTest {
         LockingFileParser<String> x = new LockingFileParser<>(
                 FileParser.onParsingStream((stream) -> {
                     try {
-                        Thread.sleep(100);
+                        Thread.sleep(1000);
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
