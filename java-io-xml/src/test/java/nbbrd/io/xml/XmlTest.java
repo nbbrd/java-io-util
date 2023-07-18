@@ -17,6 +17,7 @@
 package nbbrd.io.xml;
 
 import _test.sample.Person;
+import internal.io.InternalResource;
 import internal.io.text.BufferedInputStreamWithFile;
 import lombok.NonNull;
 import org.junit.jupiter.api.Test;
@@ -109,13 +110,7 @@ public class XmlTest {
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
-            ByteArrayOutputStream tmp = new ByteArrayOutputStream();
-            byte[] buffer = new byte[512];
-            int count = 0;
-            while ((count = resource.read(buffer)) != -1) {
-                tmp.write(buffer, 0, count);
-            }
-            byte[] data = tmp.toByteArray();
+            byte[] data = InternalResource.readAllBytes(resource);
             if (data.length == 0) {
                 throw new EOFException(getFile(resource));
             }

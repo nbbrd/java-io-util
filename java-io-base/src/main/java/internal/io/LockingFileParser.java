@@ -2,6 +2,7 @@ package internal.io;
 
 import lombok.NonNull;
 import nbbrd.io.FileParser;
+import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IOSupplier;
 
 import java.io.File;
@@ -11,6 +12,7 @@ import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
@@ -26,6 +28,8 @@ public final class LockingFileParser<T> implements FileParser<T> {
         try (FileInputStream stream = new FileInputStream(checkSource(source))) {
             try (FileLock ignore = stream.getChannel().lock(0, Long.MAX_VALUE, true)) {
                 return delegate.parseStream(stream);
+            } catch (OverlappingFileLockException ex) {
+                throw WrappedIOException.wrap(ex);
             }
         }
     }
@@ -35,6 +39,8 @@ public final class LockingFileParser<T> implements FileParser<T> {
         try (FileChannel channel = FileChannel.open(checkSource(source), StandardOpenOption.READ)) {
             try (FileLock ignore = channel.lock(0, Long.MAX_VALUE, true)) {
                 return delegate.parseStream(Channels.newInputStream(channel));
+            } catch (OverlappingFileLockException ex) {
+                throw WrappedIOException.wrap(ex);
             }
         }
     }

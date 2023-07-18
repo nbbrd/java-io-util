@@ -13,7 +13,7 @@ import java.nio.file.Path;
 import static nbbrd.io.Resource.uncloseableInputStream;
 
 @lombok.RequiredArgsConstructor
-public final class DecodingFileFormatter<T> implements FileParser<T> {
+public final class DecodingFileParser<T> implements FileParser<T> {
 
     @NonNull
     final FileParser<T> parser;

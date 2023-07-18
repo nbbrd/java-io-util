@@ -13,13 +13,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class DecodingFileFormatterTest {
+public class DecodingFileParserTest {
 
     @Test
     public void testClosing(@TempDir Path temp) throws IOException {
         AtomicInteger closeCount = new AtomicInteger(0);
 
-        DecodingFileFormatter<String> x = new DecodingFileFormatter<>(
+        DecodingFileParser<String> x = new DecodingFileParser<>(
                 FileParser.onParsingStream((stream) -> "hello"),
                 o -> new ForwardingInputStream(o).onClose(closeCount::incrementAndGet)
         );
@@ -36,7 +36,7 @@ public class DecodingFileFormatterTest {
         x.parseStream(() -> new ByteArrayInputStream(new byte[0]));
         assertThat(closeCount).hasValue(4);
 
-        x.parseResource(DecodingFileFormatter.class, "/nbbrd/io/text/hello.txt");
+        x.parseResource(DecodingFileParser.class, "/nbbrd/io/text/hello.txt");
         assertThat(closeCount).hasValue(5);
     }
 }

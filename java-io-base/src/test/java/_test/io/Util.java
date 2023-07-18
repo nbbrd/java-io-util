@@ -1,16 +1,25 @@
 package _test.io;
 
+import internal.io.InternalResource;
 import nbbrd.io.Resource;
+import nbbrd.io.WrappedIOException;
+import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.function.IOUnaryOperator;
 import nbbrd.io.sys.SystemProperties;
+import org.assertj.core.api.Condition;
 
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
+import java.util.List;
+import java.util.Objects;
 import java.util.function.Supplier;
+import java.util.stream.IntStream;
+
+import static java.util.stream.Collectors.toList;
 
 public final class Util {
 
@@ -70,14 +79,28 @@ public final class Util {
     }
 
     public static byte[] decode(byte[] bytes, IOUnaryOperator<InputStream> encoder) throws IOException {
-        ByteArrayOutputStream result = new ByteArrayOutputStream();
         try (InputStream input = encoder.applyWithIO(new ByteArrayInputStream(bytes))) {
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = input.read(buffer, 0, buffer.length)) >= 0) {
-                result.write(buffer, 0, read);
-            }
+            return InternalResource.readAllBytes(input);
         }
-        return result.toByteArray();
+    }
+
+
+    public static Condition<Throwable> wrappedIOExceptionOfType(Class<?> type) {
+        return new Condition<>((Throwable o) -> o instanceof WrappedIOException && type.isInstance(o.getCause()), "");
+    }
+
+    public static List<Throwable> running(int n, IORunnable runnable) {
+        return IntStream.range(0, n)
+                .parallel()
+                .mapToObj(i -> {
+                    try {
+                        runnable.runWithIO();
+                    } catch (Throwable ex) {
+                        return ex;
+                    }
+                    return null;
+                })
+                .filter(Objects::nonNull)
+                .collect(toList());
     }
 }

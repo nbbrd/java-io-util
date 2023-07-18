@@ -16,6 +16,7 @@
  */
 package nbbrd.io.zip;
 
+import internal.io.InternalResource;
 import lombok.NonNull;
 import nbbrd.io.Resource;
 import nbbrd.io.function.IOPredicate;
@@ -99,12 +100,8 @@ public class Zip {
         if (size >= Integer.MAX_VALUE) {
             throw new IOException("ZIP entry size is too large");
         }
-        ByteArrayOutputStream result = new ByteArrayOutputStream(size > 0 ? (int) size : 4096);
-        byte[] buffer = new byte[4096];
-        int len;
-        while ((len = stream.read(buffer)) != -1) {
-            result.write(buffer, 0, len);
-        }
+        ByteArrayOutputStream result = new ByteArrayOutputStream(size > 0 ? (int) size : InternalResource.DEFAULT_BUFFER_SIZE);
+        InternalResource.transferTo(stream, result);
         return result.toByteArray();
     }
 }
