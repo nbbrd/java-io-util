@@ -1,9 +1,13 @@
 package _test.io;
 
+import internal.io.InternalResource;
 import internal.io.text.InternalTextResource;
 import lombok.NonNull;
 
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.Reader;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,15 +38,9 @@ public class ResourceId {
     }
 
     public byte[] toBytes() throws IOException {
-        ByteArrayOutputStream result = new ByteArrayOutputStream();
         try (InputStream input = open()) {
-            byte[] buffer = new byte[8192];
-            int read;
-            while ((read = input.read(buffer, 0, buffer.length)) >= 0) {
-                result.write(buffer, 0, read);
-            }
+            return InternalResource.readAllBytes(input);
         }
-        return result.toByteArray();
     }
 
     public BufferedReader open(Charset encoding) throws IOException {

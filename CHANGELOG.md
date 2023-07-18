@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix OverlappingFileLockException
+
 ## [0.0.24] - 2023-06-30
 
 ### Added

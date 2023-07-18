@@ -28,5 +28,6 @@ module nbbrd.io.base {
     exports nbbrd.io.text;
     exports nbbrd.io.zip;
 
+    exports internal.io to nbbrd.io.xml, nbbrd.io.xml.bind, nbbrd.io.picocsv;
     exports internal.io.text to nbbrd.io.xml, nbbrd.io.xml.bind, nbbrd.io.picocsv;
 }
