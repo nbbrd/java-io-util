@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.0.25] - 2023-07-18
+
 ### Fixed
 
 - Fix OverlappingFileLockException
@@ -228,7 +230,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Initial release
 
-[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.24...HEAD
+[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.25...HEAD
+[0.0.25]: https://github.com/nbbrd/java-io-util/compare/v0.0.24...v0.0.25
 [0.0.24]: https://github.com/nbbrd/java-io-util/compare/v0.0.23...v0.0.24
 [0.0.23]: https://github.com/nbbrd/java-io-util/compare/v0.0.22...v0.0.23
 [0.0.22]: https://github.com/nbbrd/java-io-util/compare/v0.0.21...v0.0.22
