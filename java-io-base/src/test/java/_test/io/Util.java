@@ -90,7 +90,7 @@ public final class Util {
     }
 
     public static List<Throwable> running(int n, IORunnable runnable) {
-        return IntStream.range(0, 10)
+        return IntStream.range(0, n)
                 .parallel()
                 .mapToObj(i -> {
                     try {
