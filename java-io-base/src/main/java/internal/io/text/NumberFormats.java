@@ -25,36 +25,44 @@ import java.text.NumberFormat;
 import java.text.ParsePosition;
 
 /**
+ * Set of tools to overcome {@link NumberFormat} pitfalls.
+ *
  * @author Philippe Charles
  */
-@lombok.experimental.UtilityClass
 final class NumberFormats {
 
-    @Nullable
-    public Number parseAll(@NonNull NumberFormat numberFormat, @NonNull CharSequence input) {
+    private NumberFormats() {
+        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
+
+    /**
+     * Same as {@link NumberFormat#parse(String)} but without throwing an exception.
+     *
+     * @param format the format used to parse
+     * @param input  the string to parse
+     * @return null if parsing failed, a {@link Number} otherwise
+     */
+    public static @Nullable Number parseOrNull(@NonNull NumberFormat format, @NonNull CharSequence input) {
         String source = input.toString();
         ParsePosition pos = new ParsePosition(0);
-        Number result = numberFormat.parse(source, pos);
+        Number result = format.parse(source, pos);
         return pos.getIndex() == input.length() ? result : null;
     }
 
-    @NonNull
-    public CharSequence simplify(@NonNull NumberFormat numberFormat, @NonNull CharSequence input) {
-        return NumberFormats.hasGroupingSpaceChar(numberFormat)
-                ? NumberFormats.removeGroupingSpaceChars(input)
-                : input;
+    public static @NonNull CharSequence simplify(@NonNull NumberFormat format, @NonNull CharSequence input) {
+        return hasGroupingSpaceChar(format) ? removeGroupingSpaceChars(input) : input;
     }
 
-    private boolean hasGroupingSpaceChar(NumberFormat format) {
+    private static boolean hasGroupingSpaceChar(NumberFormat format) {
         return format instanceof DecimalFormat
                 && hasGroupingSpaceChar(((DecimalFormat) format).getDecimalFormatSymbols());
     }
 
-    private boolean hasGroupingSpaceChar(DecimalFormatSymbols symbols) {
+    private static boolean hasGroupingSpaceChar(DecimalFormatSymbols symbols) {
         return Character.isSpaceChar(symbols.getGroupingSeparator());
     }
 
-    private CharSequence removeGroupingSpaceChars(CharSequence input) {
+    private static CharSequence removeGroupingSpaceChars(CharSequence input) {
         if (input.length() < 2) {
             return input;
         }
@@ -69,9 +77,9 @@ final class NumberFormats {
         return result.length() != input.length() ? result.toString() : input;
     }
 
-    private boolean isGroupingSpaceChar(CharSequence array, int index) {
-        return Character.isSpaceChar(array.charAt(index))
-                && Character.isDigit(array.charAt(index - 1))
-                && Character.isDigit(array.charAt(index + 1));
+    private static boolean isGroupingSpaceChar(CharSequence input, int index) {
+        return Character.isSpaceChar(input.charAt(index))
+                && Character.isDigit(input.charAt(index - 1))
+                && Character.isDigit(input.charAt(index + 1));
     }
 }
