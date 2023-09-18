@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix AM/PM prefix compatibility in DateFormat
+
 ## [0.0.25] - 2023-07-18
 
 ### Fixed

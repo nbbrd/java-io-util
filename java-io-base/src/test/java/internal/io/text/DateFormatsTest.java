@@ -34,7 +34,8 @@ import java.time.format.FormatStyle;
 import java.util.Date;
 import java.util.Locale;
 
-import static internal.io.text.DateFormats.parseOrNull;
+import static internal.io.text.DateFormats.*;
+import static java.util.Locale.GERMANY;
 import static java.util.Locale.US;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
@@ -44,6 +45,10 @@ import static org.assertj.core.api.Assertions.assertThatNullPointerException;
  */
 public class DateFormatsTest {
 
+    static final SimpleDateFormat TIME24 = (SimpleDateFormat) SimpleDateFormat.getTimeInstance(DateFormat.MEDIUM, GERMANY);
+    static final SimpleDateFormat TIME12 = (SimpleDateFormat) SimpleDateFormat.getTimeInstance(DateFormat.MEDIUM, US);
+
+    @SuppressWarnings("DataFlowIssue")
     @Test
     public void testParseOrNull() {
         assertThatNullPointerException().isThrownBy(() -> parseOrNull(null, ""));
@@ -57,6 +62,36 @@ public class DateFormatsTest {
                     assertThat(parseOrNull(format, "2010-01x")).isNull();
                     assertThat(parseOrNull(format, "x2010-01")).isNull();
                 });
+    }
+
+    @SuppressWarnings("DataFlowIssue")
+    @Test
+    public void testNormalize() {
+        assertThatNullPointerException().isThrownBy(() -> normalize(null, ""));
+        assertThatNullPointerException().isThrownBy(() -> normalize(TIME24, null));
+
+        assertThat(TIME24)
+                .satisfies(without -> {
+                    assertThat(normalize(without, "")).isEmpty();
+                    assertThat(normalize(without, "03:01:02")).isEqualTo("03:01:02");
+                    assertThat(normalize(without, "3:01:02 AM")).isEqualTo("3:01:02 AM");
+                    assertThat(normalize(without, "3:01:02\u202FAM")).isEqualTo("3:01:02\u202FAM");
+                });
+
+        assertThat(TIME12)
+                .satisfies(with -> {
+                    char amPmPrefix = getAmPmPrefix(with);
+                    assertThat(normalize(with, "")).isEmpty();
+                    assertThat(normalize(with, "03:01:02")).isEqualTo("03:01:02");
+                    assertThat(normalize(with, "3:01:02 AM")).isEqualTo("3:01:02" + amPmPrefix + "AM");
+                    assertThat(normalize(with, "3:01:02\u202FAM")).isEqualTo("3:01:02" + amPmPrefix + "AM");
+                });
+    }
+
+    @Test
+    public void testGetAmPmPrefix() {
+        assertThat(getAmPmPrefix(TIME24)).isEqualTo('\0');
+        assertThat(getAmPmPrefix(TIME12)).isNotEqualTo('\0');
     }
 
     /**
@@ -97,6 +132,12 @@ public class DateFormatsTest {
             assertThat(dateFormat.parse(text)).isEqualTo(date);
             assertThat(dateTimeFormatter.format(localTime)).isEqualTo(text);
             assertThat(dateTimeFormatter.parse(text, LocalTime::from)).isEqualTo(localTime);
+        }
+
+        @Test
+        public void testBackwardAndForwardCompatibility() {
+            assertThat(parseOrNull(dateFormat, normalize(dateFormat, "3:01:02 AM"))).isEqualTo(date);
+            assertThat(parseOrNull(dateFormat, normalize(dateFormat, "3:01:02\u202FAM"))).isEqualTo(date);
         }
     }
 }

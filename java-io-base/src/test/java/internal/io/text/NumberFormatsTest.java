@@ -26,7 +26,7 @@ import java.text.NumberFormat;
 import java.text.ParseException;
 
 import static internal.io.text.NumberFormats.parseOrNull;
-import static internal.io.text.NumberFormats.simplify;
+import static internal.io.text.NumberFormats.normalize;
 import static java.util.Locale.FRANCE;
 import static java.util.Locale.ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,6 +37,7 @@ import static org.assertj.core.api.Assertions.assertThatNullPointerException;
  */
 public class NumberFormatsTest {
 
+    @SuppressWarnings("DataFlowIssue")
     @Test
     public void testParseOrNull() {
         assertThatNullPointerException().isThrownBy(() -> parseOrNull(null, ""));
@@ -52,38 +53,39 @@ public class NumberFormatsTest {
                 });
     }
 
+    @SuppressWarnings("DataFlowIssue")
     @Test
-    public void testSimplify() {
-        assertThatNullPointerException().isThrownBy(() -> simplify(null, ""));
-        assertThatNullPointerException().isThrownBy(() -> simplify(NumberFormat.getInstance(ROOT), null));
+    public void testNormalize() {
+        assertThatNullPointerException().isThrownBy(() -> normalize(null, ""));
+        assertThatNullPointerException().isThrownBy(() -> normalize(NumberFormat.getInstance(ROOT), null));
 
         assertThat(NumberFormat.getInstance(ROOT))
                 .satisfies(without -> {
-                    assertThat(simplify(without, "")).isEmpty();
-                    assertThat(simplify(without, "1234.5")).isEqualTo("1234.5");
-                    assertThat(simplify(without, "1,234.5")).isEqualTo("1,234.5");
+                    assertThat(normalize(without, "")).isEmpty();
+                    assertThat(normalize(without, "1234.5")).isEqualTo("1234.5");
+                    assertThat(normalize(without, "1,234.5")).isEqualTo("1,234.5");
 
-                    assertThat(simplify(without, " ")).isEqualTo(" ");
-                    assertThat(simplify(without, " 2")).isEqualTo(" 2");
-                    assertThat(simplify(without, "1 ")).isEqualTo("1 ");
-                    assertThat(simplify(without, "1 3")).isEqualTo("1 3");
-                    assertThat(simplify(without, "1 234,5")).isEqualTo("1 234,5");
-                    assertThat(simplify(without, "1\u00A0234,5")).isEqualTo("1\u00A0234,5");
-                    assertThat(simplify(without, "1\u202F234,5")).isEqualTo("1\u202F234,5");
+                    assertThat(normalize(without, " ")).isEqualTo(" ");
+                    assertThat(normalize(without, " 2")).isEqualTo(" 2");
+                    assertThat(normalize(without, "1 ")).isEqualTo("1 ");
+                    assertThat(normalize(without, "1 3")).isEqualTo("1 3");
+                    assertThat(normalize(without, "1 234,5")).isEqualTo("1 234,5");
+                    assertThat(normalize(without, "1\u00A0234,5")).isEqualTo("1\u00A0234,5");
+                    assertThat(normalize(without, "1\u202F234,5")).isEqualTo("1\u202F234,5");
                 });
 
         assertThat(NumberFormat.getInstance(FRANCE))
                 .satisfies(with -> {
-                    assertThat(simplify(with, "")).isEmpty();
-                    assertThat(simplify(with, "1234.5")).isEqualTo("1234.5");
-                    assertThat(simplify(with, "1,234.5")).isEqualTo("1,234.5");
+                    assertThat(normalize(with, "")).isEmpty();
+                    assertThat(normalize(with, "1234.5")).isEqualTo("1234.5");
+                    assertThat(normalize(with, "1,234.5")).isEqualTo("1,234.5");
 
-                    assertThat(simplify(with, " 2")).isEqualTo(" 2");
-                    assertThat(simplify(with, "1 ")).isEqualTo("1 ");
-                    assertThat(simplify(with, "1 3")).isEqualTo("13");
-                    assertThat(simplify(with, "1 234,5")).isEqualTo("1234,5");
-                    assertThat(simplify(with, "1\u00A0234,5")).isEqualTo("1234,5");
-                    assertThat(simplify(with, "1\u202F234,5")).isEqualTo("1234,5");
+                    assertThat(normalize(with, " 2")).isEqualTo(" 2");
+                    assertThat(normalize(with, "1 ")).isEqualTo("1 ");
+                    assertThat(normalize(with, "1 3")).isEqualTo("13");
+                    assertThat(normalize(with, "1 234,5")).isEqualTo("1234,5");
+                    assertThat(normalize(with, "1\u00A0234,5")).isEqualTo("1234,5");
+                    assertThat(normalize(with, "1\u202F234,5")).isEqualTo("1234,5");
                 });
     }
 
@@ -116,6 +118,12 @@ public class NumberFormatsTest {
             assertThat(symbols.getGroupingSeparator()).isEqualTo('\u202F');
             assertThat(numberFormat.format(number)).isEqualTo(text);
             assertThat(numberFormat.parse(text)).isEqualTo(number);
+        }
+
+        @Test
+        public void testBackwardAndForwardCompatibility() {
+            assertThat(parseOrNull(numberFormat, normalize(numberFormat, "1\u00A0234,5"))).isEqualTo(number);
+            assertThat(parseOrNull(numberFormat, normalize(numberFormat, "1\u202F234,5"))).isEqualTo(number);
         }
     }
 }

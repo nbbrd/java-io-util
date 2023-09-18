@@ -174,11 +174,11 @@ public class InternalParser {
     }
 
     public Date parseDate(DateFormat format, CharSequence input) {
-        return input != null ? DateFormats.parseOrNull(format, input) : null;
+        return input != null ? DateFormats.parseOrNull(format, DateFormats.normalize(format, input)) : null;
     }
 
     public Number parseNumber(NumberFormat format, CharSequence input) {
-        return input != null ? NumberFormats.parseOrNull(format, NumberFormats.simplify(format, input)) : null;
+        return input != null ? NumberFormats.parseOrNull(format, NumberFormats.normalize(format, input)) : null;
     }
 
     public <T extends Enum<T>> T parseEnum(Class<T> enumClass, CharSequence input) {

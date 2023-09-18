@@ -20,7 +20,6 @@ import lombok.NonNull;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.text.DecimalFormat;
-import java.text.DecimalFormatSymbols;
 import java.text.NumberFormat;
 import java.text.ParsePosition;
 
@@ -49,17 +48,21 @@ final class NumberFormats {
         return pos.getIndex() == input.length() ? result : null;
     }
 
-    public static @NonNull CharSequence simplify(@NonNull NumberFormat format, @NonNull CharSequence input) {
-        return hasGroupingSpaceChar(format) ? removeGroupingSpaceChars(input) : input;
-    }
-
-    private static boolean hasGroupingSpaceChar(NumberFormat format) {
+    public static @NonNull CharSequence normalize(@NonNull NumberFormat format, @NonNull CharSequence input) {
         return format instanceof DecimalFormat
-                && hasGroupingSpaceChar(((DecimalFormat) format).getDecimalFormatSymbols());
+                ? normalizeDecimalFormat((DecimalFormat) format, input)
+                : input;
     }
 
-    private static boolean hasGroupingSpaceChar(DecimalFormatSymbols symbols) {
-        return Character.isSpaceChar(symbols.getGroupingSeparator());
+    private static CharSequence normalizeDecimalFormat(DecimalFormat format, CharSequence input) {
+        char groupingSeparator = getGroupingSeparator(format);
+        return Character.isSpaceChar(groupingSeparator)
+                ? removeGroupingSpaceChars(input)
+                : input;
+    }
+
+    private static char getGroupingSeparator(DecimalFormat format) {
+        return format.getDecimalFormatSymbols().getGroupingSeparator();
     }
 
     private static CharSequence removeGroupingSpaceChars(CharSequence input) {
