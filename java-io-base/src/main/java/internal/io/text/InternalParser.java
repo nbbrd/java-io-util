@@ -24,7 +24,6 @@ import java.net.URL;
 import java.nio.charset.Charset;
 import java.text.DateFormat;
 import java.text.NumberFormat;
-import java.text.ParsePosition;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.temporal.TemporalQuery;
@@ -42,25 +41,6 @@ import java.util.stream.Stream;
  */
 @lombok.experimental.UtilityClass
 public class InternalParser {
-
-    @SuppressWarnings("unchecked")
-    public <T> T parseTemporalAccessor(DateTimeFormatter formatter, TemporalQuery<T>[] queries, CharSequence input) {
-        if (input != null) {
-            try {
-                switch (queries.length) {
-                    case 0:
-                        throw new IllegalArgumentException("At least one query must be specified");
-                    case 1:
-                        return formatter.parse(input, queries[0]);
-                    default:
-                        return (T) formatter.parseBest(input, queries);
-                }
-            } catch (DateTimeParseException ex) {
-                doNothing(ex);
-            }
-        }
-        return null;
-    }
 
     public Boolean parseBoolean(CharSequence input) {
         if (input != null) {
@@ -174,18 +154,31 @@ public class InternalParser {
         return input != null ? new File(input.toString()) : null;
     }
 
-    public Date parseDate(DateFormat dateFormat, CharSequence input) {
+    @SuppressWarnings("unchecked")
+    public <T> T parseTemporalAccessor(DateTimeFormatter formatter, TemporalQuery<T>[] queries, CharSequence input) {
         if (input != null) {
-            String source = input.toString();
-            ParsePosition pos = new ParsePosition(0);
-            Date result = dateFormat.parse(source, pos);
-            return pos.getIndex() == input.length() ? result : null;
+            try {
+                switch (queries.length) {
+                    case 0:
+                        throw new IllegalArgumentException("At least one query must be specified");
+                    case 1:
+                        return formatter.parse(input, queries[0]);
+                    default:
+                        return (T) formatter.parseBest(input, queries);
+                }
+            } catch (DateTimeParseException ex) {
+                doNothing(ex);
+            }
         }
         return null;
     }
 
-    public Number parseNumber(NumberFormat numberFormat, CharSequence input) {
-        return input != null ? NumberFormats.parseAll(numberFormat, NumberFormats.simplify(numberFormat, input)) : null;
+    public Date parseDate(DateFormat format, CharSequence input) {
+        return input != null ? DateFormats.parseOrNull(format, DateFormats.normalize(format, input)) : null;
+    }
+
+    public Number parseNumber(NumberFormat format, CharSequence input) {
+        return input != null ? NumberFormats.parseOrNull(format, NumberFormats.normalize(format, input)) : null;
     }
 
     public <T extends Enum<T>> T parseEnum(Class<T> enumClass, CharSequence input) {

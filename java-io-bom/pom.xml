@@ -7,7 +7,7 @@
     <parent>
         <artifactId>java-io-parent</artifactId>
         <groupId>com.github.nbbrd.java-io-util</groupId>
-        <version>0.0.25</version>
+        <version>0.0.26</version>
     </parent>
 
     <artifactId>java-io-bom</artifactId>
@@ -47,6 +47,11 @@
             <dependency>
                 <groupId>${project.groupId}</groupId>
                 <artifactId>java-io-curl</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>${project.groupId}</groupId>
+                <artifactId>java-io-http</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>
@@ -101,7 +106,7 @@
                     <plugin>
                         <groupId>org.jreleaser</groupId>
                         <artifactId>jreleaser-maven-plugin</artifactId>
-                        <version>1.7.0</version>
+                        <version>1.8.0</version>
                         <executions>
                             <execution>
                                 <phase>install</phase>
