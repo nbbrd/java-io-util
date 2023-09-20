@@ -42,6 +42,7 @@
         <module>java-io-xml-bind</module>
         <module>java-io-picocsv</module>
         <module>java-io-curl</module>
+        <module>java-io-http</module>
         <module>java-io-bom</module>
     </modules>
 

@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- Add http module
+
 ### Fixed
 
 - Fix AM/PM prefix compatibility in DateFormat
