@@ -16,7 +16,6 @@
  */
 package nbbrd.io.http;
 
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import nbbrd.io.curl.CurlHttpURLConnection;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -37,15 +36,6 @@ public class CurlClientTest extends DefaultHttpClientTest {
     @Override
     protected boolean isHttpsURLConnectionSupported() {
         return false;
-    }
-
-    @Override
-    protected WireMockConfiguration getWireMockConfiguration() {
-        return WireMockConfiguration
-                .options()
-                .dynamicPort()
-                .dynamicHttpsPort()
-                .gzipDisabled(false);
     }
 
     @Disabled

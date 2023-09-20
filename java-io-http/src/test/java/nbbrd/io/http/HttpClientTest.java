@@ -56,7 +56,14 @@ public abstract class HttpClientTest {
 
     abstract protected HttpClient getClient(HttpContext context);
 
-    abstract protected WireMockConfiguration getWireMockConfiguration();
+    protected WireMockConfiguration getWireMockConfiguration() {
+        return WireMockConfiguration
+                .options()
+                .bindAddress("127.0.0.1")
+                .dynamicPort()
+                .dynamicHttpsPort()
+                .gzipDisabled(false);
+    }
 
     @RegisterExtension
     protected WireMockExtension wire = WireMockExtension.newInstance()

@@ -16,8 +16,6 @@
  */
 package nbbrd.io.http;
 
-import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-
 /**
  * @author Philippe Charles
  */
@@ -31,14 +29,5 @@ public class JdkClientTest extends DefaultHttpClientTest {
     @Override
     protected boolean isHttpsURLConnectionSupported() {
         return true;
-    }
-
-    @Override
-    protected WireMockConfiguration getWireMockConfiguration() {
-        return WireMockConfiguration
-                .options()
-                .dynamicPort()
-                .dynamicHttpsPort()
-                .gzipDisabled(false);
     }
 }
