@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.function.BiConsumer;
 
 import static java.util.Collections.emptySortedMap;
+import static nbbrd.io.curl.Curl.CommandBuilder.STDOUT_FILENAME;
 
 public final class CurlHttpURLConnection extends HttpURLConnection {
 
@@ -172,7 +173,7 @@ public final class CurlHttpURLConnection extends HttpURLConnection {
                 .insecure(insecure)
                 .proxy(proxy)
                 .output(inputFile)
-                .dumpHeader("-")
+                .dumpHeader(STDOUT_FILENAME)
                 .connectTimeout(getConnectTimeout() / 1000f)
                 .maxTime(getReadTimeout() / 1000f)
                 .headers(getRequestProperties())

@@ -16,7 +16,9 @@
  */
 package nbbrd.io.http;
 
+import lombok.AccessLevel;
 import lombok.NonNull;
+import nbbrd.design.StaticFactoryMethod;
 
 import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
@@ -25,16 +27,18 @@ import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Philippe Charles
  */
-@lombok.RequiredArgsConstructor(staticName = "of")
+@lombok.RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class URLQueryBuilder {
+
+    @StaticFactoryMethod
+    public static @NonNull URLQueryBuilder of(@NonNull URL endPoint) {
+        return new URLQueryBuilder(endPoint);
+    }
 
     @lombok.NonNull
     private final URL endPoint;
@@ -98,10 +102,29 @@ public final class URLQueryBuilder {
         return this;
     }
 
+    /**
+     * Appends the specified parameter to the current URL.
+     *
+     * @param key a non-null key
+     * @return this builder
+     * @throws NullPointerException if key or value is null
+     */
+    @NonNull
+    public URLQueryBuilder param(@NonNull String key) {
+        params.put(key, null);
+        return this;
+    }
+
     @Override
     public String toString() {
         StringBuilder result = new StringBuilder();
-        result.append(endPoint);
+
+        String endPointAsString = endPoint.toString();
+        if (!paths.isEmpty() && endPointAsString.charAt(endPointAsString.length() - 1) == '/') {
+            result.append(endPointAsString, 0, endPointAsString.length() - 1);
+        } else {
+            result.append(endPointAsString);
+        }
 
         for (String path : paths) {
             result.append('/').append(encode(path, encoding));
@@ -111,17 +134,25 @@ public final class URLQueryBuilder {
             result.append('/');
         }
 
-        boolean first = true;
-        for (Map.Entry<String, String> o : params.entrySet()) {
-            result.append(first ? '?' : '&');
-            result
-                    .append(encode(o.getKey(), encoding))
-                    .append('=')
-                    .append(encode(o.getValue(), encoding));
-            first = false;
+        Iterator<Map.Entry<String, String>> paramsIterator = params.entrySet().iterator();
+        if (paramsIterator.hasNext()) {
+            result.append('?');
+            appendParam(result, paramsIterator.next());
+            while (paramsIterator.hasNext()) {
+                result.append('&');
+                appendParam(result, paramsIterator.next());
+            }
         }
 
         return result.toString();
+    }
+
+    private void appendParam(StringBuilder result, Map.Entry<String, String> o) {
+        result.append(encode(o.getKey(), encoding));
+        String value = o.getValue();
+        if (value != null) {
+            result.append('=').append(encode(value, encoding));
+        }
     }
 
     /**
@@ -129,7 +160,7 @@ public final class URLQueryBuilder {
      *
      * @return a new URL
      * @throws MalformedURLException if no protocol is specified, or an unknown protocol is found, or spec is null,
-     *                                        or the parsed URL fails to comply with the specific syntax of the associated protocol.
+     *                               or the parsed URL fails to comply with the specific syntax of the associated protocol.
      */
     @NonNull
     public URL build() throws MalformedURLException {

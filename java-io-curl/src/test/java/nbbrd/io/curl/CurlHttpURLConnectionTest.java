@@ -33,6 +33,8 @@ import static org.assertj.core.api.Assertions.*;
 
 public class CurlHttpURLConnectionTest {
 
+    private final boolean selfSignedCertificate = true;
+
     @RegisterExtension
     public final WireMockExtension wire = WireMockExtension.newInstance()
             .options(WireMockConfiguration
@@ -54,7 +56,7 @@ public class CurlHttpURLConnectionTest {
 
         UUID id = UUID.nameUUIDFromBytes(new byte[0]);
 
-        assertThat(CurlHttpURLConnection.builder(localhost).proxy(proxy123).insecure(true).tempDir(temp).id(id).build())
+        assertThat(CurlHttpURLConnection.builder(localhost).proxy(proxy123).insecure(selfSignedCertificate).tempDir(temp).id(id).build())
                 .returns(localhost, HttpURLConnection::getURL)
                 .returns(proxy123, CurlHttpURLConnection::getProxy)
                 .returns(true, CurlHttpURLConnection::isInsecure)
@@ -152,7 +154,7 @@ public class CurlHttpURLConnectionTest {
                 .http1_1()
                 .url(wireURL(SAMPLE_URL))
                 .dumpHeader(dumpHeader.toString())
-                .insecure(true)
+                .insecure(selfSignedCertificate)
                 .build();
 
         ProcessReader.readToString(command);
@@ -316,7 +318,7 @@ public class CurlHttpURLConnectionTest {
                 wire.stubFor(get(SAMPLE_URL).willReturn(aResponse().withStatus(redirection).withHeader(HTTP_LOCATION_HEADER, location)));
                 wire.stubFor(get(SECOND_URL).willReturn(okXml(SAMPLE_XML)));
 
-                HttpURLConnection x = CurlHttpURLConnection.builder(wireURL(SAMPLE_URL)).insecure(true).build();
+                HttpURLConnection x = CurlHttpURLConnection.builder(wireURL(SAMPLE_URL)).insecure(selfSignedCertificate).build();
                 x.setInstanceFollowRedirects(followRedirects);
                 x.setRequestProperty(HTTP_CONTENT_TYPE_HEADER, TYPE_XML);
                 x.connect();
@@ -374,10 +376,10 @@ public class CurlHttpURLConnectionTest {
         return new URL(String.format(Locale.ROOT, "%s%s", wire.baseUrl(), path));
     }
 
-    private CurlHttpURLConnection curl(URL url, File temp) throws MalformedURLException {
+    private CurlHttpURLConnection curl(URL url, File temp) {
         return CurlHttpURLConnection
                 .builder(url)
-                .insecure(true)
+                .insecure(selfSignedCertificate)
                 .tempDir(temp)
                 .build();
     }
