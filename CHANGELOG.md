@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix trailing slash and param without value in URLQueryBuilder
+
 ## [0.0.26] - 2023-09-20
 
 ### Added
