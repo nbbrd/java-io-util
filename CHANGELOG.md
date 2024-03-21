@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix encoding of space characters in URL [#301](https://github.com/nbbrd/java-io-util/issues/301)
+
 ## [0.0.27] - 2024-01-16
 
 ### Fixed

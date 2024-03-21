@@ -148,21 +148,21 @@ public class URLQueryBuilderTest {
 
     @Test
     public void testEncodingOfSpaceCharacter() throws IOException {
-        assertThat(of(urlWithoutSlash).path("a b").build())
-                .isNotEqualTo(uriBuilderAsURL(urlWithoutSlash, o -> o.appendPathSegments("a b")))
-                .hasToString("http://localhost/a+b");
+        assertThat(of(urlWithoutSlash).path("a b+").build())
+                .isEqualTo(uriBuilderAsURL(urlWithoutSlash, o -> o.appendPathSegments("a b+")))
+                .hasToString("http://localhost/a%20b%2B");
 
-        assertThat(of(urlWithSlash).path("a b").build())
-                .isNotEqualTo(uriBuilderAsURL(urlWithSlash, o -> o.appendPathSegments("a b")))
-                .hasToString("http://localhost/a+b");
+        assertThat(of(urlWithSlash).path("a b+").build())
+                .isNotEqualTo(uriBuilderAsURL(urlWithSlash, o -> o.appendPathSegments("a b+")))
+                .hasToString("http://localhost/a%20b%2B");
 
-        assertThat(of(urlWithoutSlash).param("x y", "a b").build())
-                .isNotEqualTo(uriBuilderAsURL(urlWithoutSlash, o -> o.addParameter("x y ","a b")))
-                .hasToString("http://localhost?x+y=a+b");
+        assertThat(of(urlWithoutSlash).param("x y+", "a b+").build())
+                .isEqualTo(uriBuilderAsURL(urlWithoutSlash, o -> o.addParameter("x y+","a b+")))
+                .hasToString("http://localhost?x%20y%2B=a%20b%2B");
 
-        assertThat(of(urlWithSlash).param("x y", "a b").build())
-                .isNotEqualTo(uriBuilderAsURL(urlWithSlash, o -> o.addParameter("x y ","a b")))
-                .hasToString("http://localhost/?x+y=a+b");
+        assertThat(of(urlWithSlash).param("x y+", "a b+").build())
+                .isEqualTo(uriBuilderAsURL(urlWithSlash, o -> o.addParameter("x y+","a b+")))
+                .hasToString("http://localhost/?x%20y%2B=a%20b%2B");
     }
 
     private final URL urlWithoutSlash = Parser.onURL().parseValue("http://localhost").orElseThrow(RuntimeException::new);
