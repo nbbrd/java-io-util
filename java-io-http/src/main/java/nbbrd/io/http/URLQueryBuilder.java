@@ -25,7 +25,6 @@ import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLEncoder;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -45,7 +44,6 @@ public final class URLQueryBuilder {
 
     private boolean trailingSlash = false;
 
-    private final Charset encoding = StandardCharsets.UTF_8;
     private final List<String> paths = new ArrayList<>();
     private final Map<String, String> params = new LinkedHashMap<>();
 
@@ -127,7 +125,7 @@ public final class URLQueryBuilder {
         }
 
         for (String path : paths) {
-            result.append('/').append(encode(path, encoding));
+            result.append('/').append(encode(path));
         }
 
         if (trailingSlash) {
@@ -148,10 +146,10 @@ public final class URLQueryBuilder {
     }
 
     private void appendParam(StringBuilder result, Map.Entry<String, String> o) {
-        result.append(encode(o.getKey(), encoding));
+        result.append(encode(o.getKey()));
         String value = o.getValue();
         if (value != null) {
-            result.append('=').append(encode(value, encoding));
+            result.append('=').append(encode(value));
         }
     }
 
@@ -167,9 +165,9 @@ public final class URLQueryBuilder {
         return new URL(toString());
     }
 
-    private static String encode(String s, Charset charset) {
+    private static String encode(String s) {
         try {
-            return URLEncoder.encode(s, charset.name());
+            return URLEncoder.encode(s, StandardCharsets.UTF_8.name()).replace("+", "%20");
         } catch (UnsupportedEncodingException ex) {
             throw new UncheckedIOException(ex);
         }

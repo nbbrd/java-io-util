@@ -7,7 +7,7 @@
     <parent>
         <artifactId>java-io-parent</artifactId>
         <groupId>com.github.nbbrd.java-io-util</groupId>
-        <version>0.0.27</version>
+        <version>0.0.28</version>
     </parent>
 
     <artifactId>java-io-picocsv</artifactId>
@@ -44,7 +44,7 @@
         <dependency>
             <groupId>com.github.nbbrd.picocsv</groupId>
             <artifactId>picocsv</artifactId>
-            <version>2.2.2</version>
+            <version>2.3.0</version>
         </dependency>
 
         <!-- test libraries -->

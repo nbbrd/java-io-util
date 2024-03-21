@@ -18,10 +18,14 @@ package nbbrd.io.http;
 
 import nbbrd.io.text.Parser;
 import org.junit.jupiter.api.Test;
+import wiremock.org.apache.hc.core5.net.URIBuilder;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static java.util.Arrays.asList;
 import static nbbrd.io.http.URLQueryBuilder.of;
@@ -39,10 +43,12 @@ public class URLQueryBuilderTest {
         assertThatNullPointerException()
                 .isThrownBy(() -> of(null));
 
-        assertThat(of(withoutTrailingSlash))
+        assertThat(of(urlWithoutSlash).build())
+                .isEqualTo(uriBuilderAsURL(urlWithoutSlash, DO_NOTHING))
                 .hasToString("http://localhost");
 
-        assertThat(of(withTrailingSlash))
+        assertThat(of(urlWithSlash).build())
+                .isEqualTo(uriBuilderAsURL(urlWithSlash, DO_NOTHING))
                 .hasToString("http://localhost/");
     }
 
@@ -50,21 +56,29 @@ public class URLQueryBuilderTest {
     @Test
     public void testPath() throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> of(withoutTrailingSlash).path((String) null));
+                .isThrownBy(() -> of(urlWithoutSlash).path((String) null));
 
+        assertThat(of(urlWithoutSlash).path("hello").path("").path("worl/d").build())
+                .isEqualTo(uriBuilderAsURL(urlWithoutSlash, o -> o.appendPathSegments("hello", "", "worl/d")))
+                .hasToString("http://localhost/hello//worl%2Fd");
+
+        assertThat(of(urlWithSlash).path("hello").path("").path("worl/d").build())
+                .isNotEqualTo(uriBuilderAsURL(urlWithSlash, o -> o.appendPathSegments("hello", "", "worl/d")))
+                .hasToString("http://localhost/hello//worl%2Fd");
+    }
+
+    @SuppressWarnings("DataFlowIssue")
+    @Test
+    public void testPathList() throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> of(withoutTrailingSlash).path((List<String>) null));
+                .isThrownBy(() -> of(urlWithoutSlash).path((List<String>) null));
 
-        assertThat(of(withoutTrailingSlash).path("hello").path("").path("worl/d").build())
+        assertThat(of(urlWithoutSlash).path(asList("hello", "", "worl/d")).build())
+                .isEqualTo(uriBuilderAsURL(urlWithoutSlash, o -> o.appendPathSegments("hello", "", "worl/d")))
                 .hasToString("http://localhost/hello//worl%2Fd");
 
-        assertThat(of(withTrailingSlash).path("hello").path("").path("worl/d").build())
-                .hasToString("http://localhost/hello//worl%2Fd");
-
-        assertThat(of(withoutTrailingSlash).path(asList("hello", "", "worl/d")).build())
-                .hasToString("http://localhost/hello//worl%2Fd");
-
-        assertThat(of(withTrailingSlash).path(asList("hello", "", "worl/d")).build())
+        assertThat(of(urlWithSlash).path(asList("hello", "", "worl/d")).build())
+                .isNotEqualTo(uriBuilderAsURL(urlWithSlash, o -> o.appendPathSegments("hello", "", "worl/d")))
                 .hasToString("http://localhost/hello//worl%2Fd");
     }
 
@@ -72,54 +86,98 @@ public class URLQueryBuilderTest {
     @SuppressWarnings({"DataFlowIssue"})
     public void testParam() throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> of(withoutTrailingSlash).param(null, ""));
+                .isThrownBy(() -> of(urlWithoutSlash).param(null, ""));
 
         assertThatNullPointerException()
-                .isThrownBy(() -> of(withoutTrailingSlash).param("", null));
+                .isThrownBy(() -> of(urlWithoutSlash).param("", null));
 
-        assertThatNullPointerException()
-                .isThrownBy(() -> of(withoutTrailingSlash).param(null));
-
-        assertThat(of(withoutTrailingSlash).param("p1", "v1").param("p&=2", "v&=2").build())
+        assertThat(of(urlWithoutSlash).param("p1", "v1").param("p&=2", "v&=2").build())
+                .isEqualTo(uriBuilderAsURL(urlWithoutSlash, o -> o.addParameter("p1", "v1").addParameter("p&=2", "v&=2")))
                 .hasToString("http://localhost?p1=v1&p%26%3D2=v%26%3D2");
 
-        assertThat(of(withTrailingSlash).param("p1", "v1").param("p&=2", "v&=2").build())
+        assertThat(of(urlWithSlash).param("p1", "v1").param("p&=2", "v&=2").build())
+                .isEqualTo(uriBuilderAsURL(urlWithSlash, o -> o.addParameter("p1", "v1").addParameter("p&=2", "v&=2")))
                 .hasToString("http://localhost/?p1=v1&p%26%3D2=v%26%3D2");
 
-        assertThat(of(withoutTrailingSlash).path("hello").path("worl/d").param("p1", "v1").param("p&=2", "v&=2").build())
+        assertThat(of(urlWithoutSlash).path("hello").path("worl/d").param("p1", "v1").param("p&=2", "v&=2").build())
+                .isEqualTo(uriBuilderAsURL(urlWithoutSlash, o -> o.appendPathSegments("hello", "worl/d").addParameter("p1", "v1").addParameter("p&=2", "v&=2")))
                 .hasToString("http://localhost/hello/worl%2Fd?p1=v1&p%26%3D2=v%26%3D2");
 
-        assertThat(of(withTrailingSlash).path("hello").path("worl/d").param("p1", "v1").param("p&=2", "v&=2").build())
+        assertThat(of(urlWithSlash).path("hello").path("worl/d").param("p1", "v1").param("p&=2", "v&=2").build())
+                .isNotEqualTo(uriBuilderAsURL(urlWithSlash, o -> o.appendPathSegments("hello", "worl/d").addParameter("p1", "v1").addParameter("p&=2", "v&=2")))
                 .hasToString("http://localhost/hello/worl%2Fd?p1=v1&p%26%3D2=v%26%3D2");
 
-        assertThat(of(withoutTrailingSlash).param("b", "2").param("a", "1").build())
+        assertThat(of(urlWithoutSlash).param("b", "2").param("a", "1").build())
+                .isEqualTo(uriBuilderAsURL(urlWithoutSlash, o -> o.addParameter("b", "2").addParameter("a", "1")))
                 .hasToString("http://localhost?b=2&a=1");
 
-        assertThat(of(withTrailingSlash).param("b", "2").param("a", "1").build())
+        assertThat(of(urlWithSlash).param("b", "2").param("a", "1").build())
+                .isEqualTo(uriBuilderAsURL(urlWithSlash, o -> o.addParameter("b", "2").addParameter("a", "1")))
                 .hasToString("http://localhost/?b=2&a=1");
+    }
 
-        assertThat(of(withoutTrailingSlash).param("b").param("a").build())
+    @Test
+    @SuppressWarnings({"DataFlowIssue"})
+    public void testParamWithoutValue() throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> of(urlWithoutSlash).param(null));
+
+        assertThat(of(urlWithoutSlash).param("b").param("a").build())
+                .isEqualTo(uriBuilderAsURL(urlWithoutSlash, o -> o.addParameter("b", null).addParameter("a", null)))
                 .hasToString("http://localhost?b&a");
 
-        assertThat(of(withTrailingSlash).param("b").param("a").build())
+        assertThat(of(urlWithSlash).param("b").param("a").build())
+                .isEqualTo(uriBuilderAsURL(urlWithSlash, o -> o.addParameter("b", null).addParameter("a", null)))
                 .hasToString("http://localhost/?b&a");
     }
 
     @Test
     public void testTrailingSlash() throws IOException {
-        assertThat(of(withoutTrailingSlash).trailingSlash(true).build())
+        assertThat(of(urlWithoutSlash).trailingSlash(true).build())
                 .hasToString("http://localhost/");
 
-        assertThat(of(withoutTrailingSlash).trailingSlash(true).param("p1", "v1").param("p&=2", "v&=2").build())
+        assertThat(of(urlWithoutSlash).trailingSlash(true).param("p1", "v1").param("p&=2", "v&=2").build())
                 .hasToString("http://localhost/?p1=v1&p%26%3D2=v%26%3D2");
 
-        assertThat(of(withoutTrailingSlash).trailingSlash(true).path("hello").path("worl/d").build())
+        assertThat(of(urlWithoutSlash).trailingSlash(true).path("hello").path("worl/d").build())
                 .hasToString("http://localhost/hello/worl%2Fd/");
 
-        assertThat(of(withoutTrailingSlash).trailingSlash(true).path("hello").path("worl/d").param("p1", "v1").param("p&=2", "v&=2").build())
+        assertThat(of(urlWithoutSlash).trailingSlash(true).path("hello").path("worl/d").param("p1", "v1").param("p&=2", "v&=2").build())
                 .hasToString("http://localhost/hello/worl%2Fd/?p1=v1&p%26%3D2=v%26%3D2");
     }
 
-    private final URL withoutTrailingSlash = Parser.onURL().parseValue("http://localhost").orElseThrow(RuntimeException::new);
-    private final URL withTrailingSlash = Parser.onURL().parseValue("http://localhost/").orElseThrow(RuntimeException::new);
+    @Test
+    public void testEncodingOfSpaceCharacter() throws IOException {
+        assertThat(of(urlWithoutSlash).path("a b+").build())
+                .isEqualTo(uriBuilderAsURL(urlWithoutSlash, o -> o.appendPathSegments("a b+")))
+                .hasToString("http://localhost/a%20b%2B");
+
+        assertThat(of(urlWithSlash).path("a b+").build())
+                .isNotEqualTo(uriBuilderAsURL(urlWithSlash, o -> o.appendPathSegments("a b+")))
+                .hasToString("http://localhost/a%20b%2B");
+
+        assertThat(of(urlWithoutSlash).param("x y+", "a b+").build())
+                .isEqualTo(uriBuilderAsURL(urlWithoutSlash, o -> o.addParameter("x y+","a b+")))
+                .hasToString("http://localhost?x%20y%2B=a%20b%2B");
+
+        assertThat(of(urlWithSlash).param("x y+", "a b+").build())
+                .isEqualTo(uriBuilderAsURL(urlWithSlash, o -> o.addParameter("x y+","a b+")))
+                .hasToString("http://localhost/?x%20y%2B=a%20b%2B");
+    }
+
+    private final URL urlWithoutSlash = Parser.onURL().parseValue("http://localhost").orElseThrow(RuntimeException::new);
+    private final URL urlWithSlash = Parser.onURL().parseValue("http://localhost/").orElseThrow(RuntimeException::new);
+
+    private static URL uriBuilderAsURL(URL base, Consumer<? super URIBuilder> consumer) {
+        try {
+            URIBuilder builder = new URIBuilder(base.toURI());
+            consumer.accept(builder);
+            return builder.build().toURL();
+        } catch (URISyntaxException | MalformedURLException ex) {
+            throw new RuntimeException(ex);
+        }
+    }
+
+    private static final Consumer<Object> DO_NOTHING = ignore -> {
+    };
 }
