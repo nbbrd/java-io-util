@@ -7,7 +7,7 @@
     <parent>
         <artifactId>java-io-parent</artifactId>
         <groupId>com.github.nbbrd.java-io-util</groupId>
-        <version>0.0.28</version>
+        <version>0.0.29-SNAPSHOT</version>
     </parent>
 
     <artifactId>java-io-picocsv</artifactId>
