@@ -7,6 +7,16 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.0.29] - 2024-06-21
+
+### Fixed
+
+- Fix MalformedInputException in ProcessReader [#329](https://github.com/nbbrd/java-io-util/issues/329)
+
+### Added
+
+- Add PowerShellWrapper
+
 ## [0.0.28] - 2024-03-21
 
 ### Fixed
@@ -252,7 +262,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Initial release
 
-[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.28...HEAD
+[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.29...HEAD
+[0.0.29]: https://github.com/nbbrd/java-io-util/compare/v0.0.28...v0.0.29
 [0.0.28]: https://github.com/nbbrd/java-io-util/compare/v0.0.27...v0.0.28
 [0.0.27]: https://github.com/nbbrd/java-io-util/compare/v0.0.26...v0.0.27
 [0.0.26]: https://github.com/nbbrd/java-io-util/compare/v0.0.25...v0.0.26

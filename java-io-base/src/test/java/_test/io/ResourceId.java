@@ -44,7 +44,7 @@ public class ResourceId {
     }
 
     public BufferedReader open(Charset encoding) throws IOException {
-        return newBufferedReader(anchor, name, encoding.newDecoder());
+        return newBufferedReader(anchor, name, encoding);
     }
 
     public String copyToString(Charset encoding) throws IOException {

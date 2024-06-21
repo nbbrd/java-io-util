@@ -1,5 +1,8 @@
 # Common I/O utilities for Java 
 
+[![Download](https://img.shields.io/github/release/nbbrd/java-io-util.svg)](https://github.com/nbbrd/java-io-util/releases/latest)
+[![Changes](https://img.shields.io/endpoint?url=https%3A%2F%2Fraw.githubusercontent.com%2Fnbbrd%2Fjava-io-util%2Fbadges%2Funreleased-changes.json)](https://github.com/nbbrd/java-io-util/blob/develop/CHANGELOG.md)
+
 This library contains common code used for I/O operations in Java.  
 While not being rocket science, its purpose is to be useful, well documented and well tested.
 

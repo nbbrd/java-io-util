@@ -19,6 +19,7 @@ package nbbrd.io.text;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -46,18 +47,17 @@ public class TextResourceTest {
     @Test
     @SuppressWarnings({"null", "resource", "DataFlowIssue"})
     public void testNewBufferedReaderOfResource() throws IOException {
-        CharsetDecoder utf8 = UTF_8.newDecoder();
-
-        assertThatNullPointerException().isThrownBy(() -> newBufferedReader(null, "", utf8));
-        assertThatNullPointerException().isThrownBy(() -> newBufferedReader(TextResourceTest.class, null, utf8));
-        assertThatNullPointerException().isThrownBy(() -> newBufferedReader(TextResourceTest.class, "", null));
+        assertThatNullPointerException().isThrownBy(() -> newBufferedReader(null, "", UTF_8));
+        assertThatNullPointerException().isThrownBy(() -> newBufferedReader(TextResourceTest.class, null, UTF_8));
+        assertThatNullPointerException().isThrownBy(() -> newBufferedReader(TextResourceTest.class, "", (Charset) null));
+        assertThatNullPointerException().isThrownBy(() -> newBufferedReader(TextResourceTest.class, "", (CharsetDecoder) null));
 
         assertThatIOException()
-                .isThrownBy(() -> newBufferedReader(TextResourceTest.class, "missing", utf8))
+                .isThrownBy(() -> newBufferedReader(TextResourceTest.class, "missing", UTF_8))
                 .withMessageContaining("missing")
                 .withMessageContaining(TextResourceTest.class.getName());
 
-        try (BufferedReader reader = newBufferedReader(TextResourceTest.class, "/nbbrd/io/text/hello.txt", utf8)) {
+        try (BufferedReader reader = newBufferedReader(TextResourceTest.class, "/nbbrd/io/text/hello.txt", UTF_8)) {
             assertThat(reader.lines()).contains("world");
         }
     }
@@ -65,12 +65,13 @@ public class TextResourceTest {
     @SuppressWarnings({"resource", "DataFlowIssue"})
     @Test
     public void testNewBufferedReader() throws IOException {
-        byte[] bytes = "world".getBytes(UTF_8);
+        byte[] bytes = "world" .getBytes(UTF_8);
 
-        assertThatNullPointerException().isThrownBy(() -> newBufferedReader(null, UTF_8.newDecoder()));
-        assertThatNullPointerException().isThrownBy(() -> newBufferedReader(new ByteArrayInputStream(bytes), null));
+        assertThatNullPointerException().isThrownBy(() -> newBufferedReader(null, UTF_8));
+        assertThatNullPointerException().isThrownBy(() -> newBufferedReader(new ByteArrayInputStream(bytes), (Charset) null));
+        assertThatNullPointerException().isThrownBy(() -> newBufferedReader(new ByteArrayInputStream(bytes), (CharsetDecoder) null));
 
-        try (BufferedReader reader = newBufferedReader(new ByteArrayInputStream(bytes), UTF_8.newDecoder())) {
+        try (BufferedReader reader = newBufferedReader(new ByteArrayInputStream(bytes), UTF_8)) {
             assertThat(reader.lines()).contains("world");
         }
     }

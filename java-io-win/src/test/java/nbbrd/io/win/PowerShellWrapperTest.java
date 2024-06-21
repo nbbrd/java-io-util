@@ -30,72 +30,60 @@ import java.nio.file.Path;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.nio.file.Files.createTempFile;
 import static java.util.Arrays.asList;
-import static nbbrd.io.win.CScriptWrapper.NO_TIMEOUT;
-import static nbbrd.io.win.CScriptWrapper.exec;
+import static nbbrd.io.win.PowerShellWrapper.exec;
 import static org.assertj.core.api.Assertions.*;
 
 /**
  * @author Philippe Charles
  */
-public class CScriptWrapperTest {
+public class PowerShellWrapperTest {
 
     @SuppressWarnings("DataFlowIssue")
     @Test
-    public void testParameters(@TempDir Path temp) {
+    public void testParameters(@TempDir Path temp) throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> exec(null, NO_TIMEOUT, ""));
+                .isThrownBy(() -> exec(null, ""));
 
         assertThatNullPointerException()
-                .isThrownBy(() -> exec(createTempFile(temp, "a", "b").toFile(), NO_TIMEOUT, (String[]) null));
+                .isThrownBy(() -> exec(createTempFile(temp, "a", "b").toFile(), (String[]) null));
     }
 
     @Test
     @EnabledOnOs(OS.WINDOWS)
     public void testExitCode(@TempDir Path temp) throws IOException, InterruptedException {
-        assertThat(exec(vbs(temp, ""), NO_TIMEOUT).waitFor())
+        assertThat(exec(ps1(temp, "")).waitFor())
                 .isEqualTo(0);
 
-        assertThat(exec(vbs(temp, "WScript.Quit -123"), NO_TIMEOUT).waitFor())
+        assertThat(exec(ps1(temp, "Exit(-123)")).waitFor())
                 .isEqualTo(-123);
     }
 
     @Test
     @EnabledOnOs(OS.WINDOWS)
-    public void testTimeOut(@TempDir Path temp) throws IOException, InterruptedException {
-        File infiniteLoop = vbs(temp,
-                "While (true)",
-                "Wend"
-        );
-
-        assertThat(exec(infiniteLoop, (short) 2).waitFor())
-                .isEqualTo(0);
-
-        assertThat(ProcessReader.readToString(exec(infiniteLoop, (short) 2)))
-                .contains(infiniteLoop.toString());
-    }
-
-    @Test
-    @EnabledOnOs(OS.WINDOWS)
     public void testOutput(@TempDir Path temp) throws IOException, InterruptedException {
-        File scriptWithArgs = vbs(temp,
-                "For Each strArg in Wscript.Arguments",
-                "  WScript.Echo strArg",
-                "Next"
+        File scriptWithArgs = ps1(temp,
+                "foreach ($strArg in $args) {",
+                "  echo $strArg",
+                "}"
         );
 
-        assertThat(exec(scriptWithArgs, NO_TIMEOUT, "a", "b", "c").waitFor())
+        assertThat(exec(scriptWithArgs, "a", "b", "c").waitFor())
                 .isEqualTo(0);
 
-        assertThat(ProcessReader.readToString(exec(scriptWithArgs, NO_TIMEOUT, "a", "b", "c")))
+        assertThat(ProcessReader.readToString(exec(scriptWithArgs, "a", "b", "c")))
                 .isEqualTo("a" + System.lineSeparator() + "b" + System.lineSeparator() + "c");
 
         String emoji = "\uD83D\uDCA1"; // 💡
-        assertThatCode(() -> ProcessReader.readToString(exec(vbs(temp, "WScript.Echo \"" + emoji + "\""), NO_TIMEOUT)))
+        assertThatCode(() -> ProcessReader.readToString(exec(ps1(temp, "echo \"" + emoji + "\""))))
                 .doesNotThrowAnyException();
+
+        Path folderWithSpaces = Files.createTempDirectory(temp, "folder with spaces");
+        assertThat(ProcessReader.readToString(exec(ps1(folderWithSpaces, "echo \"hello\""))))
+                .isEqualTo("hello");
     }
 
-    private static File vbs(Path temp, String... content) throws IOException {
-        File script = createTempFile(temp, "script", ".vbs").toFile();
+    private static File ps1(Path temp, String... content) throws IOException {
+        File script = createTempFile(temp, "script", ".ps1").toFile();
         Files.write(script.toPath(), asList(content), UTF_8);
         return script;
     }

@@ -37,7 +37,7 @@ public class ProcessReader {
     }
 
     public static @NonNull BufferedReader newReader(@NonNull Process process) {
-        return TextResource.newBufferedReader(new ProcessInputStream(process), Charset.defaultCharset().newDecoder());
+        return TextResource.newBufferedReader(new ProcessInputStream(process), Charset.defaultCharset());
     }
 
     public static @NonNull String readToString(@NonNull String... args) throws IOException {
