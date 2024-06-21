@@ -11,6 +11,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Fix MalformedInputException in ProcessReader [#329](https://github.com/nbbrd/java-io-util/issues/329)
 
+### Added
+
+- Add PowerShellWrapper
+
 ## [0.0.28] - 2024-03-21
 
 ### Fixed
