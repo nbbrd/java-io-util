@@ -26,7 +26,7 @@ public final class EndOfProcessException extends IOException {
     }
 
     private static String readErrorStream(Process process) throws IOException {
-        try (BufferedReader reader = TextResource.newBufferedReader(process.getErrorStream(), Charset.defaultCharset().newDecoder())) {
+        try (BufferedReader reader = TextResource.newBufferedReader(process.getErrorStream(), Charset.defaultCharset())) {
             return InternalTextResource.copyByLineToString(reader, System.lineSeparator());
         }
     }

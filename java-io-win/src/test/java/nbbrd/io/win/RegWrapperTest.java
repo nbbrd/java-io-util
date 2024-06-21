@@ -107,7 +107,7 @@ public class RegWrapperTest {
     }
 
     static Map<String, List<RegValue>> parse(String resourceName) throws IOException {
-        try (BufferedReader reader = newBufferedReader(RegWrapperTest.class, resourceName, Charset.defaultCharset().newDecoder())) {
+        try (BufferedReader reader = newBufferedReader(RegWrapperTest.class, resourceName, Charset.defaultCharset())) {
             return RegWrapper.parse(reader);
         }
     }

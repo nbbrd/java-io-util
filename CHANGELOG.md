@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix MalformedInputException in ProcessReader [#329](https://github.com/nbbrd/java-io-util/issues/329)
+
 ## [0.0.28] - 2024-03-21
 
 ### Fixed

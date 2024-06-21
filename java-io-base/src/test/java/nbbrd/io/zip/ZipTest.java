@@ -58,10 +58,10 @@ public class ZipTest {
             assertThatNullPointerException().isThrownBy(() -> loader.load(null));
             assertThatIOException().isThrownBy(() -> loader.load("xyz"));
             try (InputStream stream = loader.load("hello.txt")) {
-                assertThat(TextResource.newBufferedReader(stream, UTF_8.newDecoder()).lines()).containsExactly("hello");
+                assertThat(TextResource.newBufferedReader(stream, UTF_8).lines()).containsExactly("hello");
             }
             try (InputStream stream = loader.load("folder1/world.txt")) {
-                assertThat(TextResource.newBufferedReader(stream, UTF_8.newDecoder()).lines()).containsExactly("world");
+                assertThat(TextResource.newBufferedReader(stream, UTF_8).lines()).containsExactly("world");
             }
         }
 
@@ -83,10 +83,10 @@ public class ZipTest {
                 assertThatNullPointerException().isThrownBy(() -> loader.load(null));
                 assertThatIOException().isThrownBy(() -> loader.load("xyz"));
                 try (InputStream stream = loader.load("hello.txt")) {
-                    assertThat(TextResource.newBufferedReader(stream, UTF_8.newDecoder()).lines()).containsExactly("hello");
+                    assertThat(TextResource.newBufferedReader(stream, UTF_8).lines()).containsExactly("hello");
                 }
                 try (InputStream stream = loader.load("folder1/world.txt")) {
-                    assertThat(TextResource.newBufferedReader(stream, UTF_8.newDecoder()).lines()).containsExactly("world");
+                    assertThat(TextResource.newBufferedReader(stream, UTF_8).lines()).containsExactly("world");
                 }
             }
         }
@@ -97,7 +97,7 @@ public class ZipTest {
                 assertThatIOException().isThrownBy(() -> loader.load("xyz"));
                 assertThatIOException().isThrownBy(() -> loader.load("hello.txt"));
                 try (InputStream stream = loader.load("folder1/world.txt")) {
-                    assertThat(TextResource.newBufferedReader(stream, UTF_8.newDecoder()).lines()).containsExactly("world");
+                    assertThat(TextResource.newBufferedReader(stream, UTF_8).lines()).containsExactly("world");
                 }
             }
         }

@@ -16,71 +16,87 @@
  */
 package nbbrd.io.win;
 
-import nbbrd.io.sys.OS;
 import nbbrd.io.sys.ProcessReader;
-import org.assertj.core.api.Assumptions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.Files.createTempFile;
+import static java.util.Arrays.asList;
 import static nbbrd.io.win.CScriptWrapper.NO_TIMEOUT;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static nbbrd.io.win.CScriptWrapper.exec;
+import static org.assertj.core.api.Assertions.*;
 
 /**
  * @author Philippe Charles
  */
 public class CScriptWrapperTest {
 
+    @SuppressWarnings("DataFlowIssue")
     @Test
-    public void testExec(@TempDir Path temp) throws IOException, InterruptedException {
+    public void testParameters(@TempDir Path temp) {
         assertThatNullPointerException()
-                .isThrownBy(() -> CScriptWrapper.exec(null, NO_TIMEOUT, ""));
+                .isThrownBy(() -> exec(null, NO_TIMEOUT, ""));
 
         assertThatNullPointerException()
-                .isThrownBy(() -> CScriptWrapper.exec(Files.createTempFile("a", "b").toFile(), NO_TIMEOUT, (String[]) null));
+                .isThrownBy(() -> exec(createTempFile(temp, "a", "b").toFile(), NO_TIMEOUT, (String[]) null));
+    }
 
-        Assumptions.assumeThat(OS.NAME).isEqualTo(OS.Name.WINDOWS);
-
-        assertThat(CScriptWrapper.exec(vbs(temp, ""), NO_TIMEOUT).waitFor())
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    public void testExitCode(@TempDir Path temp) throws IOException, InterruptedException {
+        assertThat(exec(vbs(temp, ""), NO_TIMEOUT).waitFor())
                 .isEqualTo(0);
 
-        assertThat(CScriptWrapper.exec(vbs(temp, "WScript.Quit -123"), NO_TIMEOUT).waitFor())
+        assertThat(exec(vbs(temp, "WScript.Quit -123"), NO_TIMEOUT).waitFor())
                 .isEqualTo(-123);
+    }
 
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    public void testTimeOut(@TempDir Path temp) throws IOException, InterruptedException {
+        File infiniteLoop = vbs(temp,
+                "While (true)",
+                "Wend"
+        );
+
+        assertThat(exec(infiniteLoop, (short) 2).waitFor())
+                .isEqualTo(0);
+
+        assertThat(ProcessReader.readToString(exec(infiniteLoop, (short) 2)))
+                .contains(infiniteLoop.toString());
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    public void testOutput(@TempDir Path temp) throws IOException, InterruptedException {
         File scriptWithArgs = vbs(temp,
                 "For Each strArg in Wscript.Arguments",
                 "  WScript.Echo strArg",
                 "Next"
         );
 
-        assertThat(CScriptWrapper.exec(scriptWithArgs, NO_TIMEOUT, "a", "b", "c").waitFor())
+        assertThat(exec(scriptWithArgs, NO_TIMEOUT, "a", "b", "c").waitFor())
                 .isEqualTo(0);
 
-        assertThat(ProcessReader.readToString(CScriptWrapper.exec(scriptWithArgs, NO_TIMEOUT, "a", "b", "c")))
+        assertThat(ProcessReader.readToString(exec(scriptWithArgs, NO_TIMEOUT, "a", "b", "c")))
                 .isEqualTo("a" + System.lineSeparator() + "b" + System.lineSeparator() + "c");
 
-        File infiniteLoop = vbs(temp,
-                "While (true)",
-                "Wend"
-        );
-
-        assertThat(CScriptWrapper.exec(infiniteLoop, (short) 2).waitFor())
-                .isEqualTo(0);
-
-        assertThat(ProcessReader.readToString(CScriptWrapper.exec(infiniteLoop, (short) 2)))
-                .contains(infiniteLoop.toString());
+        String emoji = "\uD83D\uDCA1"; // 💡
+        assertThatCode(() -> ProcessReader.readToString(exec(vbs(temp, "WScript.Echo \"" + emoji + "\""), NO_TIMEOUT)))
+                .doesNotThrowAnyException();
     }
 
-    private File vbs(Path temp, String... content) throws IOException {
-        File script = Files.createTempFile("script", ".vbs").toFile();
-        Files.write(script.toPath(), Arrays.asList(content), StandardCharsets.UTF_8);
+    private static File vbs(Path temp, String... content) throws IOException {
+        File script = createTempFile(temp, "script", ".vbs").toFile();
+        Files.write(script.toPath(), asList(content), UTF_8);
         return script;
     }
 }

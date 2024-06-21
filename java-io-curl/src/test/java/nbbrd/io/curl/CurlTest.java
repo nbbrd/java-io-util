@@ -109,7 +109,7 @@ public class CurlTest {
 
     @Test
     public void testHead() throws IOException {
-        try (BufferedReader reader = newBufferedReader(CurlTest.class, "curlhead.txt", UTF_8.newDecoder())) {
+        try (BufferedReader reader = newBufferedReader(CurlTest.class, "curlhead.txt", UTF_8)) {
             assertThat(Curl.Head.parseResponse(reader))
                     .singleElement()
                     .isEqualTo(new Curl.Head(
@@ -132,7 +132,7 @@ public class CurlTest {
                     ));
         }
 
-        try (BufferedReader reader = newBufferedReader(CurlTest.class, "curlhead2.txt", UTF_8.newDecoder())) {
+        try (BufferedReader reader = newBufferedReader(CurlTest.class, "curlhead2.txt", UTF_8)) {
             assertThat(Curl.Head.parseResponse(reader))
                     .hasSize(2)
                     .satisfies(head -> assertThat(head.getStatus().getCode()).isEqualTo(301), atIndex(0))

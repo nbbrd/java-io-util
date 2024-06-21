@@ -81,7 +81,7 @@ public class FileParserTest {
     }
 
     private final IOFunction<InputStream, String> deserializeAndClose = resource -> {
-        try (Reader reader = TextResource.newBufferedReader(resource, UTF_8.newDecoder())) {
+        try (Reader reader = TextResource.newBufferedReader(resource, UTF_8)) {
             return InternalTextResource.copyToString(reader);
         }
     };
