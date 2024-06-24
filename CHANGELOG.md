@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix UTF8 encoding in PowerShellWrapper
+
 ## [0.0.29] - 2024-06-21
 
 ### Fixed

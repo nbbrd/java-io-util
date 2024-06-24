@@ -16,7 +16,6 @@
  */
 package nbbrd.io.win;
 
-import nbbrd.io.sys.ProcessReader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
@@ -24,14 +23,20 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Base64;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.Files.createTempDirectory;
 import static java.nio.file.Files.createTempFile;
 import static java.util.Arrays.asList;
+import static nbbrd.io.sys.ProcessReader.readToString;
 import static nbbrd.io.win.PowerShellWrapper.exec;
-import static org.assertj.core.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNullPointerException;
+import static org.assertj.core.api.InstanceOfAssertFactories.STRING;
 
 /**
  * @author Philippe Charles
@@ -61,6 +66,7 @@ public class PowerShellWrapperTest {
     @Test
     @EnabledOnOs(OS.WINDOWS)
     public void testOutput(@TempDir Path temp) throws IOException, InterruptedException {
+        String emoji = "\uD83D\uDCA1"; // 💡
         File scriptWithArgs = ps1(temp,
                 "foreach ($strArg in $args) {",
                 "  echo $strArg",
@@ -70,16 +76,29 @@ public class PowerShellWrapperTest {
         assertThat(exec(scriptWithArgs, "a", "b", "c").waitFor())
                 .isEqualTo(0);
 
-        assertThat(ProcessReader.readToString(exec(scriptWithArgs, "a", "b", "c")))
-                .isEqualTo("a" + System.lineSeparator() + "b" + System.lineSeparator() + "c");
+        assertThat(exec(scriptWithArgs, "a", "b", emoji))
+                .extracting(PowerShellWrapperTest::readToUTF8String, STRING)
+                .isEqualTo("a" + System.lineSeparator() + "b" + System.lineSeparator() + emoji);
 
-        String emoji = "\uD83D\uDCA1"; // 💡
-        assertThatCode(() -> ProcessReader.readToString(exec(ps1(temp, "echo \"" + emoji + "\""))))
-                .doesNotThrowAnyException();
+        assertThat(exec(ps1(temp, "echo \"$([char]0xD83D)$([char]0xDCA1)\"")))
+                .extracting(PowerShellWrapperTest::readToUTF8String, STRING)
+                .isEqualTo(emoji);
 
-        Path folderWithSpaces = Files.createTempDirectory(temp, "folder with spaces");
-        assertThat(ProcessReader.readToString(exec(ps1(folderWithSpaces, "echo \"hello\""))))
+        assertThat(exec(ps1(createTempDirectory(temp, "folder with spaces"), "echo \"hello\"")))
+                .extracting(PowerShellWrapperTest::readToUTF8String, STRING)
                 .isEqualTo("hello");
+
+        assertThat(exec(ps1(temp, "echo $([System.Text.Encoding]::UTF8.GetString([System.Convert]::FromBase64String($args[0])))"), Base64.getEncoder().encodeToString("a b".getBytes(UTF_8))))
+                .extracting(PowerShellWrapperTest::readToUTF8String, STRING)
+                .isEqualTo("a b");
+    }
+
+    private static String readToUTF8String(Process process) {
+        try {
+            return readToString(UTF_8, process);
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
 
     private static File ps1(Path temp, String... content) throws IOException {

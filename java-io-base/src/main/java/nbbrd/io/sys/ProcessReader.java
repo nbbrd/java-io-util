@@ -32,22 +32,46 @@ import java.nio.charset.Charset;
 @lombok.experimental.UtilityClass
 public class ProcessReader {
 
+    @Deprecated
     public static @NonNull BufferedReader newReader(@NonNull String... args) throws IOException {
-        return newReader(new ProcessBuilder(args).start());
+        return newReader(getSystemCharset(), args);
     }
 
+    @Deprecated
     public static @NonNull BufferedReader newReader(@NonNull Process process) {
-        return TextResource.newBufferedReader(new ProcessInputStream(process), Charset.defaultCharset());
+        return newReader(getSystemCharset(), process);
     }
 
+    @Deprecated
     public static @NonNull String readToString(@NonNull String... args) throws IOException {
-        return readToString(new ProcessBuilder(args).start());
+        return readToString(getSystemCharset(), args);
     }
 
+    @Deprecated
     public static @NonNull String readToString(@NonNull Process process) throws IOException {
-        try (BufferedReader reader = newReader(process)) {
+        return readToString(getSystemCharset(), process);
+    }
+
+    public static @NonNull BufferedReader newReader(@NonNull Charset charset, @NonNull String... args) throws IOException {
+        return newReader(charset, new ProcessBuilder(args).start());
+    }
+
+    public static @NonNull BufferedReader newReader(@NonNull Charset charset, @NonNull Process process) {
+        return TextResource.newBufferedReader(new ProcessInputStream(process), charset);
+    }
+
+    public static @NonNull String readToString(@NonNull Charset charset, @NonNull String... args) throws IOException {
+        return readToString(charset, new ProcessBuilder(args).start());
+    }
+
+    public static @NonNull String readToString(@NonNull Charset charset, @NonNull Process process) throws IOException {
+        try (BufferedReader reader = newReader(charset, process)) {
             return InternalTextResource.copyByLineToString(reader, System.lineSeparator());
         }
+    }
+
+    private static Charset getSystemCharset() {
+        return Charset.defaultCharset();
     }
 
     private static final class ProcessInputStream extends InputStream {
