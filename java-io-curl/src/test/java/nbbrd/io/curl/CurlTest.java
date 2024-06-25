@@ -12,6 +12,7 @@ import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
+import java.nio.charset.Charset;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -144,7 +145,7 @@ public class CurlTest {
     @Test
     public void testVersion() throws IOException {
         String[] versionCommand = new Curl.CommandBuilder().version().build();
-        try (BufferedReader reader = ProcessReader.newReader(versionCommand)) {
+        try (BufferedReader reader = ProcessReader.newReader(Charset.defaultCharset(), versionCommand)) {
             Curl.Version.parseText(reader).getLines().forEach(System.out::println);
         }
     }

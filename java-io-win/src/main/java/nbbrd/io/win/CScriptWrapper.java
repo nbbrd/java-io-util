@@ -38,12 +38,14 @@ public class CScriptWrapper {
         // http://technet.microsoft.com/en-us/library/ff920171.aspx
         List<String> result = new ArrayList<>();
         result.add(COMMAND);
-        result.add("\"" + script.getAbsolutePath() + "\"");
+        result.add(script.getName());
         result.add("//NoLogo");
         if (timeoutInSeconds > 0) {
             result.add("//T:" + timeoutInSeconds);
         }
         result.addAll(Arrays.asList(args));
-        return new ProcessBuilder(result).start();
+        return new ProcessBuilder(result)
+                .directory(script.getParentFile())
+                .start();
     }
 }

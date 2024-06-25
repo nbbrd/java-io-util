@@ -13,6 +13,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.*;
 import java.net.*;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.function.BiConsumer;
@@ -183,7 +184,7 @@ public final class CurlHttpURLConnection extends HttpURLConnection {
     }
 
     private Curl.Head executeCurlCommand(String[] command) throws IOException {
-        try (BufferedReader reader = ProcessReader.newReader(command)) {
+        try (BufferedReader reader = ProcessReader.newReader(Charset.defaultCharset(), command)) {
             LinkedList<Curl.Head> curlHeads = Curl.Head.parseResponse(reader);
             return curlHeads.isEmpty() ? NO_HEAD : curlHeads.getLast();
         } catch (EndOfProcessException ex) {

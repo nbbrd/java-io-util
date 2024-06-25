@@ -16,7 +16,6 @@
  */
 package nbbrd.io.win;
 
-import nbbrd.io.sys.ProcessReader;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledOnOs;
 import org.junit.jupiter.api.condition.OS;
@@ -24,12 +23,16 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.nio.file.Files.createTempDirectory;
 import static java.nio.file.Files.createTempFile;
 import static java.util.Arrays.asList;
+import static nbbrd.io.sys.ProcessReader.readToString;
 import static nbbrd.io.win.CScriptWrapper.NO_TIMEOUT;
 import static nbbrd.io.win.CScriptWrapper.exec;
 import static org.assertj.core.api.Assertions.*;
@@ -70,13 +73,14 @@ public class CScriptWrapperTest {
         assertThat(exec(infiniteLoop, (short) 2).waitFor())
                 .isEqualTo(0);
 
-        assertThat(ProcessReader.readToString(exec(infiniteLoop, (short) 2)))
+        assertThat(readToString(Charset.defaultCharset(), exec(infiniteLoop, (short) 2)))
                 .contains(infiniteLoop.toString());
     }
 
     @Test
     @EnabledOnOs(OS.WINDOWS)
     public void testOutput(@TempDir Path temp) throws IOException, InterruptedException {
+        String emoji = "\uD83D\uDCA1"; // 💡
         File scriptWithArgs = vbs(temp,
                 "For Each strArg in Wscript.Arguments",
                 "  WScript.Echo strArg",
@@ -86,12 +90,24 @@ public class CScriptWrapperTest {
         assertThat(exec(scriptWithArgs, NO_TIMEOUT, "a", "b", "c").waitFor())
                 .isEqualTo(0);
 
-        assertThat(ProcessReader.readToString(exec(scriptWithArgs, NO_TIMEOUT, "a", "b", "c")))
+        assertThat(exec(scriptWithArgs, NO_TIMEOUT, "a", "b", "c"))
+                .extracting(CScriptWrapperTest::readToSystemString, STRING)
                 .isEqualTo("a" + System.lineSeparator() + "b" + System.lineSeparator() + "c");
 
-        String emoji = "\uD83D\uDCA1"; // 💡
-        assertThatCode(() -> ProcessReader.readToString(exec(vbs(temp, "WScript.Echo \"" + emoji + "\""), NO_TIMEOUT)))
+        assertThatCode(() -> readToSystemString(exec(vbs(temp, "WScript.Echo \"" + emoji + "\""), NO_TIMEOUT)))
                 .doesNotThrowAnyException();
+
+        assertThat(exec(vbs(createTempDirectory(temp, "folder with spaces"), "WScript.Echo \"hello\""), NO_TIMEOUT))
+                .extracting(CScriptWrapperTest::readToSystemString, STRING)
+                .isEqualTo("hello");
+    }
+
+    private static String readToSystemString(Process process) {
+        try {
+            return readToString(Charset.defaultCharset(), process);
+        } catch (IOException ex) {
+            throw new UncheckedIOException(ex);
+        }
     }
 
     private static File vbs(Path temp, String... content) throws IOException {

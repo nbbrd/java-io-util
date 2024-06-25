@@ -20,6 +20,7 @@ import wiremock.com.google.common.io.ByteSource;
 import javax.net.ssl.HttpsURLConnection;
 import java.io.*;
 import java.net.*;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.Locale;
 import java.util.UUID;
@@ -157,7 +158,7 @@ public class CurlHttpURLConnectionTest {
                 .insecure(selfSignedCertificate)
                 .build();
 
-        ProcessReader.readToString(command);
+        ProcessReader.readToString(Charset.defaultCharset(), command);
 
         String content = org.assertj.core.util.Files.contentOf(dumpHeader.toFile(), UTF_8);
 

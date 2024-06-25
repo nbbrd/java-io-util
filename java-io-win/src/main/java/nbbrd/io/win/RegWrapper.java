@@ -24,6 +24,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -37,7 +38,7 @@ public class RegWrapper {
     public static final String COMMAND = "reg";
 
     public @NonNull Map<String, List<RegValue>> query(@NonNull String keyName, boolean recursive) throws IOException {
-        try (BufferedReader reader = ProcessReader.newReader(getArgs(keyName, recursive))) {
+        try (BufferedReader reader = ProcessReader.newReader(Charset.defaultCharset(), getArgs(keyName, recursive))) {
             return parse(reader);
         } catch (EndOfProcessException ex) {
             if (ex.getExitValue() == 1) {

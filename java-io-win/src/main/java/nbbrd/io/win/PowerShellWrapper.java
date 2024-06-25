@@ -35,11 +35,20 @@ public class PowerShellWrapper {
     @NonNull
     public Process exec(@NonNull File script, @NonNull String... args) throws IOException {
         List<String> result = new ArrayList<>();
+        result.add("cmd");
+        result.add("/c");
+        result.add("chcp 65001 > NUL"); // UTF-8
+        result.add("&");
         result.add(COMMAND);
+        result.add("-NoProfile");
+        result.add("-ExecutionPolicy");
+        result.add("Bypass");
         result.add("-NoLogo");
         result.add("-File");
-        result.add(script.getAbsolutePath());
+        result.add(script.getName());
         result.addAll(Arrays.asList(args));
-        return new ProcessBuilder(result).start();
+        return new ProcessBuilder(result)
+                .directory(script.getParentFile())
+                .start();
     }
 }
