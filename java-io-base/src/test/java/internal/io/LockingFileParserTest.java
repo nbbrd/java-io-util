@@ -18,8 +18,7 @@ import java.util.Collections;
 import static _test.io.Util.running;
 import static _test.io.Util.wrappedIOExceptionOfType;
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatIOException;
+import static org.assertj.core.api.Assertions.*;
 
 public class LockingFileParserTest {
 
@@ -32,9 +31,8 @@ public class LockingFileParserTest {
                 .isThrownBy(() -> new LockingFileParser<>(new ClosingStreamFileParser()).parsePath(file))
                 .isInstanceOf(ClosedChannelException.class);
 
-        assertThatIOException()
-                .isThrownBy(() -> new LockingFileParser<>(TextParser.onParsingReader(ignore -> "result").asFileParser(UTF_8)).parsePath(file))
-                .isInstanceOf(ClosedChannelException.class);
+        assertThatCode(() -> new LockingFileParser<>(TextParser.onParsingReader(ignore -> "result").asFileParser(UTF_8)).parsePath(file))
+                .doesNotThrowAnyException();
     }
 
     @Test

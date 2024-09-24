@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix unexpected closing of resources
+
 ## [0.0.30] - 2024-06-25
 
 ### Fixed

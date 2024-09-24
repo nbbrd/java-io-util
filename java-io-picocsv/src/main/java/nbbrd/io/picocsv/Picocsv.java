@@ -19,8 +19,9 @@ import java.nio.file.FileSystemException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import static nbbrd.io.text.TextResource.newBufferedReader;
-import static nbbrd.io.text.TextResource.newBufferedWriter;
+import static nbbrd.io.Resource.uncloseableInputStream;
+import static nbbrd.io.Resource.uncloseableOutputStream;
+import static nbbrd.io.text.TextResource.*;
 
 @lombok.experimental.UtilityClass
 public class Picocsv {
@@ -30,7 +31,8 @@ public class Picocsv {
     @FunctionalInterface
     public interface InputHandler<T> {
 
-        @NonNull T parse(Csv.@NonNull Reader reader) throws IOException;
+        @NonNull
+        T parse(Csv.@NonNull Reader reader) throws IOException;
     }
 
     @lombok.Builder(toBuilder = true)
@@ -72,13 +74,13 @@ public class Picocsv {
 
         @Override
         public @NonNull T parseReader(@NonNull Reader resource) throws IOException {
-            return parse(resource, TextBuffers.UNKNOWN);
+            return parse(uncloseableReader(resource), TextBuffers.UNKNOWN);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
             CharsetDecoder decoder = encoding.newDecoder();
-            return parse(newBufferedReader(resource, decoder), TextBuffers.of(resource, decoder));
+            return parse(newBufferedReader(uncloseableInputStream(resource), decoder), TextBuffers.of(resource, decoder));
         }
 
         public @NonNull T parseCsv(IOSupplier<Csv.@NonNull Reader> source) throws IOException {
@@ -146,13 +148,13 @@ public class Picocsv {
 
         @Override
         public void formatWriter(@NonNull T value, @NonNull Writer resource) throws IOException {
-            format(value, resource, TextBuffers.UNKNOWN);
+            format(value, uncloseableWriter(resource), TextBuffers.UNKNOWN);
         }
 
         @Override
         public void formatStream(@NonNull T value, @NonNull OutputStream resource, @NonNull Charset encoding) throws IOException {
             CharsetEncoder encoder = encoding.newEncoder();
-            format(value, newBufferedWriter(resource, encoder), TextBuffers.of(resource, encoder));
+            format(value, newBufferedWriter(uncloseableOutputStream(resource), encoder), TextBuffers.of(resource, encoder));
         }
 
         public void formatCsv(@NonNull T value, IOSupplier<Csv.@NonNull Writer> source) throws IOException {

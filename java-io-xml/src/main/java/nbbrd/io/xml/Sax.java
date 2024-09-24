@@ -37,6 +37,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 
 import static nbbrd.io.Resource.uncloseableInputStream;
+import static nbbrd.io.text.TextResource.uncloseableReader;
 
 /**
  * @author Philippe Charles
@@ -161,7 +162,7 @@ public class Sax {
 
         @Override
         public @NonNull T parseReader(@NonNull Reader resource) throws IOException {
-            return doParse(new InputSource(resource));
+            return doParse(new InputSource(uncloseableReader(resource)));
         }
 
         @Override
