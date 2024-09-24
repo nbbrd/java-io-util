@@ -36,6 +36,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
 import static nbbrd.io.Resource.uncloseableInputStream;
+import static nbbrd.io.text.TextResource.uncloseableReader;
 
 /**
  * @author Philippe Charles
@@ -129,8 +130,8 @@ public class Jaxb {
             Unmarshaller engine = factory.getWithIO();
 
             return cast(!ignoreXXE
-                    ? parseReaderXXE(engine, resource, xxeFactory.getWithIO())
-                    : parseReader(engine, resource));
+                    ? parseReaderXXE(engine, uncloseableReader(resource), xxeFactory.getWithIO())
+                    : parseReader(engine, uncloseableReader(resource)));
         }
 
         @Override

@@ -1,9 +1,6 @@
 package _test.io.text;
 
-import _test.io.CountingIOSupplier;
-import _test.io.CountingInputStream;
-import _test.io.ResourceId;
-import _test.io.Util;
+import _test.io.*;
 import lombok.NonNull;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.text.TextParser;
@@ -35,13 +32,13 @@ public final class TextParserAssertions {
         checkDefaultProvider(temp);
 
         testParseChars(p, value, expected);
-        testParseFileCharset(p, temp, value, expected, encodings, allowEmpty);
-        testParsePathCharset(p, temp, value, expected, encodings, allowEmpty);
-        testParseResourceCharset(p, value, expected);
+        testParseFile(p, temp, value, expected, encodings, allowEmpty);
+        testParsePath(p, temp, value, expected, encodings, allowEmpty);
+        testParseResource(p, value, expected);
         testParseReaderFromSupplier(p, value, expected);
-        testParseStreamFromSupplierCharset(p, value, expected);
+        testParseStreamFromSupplier(p, value, expected);
         testParseReader(p, value, expected);
-        testParseStreamCharset(p, value, expected);
+        testParseStream(p, value, expected);
     }
 
     private static <T> void testParseChars(TextParser<T> p, T value, Function<Charset, ResourceId> expected) throws IOException {
@@ -56,15 +53,14 @@ public final class TextParserAssertions {
                 .isEqualTo(value);
     }
 
-    private static <T> void testParseFileCharset(TextParser<T> p, Path temp, T value, Function<Charset, ResourceId> expected, Collection<Charset> encodings, boolean allowEmpty) throws IOException {
+    private static <T> void testParseFile(TextParser<T> p, Path temp, T value, Function<Charset, ResourceId> expected, Collection<Charset> encodings, boolean allowEmpty) throws IOException {
         {
             File nonNullSource = newEmptyFile(temp).toFile();
-            Charset nonNullEncoding = UTF_8;
 
             FileTime refTime = lastAccessTime(nonNullSource.toPath());
 
             assertThatNullPointerException()
-                    .isThrownBy(() -> p.parseFile(null, nonNullEncoding))
+                    .isThrownBy(() -> p.parseFile(null, UTF_8))
                     .withMessageContaining("source");
             assertThat(lastAccessTime(nonNullSource.toPath())).isEqualTo(refTime);
 
@@ -101,15 +97,14 @@ public final class TextParserAssertions {
         }
     }
 
-    private static <T> void testParsePathCharset(TextParser<T> p, Path temp, T value, Function<Charset, ResourceId> expected, Collection<Charset> encodings, boolean allowEmpty) throws IOException {
+    private static <T> void testParsePath(TextParser<T> p, Path temp, T value, Function<Charset, ResourceId> expected, Collection<Charset> encodings, boolean allowEmpty) throws IOException {
         {
             Path nonNullSource = newEmptyFile(temp);
-            Charset nonNullEncoding = UTF_8;
 
             FileTime refTime = lastAccessTime(nonNullSource);
 
             assertThatNullPointerException()
-                    .isThrownBy(() -> p.parsePath(null, nonNullEncoding))
+                    .isThrownBy(() -> p.parsePath(null, UTF_8))
                     .withMessageContaining("source");
             assertThat(lastAccessTime(nonNullSource)).isEqualTo(refTime);
 
@@ -147,7 +142,7 @@ public final class TextParserAssertions {
         }
     }
 
-    private static <T> void testParseResourceCharset(TextParser<T> p, T value, Function<Charset, ResourceId> expected) throws IOException {
+    private static <T> void testParseResource(TextParser<T> p, T value, Function<Charset, ResourceId> expected) throws IOException {
         {
             Class<?> nonNullType = TextParserAssertions.class;
             String nonNullName = "";
@@ -185,9 +180,6 @@ public final class TextParserAssertions {
                     .withMessageContaining("source");
         }
 
-        assertThat(p.parseReader(() -> expected.apply(UTF_8).open(UTF_8)))
-                .isEqualTo(value);
-
         assertThatIOException()
                 .isThrownBy(() -> p.parseReader(IOSupplier.of(null)))
                 .isInstanceOf(IOException.class)
@@ -196,15 +188,27 @@ public final class TextParserAssertions {
         assertThatIOException()
                 .isThrownBy(() -> p.parseReader(failingSupplier(TextParserTestError::new)))
                 .isInstanceOf(TextParserTestError.class);
+
+        try (StringReader2 resource = new StringReader2(expected.apply(UTF_8).copyToString(UTF_8))) {
+            assertThat(p.parseReader(() -> resource))
+                    .isEqualTo(value);
+
+            assertThat(resource.read())
+                    .describedAs("Parser must read from resource if value is not null")
+                    .isEqualTo(-1);
+
+            assertThat(resource.getCloseCount())
+                    .describedAs("Parser must close supplied resource")
+                    .isEqualTo(1);
+        }
     }
 
-    private static <T> void testParseStreamFromSupplierCharset(TextParser<T> p, T value, Function<Charset, ResourceId> expected) throws IOException {
+    private static <T> void testParseStreamFromSupplier(TextParser<T> p, T value, Function<Charset, ResourceId> expected) throws IOException {
         {
-            CountingIOSupplier nonNullSource = new CountingIOSupplier<>(Util::emptyInputStream);
-            Charset nonNullEncoding = UTF_8;
+            CountingIOSupplier<InputStream> nonNullSource = new CountingIOSupplier<>(Util::emptyInputStream);
 
             assertThatNullPointerException()
-                    .isThrownBy(() -> p.parseStream((IOSupplier<? extends InputStream>) null, nonNullEncoding))
+                    .isThrownBy(() -> p.parseStream((IOSupplier<? extends InputStream>) null, UTF_8))
                     .withMessageContaining("source");
             assertThat(nonNullSource.getCount()).isEqualTo(0);
 
@@ -223,8 +227,18 @@ public final class TextParserAssertions {
                 .isThrownBy(() -> p.parseStream(failingSupplier(TextParserTestError::new), UTF_8))
                 .isInstanceOf(TextParserTestError.class);
 
-        assertThat(p.parseStream(() -> expected.apply(UTF_8).open(), UTF_8))
-                .isEqualTo(value);
+        try (ByteArrayInputStream2 resource = new ByteArrayInputStream2(expected.apply(UTF_8).toBytes())) {
+            assertThat(p.parseStream(() -> resource, UTF_8))
+                    .isEqualTo(value);
+
+            assertThat(resource.available())
+                    .describedAs("Parser must read from resource if value is not null")
+                    .isEqualTo(0);
+
+            assertThat(resource.getCloseCount())
+                    .describedAs("Parser must close supplied resource")
+                    .isEqualTo(1);
+        }
     }
 
     private static <T> void testParseReader(TextParser<T> p, T value, Function<Charset, ResourceId> expected) throws IOException {
@@ -234,19 +248,26 @@ public final class TextParserAssertions {
                     .withMessageContaining("resource");
         }
 
-        try (Reader resource = expected.apply(UTF_8).open(UTF_8)) {
+        try (StringReader2 resource = new StringReader2(expected.apply(UTF_8).copyToString(UTF_8))) {
             assertThat(p.parseReader(resource))
                     .isEqualTo(value);
+
+            assertThat(resource.read())
+                    .describedAs("Parser must read from resource if value is not null")
+                    .isEqualTo(-1);
+
+            assertThat(resource.getCloseCount())
+                    .describedAs("Parser may not close resource")
+                    .isEqualTo(0);
         }
     }
 
-    private static <T> void testParseStreamCharset(TextParser<T> p, T value, Function<Charset, ResourceId> expected) throws IOException {
+    private static <T> void testParseStream(TextParser<T> p, T value, Function<Charset, ResourceId> expected) throws IOException {
         {
             CountingInputStream nonNullSource = new CountingInputStream(emptyInputStream());
-            Charset nonNullEncoding = UTF_8;
 
             assertThatNullPointerException()
-                    .isThrownBy(() -> p.parseStream((InputStream) null, nonNullEncoding))
+                    .isThrownBy(() -> p.parseStream((InputStream) null, UTF_8))
                     .withMessageContaining("resource");
             assertThat(nonNullSource.getCount()).isEqualTo(0);
 
@@ -256,9 +277,17 @@ public final class TextParserAssertions {
             assertThat(nonNullSource.getCount()).isEqualTo(0);
         }
 
-        try (InputStream resource = expected.apply(UTF_8).open()) {
+        try (ByteArrayInputStream2 resource = new ByteArrayInputStream2(expected.apply(UTF_8).toBytes())) {
             assertThat(p.parseStream(resource, UTF_8))
                     .isEqualTo(value);
+
+            assertThat(resource.available())
+                    .describedAs("Parser must read from resource if value is not null")
+                    .isEqualTo(0);
+
+            assertThat(resource.getCloseCount())
+                    .describedAs("Parser may not close resource")
+                    .isEqualTo(0);
         }
     }
 

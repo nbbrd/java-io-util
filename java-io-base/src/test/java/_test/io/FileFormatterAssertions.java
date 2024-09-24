@@ -89,7 +89,7 @@ public final class FileFormatterAssertions {
         }
     }
 
-    private static <T> void testFormatStreamFromSupplier(FileFormatter<T> p, T value, byte[] expected) throws IOException {
+    private static <T> void testFormatStreamFromSupplier(FileFormatter<T> p, T value, byte[] expected) {
         {
             CountingIOSupplier<OutputStream> nonNullTarget = new CountingIOSupplier<>(ByteArrayOutputStream::new);
 
@@ -113,53 +113,53 @@ public final class FileFormatterAssertions {
                 .isThrownBy(() -> p.formatStream(value, failingSupplier(FileFormatterTestError::new)))
                 .isInstanceOf(FileFormatterTestError.class);
 
-        ByteArrayOutputStream stream = new ByteArrayOutputStream();
-        p.formatStream(value, () -> stream);
-        assertThat(stream.toByteArray()).isEqualTo(expected);
+        try (ByteArrayOutputStream2 resource = new ByteArrayOutputStream2()) {
+            assertThatCode(() -> p.formatStream(value, () -> resource))
+                    .doesNotThrowAnyException();
+
+            assertThat(resource.toByteArray())
+                    .describedAs("Formatter must write to resource if value is not null")
+                    .isEqualTo(expected);
+
+            assertThat(resource.getCloseCount())
+                    .describedAs("Formatter must close supplied resource")
+                    .isEqualTo(1);
+        }
     }
 
-    private static <T> void testFormatStream(FileFormatter<T> p, T value, byte[] expected) throws IOException {
+    private static <T> void testFormatStream(FileFormatter<T> p, T value, byte[] expected) {
         assertThatNullPointerException()
                 .isThrownBy(() -> p.formatStream(value, (OutputStream) null))
                 .withMessageContaining("resource");
 
-        try (CloseableOutputStream stream = new CloseableOutputStream()) {
+        try (ByteArrayOutputStream2 resource = new ByteArrayOutputStream2()) {
             assertThatNullPointerException()
-                    .isThrownBy(() -> p.formatStream(null, stream))
+                    .isThrownBy(() -> p.formatStream(null, resource))
                     .withMessageContaining("value");
 
-            assertThat(stream)
-                    .returns(0, CloseableOutputStream::size)
-                    .returns(false, CloseableOutputStream::isClosed);
+            assertThat(resource.toByteArray())
+                    .describedAs("Formatter may not write to resource if value is null")
+                    .isEmpty();
+
+            assertThat(resource.getCloseCount())
+                    .describedAs("Formatter may not close resource")
+                    .isEqualTo(0);
         }
 
-        try (CloseableOutputStream stream = new CloseableOutputStream()) {
-            p.formatStream(value, stream);
-            assertThat(stream)
-                    .returns(expected, CloseableOutputStream::toByteArray)
-                    .returns(false, CloseableOutputStream::isClosed);
+        try (ByteArrayOutputStream2 resource = new ByteArrayOutputStream2()) {
+            assertThatCode(() -> p.formatStream(value, resource))
+                    .doesNotThrowAnyException();
+
+            assertThat(resource.toByteArray())
+                    .describedAs("Formatter must write to resource if value is not null")
+                    .isEqualTo(expected);
+
+            assertThat(resource.getCloseCount())
+                    .describedAs("Formatter may not close resource")
+                    .isEqualTo(0);
         }
     }
 
     private static final class FileFormatterTestError extends IOException {
-    }
-
-    @lombok.RequiredArgsConstructor
-    private static final class CloseableOutputStream extends ByteArrayOutputStream {
-
-        @lombok.Getter
-        private boolean closed = false;
-
-        @Override
-        public synchronized void reset() {
-            closed = false;
-            super.reset();
-        }
-
-        @Override
-        public void close() throws IOException {
-            closed = true;
-            super.close();
-        }
     }
 }

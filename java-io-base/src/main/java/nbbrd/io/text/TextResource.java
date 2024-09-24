@@ -1,5 +1,7 @@
 package nbbrd.io.text;
 
+import internal.io.text.UncloseableReader;
+import internal.io.text.UncloseableWriter;
 import lombok.NonNull;
 import nbbrd.io.Resource;
 
@@ -48,5 +50,13 @@ public class TextResource {
 
     public @NonNull BufferedWriter newBufferedWriter(@NonNull OutputStream stream, @NonNull CharsetEncoder encoder) {
         return new BufferedWriter(new OutputStreamWriter(stream, encoder));
+    }
+
+    public static @NonNull Reader uncloseableReader(@NonNull Reader delegate) {
+        return new UncloseableReader(delegate);
+    }
+
+    public static @NonNull Writer uncloseableWriter(@NonNull Writer delegate) {
+        return new UncloseableWriter(delegate);
     }
 }

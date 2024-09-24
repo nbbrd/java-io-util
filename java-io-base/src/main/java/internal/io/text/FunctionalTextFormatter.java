@@ -10,6 +10,9 @@ import java.io.OutputStreamWriter;
 import java.io.Writer;
 import java.nio.charset.Charset;
 
+import static nbbrd.io.Resource.uncloseableOutputStream;
+import static nbbrd.io.text.TextResource.uncloseableWriter;
+
 @lombok.RequiredArgsConstructor
 public final class FunctionalTextFormatter<T> implements TextFormatter<T> {
 
@@ -18,13 +21,17 @@ public final class FunctionalTextFormatter<T> implements TextFormatter<T> {
 
     @Override
     public void formatWriter(@NonNull T value, @NonNull Writer resource) throws IOException {
-        function.acceptWithIO(value, resource);
+        doWrite(value, uncloseableWriter(resource));
     }
 
     @Override
     public void formatStream(@NonNull T value, @NonNull OutputStream resource, @NonNull Charset encoding) throws IOException {
-        try (OutputStreamWriter writer = new OutputStreamWriter(resource, encoding)) {
-            formatWriter(value, writer);
+        try (OutputStreamWriter writer = new OutputStreamWriter(uncloseableOutputStream(resource), encoding)) {
+            doWrite(value, writer);
         }
+    }
+
+    private void doWrite(T value, Writer resource) throws IOException {
+        function.acceptWithIO(value, resource);
     }
 }

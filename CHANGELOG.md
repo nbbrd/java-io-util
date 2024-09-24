@@ -7,6 +7,12 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.0.31] - 2024-09-24
+
+### Fixed
+
+- Fix unexpected closing of resources
+
 ## [0.0.30] - 2024-06-25
 
 ### Fixed
@@ -268,7 +274,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Initial release
 
-[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.30...HEAD
+[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.31...HEAD
+[0.0.31]: https://github.com/nbbrd/java-io-util/compare/v0.0.30...v0.0.31
 [0.0.30]: https://github.com/nbbrd/java-io-util/compare/v0.0.29...v0.0.30
 [0.0.29]: https://github.com/nbbrd/java-io-util/compare/v0.0.28...v0.0.29
 [0.0.28]: https://github.com/nbbrd/java-io-util/compare/v0.0.27...v0.0.28

@@ -4,7 +4,10 @@ import lombok.NonNull;
 import nbbrd.io.FileParser;
 import nbbrd.io.function.IOSupplier;
 
-import java.io.*;
+import java.io.EOFException;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -139,8 +142,18 @@ public final class FileParserAssertions {
                 .isThrownBy(() -> p.parseStream(failingSupplier(FileParserTestError::new)))
                 .isInstanceOf(FileParserTestError.class);
 
-        assertThat(p.parseStream(expected::open))
-                .isEqualTo(value);
+        try (ByteArrayInputStream2 resource = new ByteArrayInputStream2(expected.toBytes())) {
+            assertThat(p.parseStream(() -> resource))
+                    .isEqualTo(value);
+
+            assertThat(resource.available())
+                    .describedAs("Parser must read from resource if value is not null")
+                    .isEqualTo(0);
+
+            assertThat(resource.getCloseCount())
+                    .describedAs("Parser must close supplied resource")
+                    .isEqualTo(1);
+        }
     }
 
     private static <T> void testParseStream(FileParser<T> p, T value, ResourceId expected) throws IOException {
@@ -148,36 +161,20 @@ public final class FileParserAssertions {
                 .isThrownBy(() -> p.parseStream((InputStream) null))
                 .withMessageContaining("resource");
 
-        byte[] bytes = expected.toBytes();
+        try (ByteArrayInputStream2 resource = new ByteArrayInputStream2(expected.toBytes())) {
+            assertThat(p.parseStream(resource))
+                    .isEqualTo(value);
 
-        try (CloseableInputStream resource = new CloseableInputStream(bytes)) {
-            assertThat(p.parseStream(resource)).isEqualTo(value);
-            assertThat(resource.isClosed()).isFalse();
+            assertThat(resource.available())
+                    .describedAs("Parser must read from resource if value is not null")
+                    .isEqualTo(0);
+
+            assertThat(resource.getCloseCount())
+                    .describedAs("Parser may not close resource")
+                    .isEqualTo(0);
         }
     }
 
     private static final class FileParserTestError extends IOException {
-    }
-
-    private static final class CloseableInputStream extends ByteArrayInputStream {
-
-        @lombok.Getter
-        private boolean closed = false;
-
-        public CloseableInputStream(byte[] bytes) {
-            super(bytes);
-        }
-
-        @Override
-        public synchronized void reset() {
-            closed = false;
-            super.reset();
-        }
-
-        @Override
-        public void close() throws IOException {
-            closed = true;
-            super.close();
-        }
     }
 }

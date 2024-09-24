@@ -1,5 +1,6 @@
 package _test.io.text;
 
+import _test.io.ByteArrayOutputStream2;
 import _test.io.CountingIOSupplier;
 import lombok.NonNull;
 import nbbrd.io.function.IOSupplier;
@@ -31,12 +32,12 @@ public final class TextFormatterAssertions {
 
         testFormatToString(p, value, expected.apply(UTF_8));
         testFormatChars(p, value, expected.apply(UTF_8));
-        testFormatFileCharset(p, value, expected, encodings, temp);
-        testFormatPathCharset(p, value, expected, encodings, temp);
+        testFormatFile(p, value, expected, encodings, temp);
+        testFormatPath(p, value, expected, encodings, temp);
         testFormatWriterFromSupplier(p, value, expected.apply(UTF_8));
-        testFormatStreamFromSupplierCharset(p, value, expected, encodings);
         testFormatWriter(p, value, expected.apply(UTF_8));
-        testFormatStreamCharset(p, value, expected, encodings);
+        testFormatStreamFromSupplier(p, value, expected, encodings);
+        testFormatStream(p, value, expected, encodings);
     }
 
     private static <T> void testFormatToString(TextFormatter<T> p, T value, String expected) throws IOException {
@@ -71,7 +72,7 @@ public final class TextFormatterAssertions {
                 .isEqualTo(expected);
     }
 
-    private static <T> void testFormatFileCharset(TextFormatter<T> p, T value, Function<Charset, String> expected, Collection<Charset> encodings, Path temp) throws IOException {
+    private static <T> void testFormatFile(TextFormatter<T> p, T value, Function<Charset, String> expected, Collection<Charset> encodings, Path temp) throws IOException {
         {
             File nonNullTarget = newFile(temp).toFile();
             Charset nonNullEncoding = UTF_8;
@@ -109,7 +110,7 @@ public final class TextFormatterAssertions {
         }
     }
 
-    private static <T> void testFormatPathCharset(TextFormatter<T> p, T value, Function<Charset, String> expected, Collection<Charset> encodings, Path temp) throws IOException {
+    private static <T> void testFormatPath(TextFormatter<T> p, T value, Function<Charset, String> expected, Collection<Charset> encodings, Path temp) throws IOException {
         {
             Path nonNullTarget = newFile(temp);
             Charset nonNullEncoding = UTF_8;
@@ -147,7 +148,7 @@ public final class TextFormatterAssertions {
         }
     }
 
-    private static <T> void testFormatWriterFromSupplier(TextFormatter<T> p, T value, String expected) throws IOException {
+    private static <T> void testFormatWriterFromSupplier(TextFormatter<T> p, T value, String expected) {
         {
             CountingIOSupplier<Writer> nonNullTarget = new CountingIOSupplier<>(StringWriter::new);
 
@@ -162,11 +163,6 @@ public final class TextFormatterAssertions {
             assertThat(nonNullTarget.getCount()).isEqualTo(0);
         }
 
-        StringWriter writer = new StringWriter();
-        p.formatWriter(value, () -> writer);
-        assertThat(writer.toString())
-                .isEqualTo(expected);
-
         assertThatIOException()
                 .isThrownBy(() -> p.formatWriter(value, IOSupplier.of(null)))
                 .isInstanceOf(IOException.class)
@@ -175,20 +171,32 @@ public final class TextFormatterAssertions {
         assertThatIOException()
                 .isThrownBy(() -> p.formatWriter(value, failingSupplier(TextFormatterTestError::new)))
                 .isInstanceOf(TextFormatterTestError.class);
+
+        try (StringWriter2 resource = new StringWriter2()) {
+            assertThatCode(() -> p.formatWriter(value, () -> resource))
+                    .doesNotThrowAnyException();
+
+            assertThat(resource.toString())
+                    .describedAs("Formatter must write to resource if value is not null")
+                    .isEqualTo(expected);
+
+            assertThat(resource.getCloseCount())
+                    .describedAs("Formatter must close supplied resource")
+                    .isEqualTo(1);
+        }
     }
 
-    private static <T> void testFormatStreamFromSupplierCharset(TextFormatter<T> p, T value, Function<Charset, String> expected, Collection<Charset> encodings) throws IOException {
+    private static <T> void testFormatStreamFromSupplier(TextFormatter<T> p, T value, Function<Charset, String> expected, Collection<Charset> encodings) {
         {
             CountingIOSupplier<OutputStream> nonNullTarget = new CountingIOSupplier<>(ByteArrayOutputStream::new);
-            Charset nonNullEncoding = UTF_8;
 
             assertThatNullPointerException()
-                    .isThrownBy(() -> p.formatStream(null, nonNullTarget, nonNullEncoding))
+                    .isThrownBy(() -> p.formatStream(null, nonNullTarget, UTF_8))
                     .withMessageContaining("value");
             assertThat(nonNullTarget.getCount()).isEqualTo(0);
 
             assertThatNullPointerException()
-                    .isThrownBy(() -> p.formatStream(value, (IOSupplier<? extends OutputStream>) null, nonNullEncoding))
+                    .isThrownBy(() -> p.formatStream(value, (IOSupplier<? extends OutputStream>) null, UTF_8))
                     .withMessageContaining("target");
             assertThat(nonNullTarget.getCount()).isEqualTo(0);
 
@@ -208,60 +216,100 @@ public final class TextFormatterAssertions {
                 .isInstanceOf(TextFormatterTestError.class);
 
         for (Charset encoding : encodings) {
-            ByteArrayOutputStream stream = new ByteArrayOutputStream();
-            p.formatStream(value, () -> stream, encoding);
-            assertThat(stream.toString(encoding.name()))
-                    .isEqualTo(expected.apply(encoding));
+            try (ByteArrayOutputStream2 resource = new ByteArrayOutputStream2()) {
+                assertThatCode(() -> p.formatStream(value, () -> resource, encoding))
+                        .doesNotThrowAnyException();
+
+                assertThat(resource.toString(encoding))
+                        .describedAs("Formatter must write to resource if value is not null")
+                        .isEqualTo(expected.apply(encoding));
+
+                assertThat(resource.getCloseCount())
+                        .describedAs("Formatter must close supplied resource")
+                        .isEqualTo(1);
+            }
         }
     }
 
-    private static <T> void testFormatWriter(TextFormatter<T> p, T value, String expected) throws IOException {
-        {
-            StringWriter nonNullTarget = new StringWriter();
+    private static <T> void testFormatWriter(TextFormatter<T> p, T value, String expected) {
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.formatWriter(value, (Writer) null))
+                .withMessageContaining("resource");
 
+        try (StringWriter2 resource = new StringWriter2()) {
             assertThatNullPointerException()
-                    .isThrownBy(() -> p.formatWriter(null, nonNullTarget))
+                    .isThrownBy(() -> p.formatWriter(null, resource))
                     .withMessageContaining("value");
-            assertThat(nonNullTarget.toString()).isEmpty();
 
-            assertThatNullPointerException()
-                    .isThrownBy(() -> p.formatWriter(value, (Writer) null))
-                    .withMessageContaining("resource");
-            assertThat(nonNullTarget.toString()).isEmpty();
+            assertThat(resource.toString())
+                    .describedAs("Formatter may not write to resource if value is null")
+                    .isEmpty();
+
+            assertThat(resource.getCloseCount())
+                    .describedAs("Formatter may not close resource")
+                    .isEqualTo(0);
         }
 
-        StringWriter resource = new StringWriter();
-        p.formatWriter(value, resource);
-        assertThat(resource.toString())
-                .isEqualTo(expected);
+        try (StringWriter2 resource = new StringWriter2()) {
+            assertThatCode(() -> p.formatWriter(value, resource))
+                    .doesNotThrowAnyException();
+
+            assertThat(resource.toString())
+                    .describedAs("Formatter must write to resource if value is not null")
+                    .isEqualTo(expected);
+
+            assertThat(resource.getCloseCount())
+                    .describedAs("Formatter may not close resource")
+                    .isEqualTo(0);
+        }
     }
 
-    private static <T> void testFormatStreamCharset(TextFormatter<T> p, T value, Function<Charset, String> expected, Collection<Charset> encodings) throws IOException {
-        {
-            ByteArrayOutputStream nonNullResource = new ByteArrayOutputStream();
-            Charset nonNullEncoding = UTF_8;
+    private static <T> void testFormatStream(TextFormatter<T> p, T value, Function<Charset, String> expected, Collection<Charset> encodings) {
+        assertThatNullPointerException()
+                .isThrownBy(() -> p.formatStream(value, (OutputStream) null, UTF_8))
+                .withMessageContaining("resource");
 
+        try (ByteArrayOutputStream2 resource = new ByteArrayOutputStream2()) {
             assertThatNullPointerException()
-                    .isThrownBy(() -> p.formatStream(null, nonNullResource, nonNullEncoding))
+                    .isThrownBy(() -> p.formatStream(null, resource, UTF_8))
                     .withMessageContaining("value");
-            assertThat(nonNullResource.toByteArray()).hasSize(0);
 
-            assertThatNullPointerException()
-                    .isThrownBy(() -> p.formatStream(value, (OutputStream) null, nonNullEncoding))
-                    .withMessageContaining("resource");
-            assertThat(nonNullResource.toByteArray()).hasSize(0);
+            assertThat(resource.toByteArray())
+                    .describedAs("Formatter may not write to resource if value is null")
+                    .isEmpty();
 
-            assertThatNullPointerException()
-                    .isThrownBy(() -> p.formatStream(value, nonNullResource, null))
-                    .withMessageContaining("encoding");
-            assertThat(nonNullResource.toByteArray()).hasSize(0);
+            assertThat(resource.getCloseCount())
+                    .describedAs("Formatter may not close resource")
+                    .isEqualTo(0);
         }
 
         for (Charset encoding : encodings) {
-            ByteArrayOutputStream resource = new ByteArrayOutputStream();
-            p.formatStream(value, resource, encoding);
-            assertThat(resource.toString(encoding.name()))
-                    .isEqualTo(expected.apply(encoding));
+            try (ByteArrayOutputStream2 resource = new ByteArrayOutputStream2()) {
+                assertThatCode(() -> p.formatStream(value, resource, encoding))
+                        .doesNotThrowAnyException();
+
+                assertThat(resource.toString(encoding))
+                        .describedAs("Formatter must write to resource if value is not null")
+                        .isEqualTo(expected.apply(encoding));
+
+                assertThat(resource.getCloseCount())
+                        .describedAs("Formatter may not close resource")
+                        .isEqualTo(0);
+            }
+        }
+
+        try (ByteArrayOutputStream2 resource = new ByteArrayOutputStream2()) {
+            assertThatNullPointerException()
+                    .isThrownBy(() -> p.formatStream(value, resource, null))
+                    .withMessageContaining("encoding");
+
+            assertThat(resource.toByteArray())
+                    .describedAs("Formatter may not write to resource if encoding is null")
+                    .isEmpty();
+
+            assertThat(resource.getCloseCount())
+                    .describedAs("Formatter may not close resource")
+                    .isEqualTo(0);
         }
     }
 

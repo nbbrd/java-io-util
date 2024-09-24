@@ -24,6 +24,7 @@ import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IOSupplier;
+import nbbrd.io.text.TextResource;
 
 import javax.xml.stream.*;
 import java.io.*;
@@ -35,6 +36,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import static nbbrd.io.Resource.uncloseableInputStream;
+import static nbbrd.io.text.TextResource.uncloseableReader;
 
 /**
  * @author Philippe Charles
@@ -170,7 +172,7 @@ public class Stax {
 
         @Override
         public @NonNull T parseReader(@NonNull Reader resource) throws IOException {
-            return doParseOrClose(o -> o.createXMLStreamReader(resource), NOTHING_TO_CLOSE);
+            return doParseOrClose(o -> o.createXMLStreamReader(uncloseableReader(resource)), NOTHING_TO_CLOSE);
         }
 
         @Override
@@ -188,12 +190,12 @@ public class Stax {
             return doParse(handler, input, onClose);
         }
 
-        private T doParseOrClose(StaxFunction<XMLInputFactory, XMLStreamReader> supplier, Closeable onClose) throws IOException {
+        private T doParseOrClose(StaxFunction<XMLInputFactory, XMLStreamReader> supplier, Closeable fallback) throws IOException {
             try {
                 XMLStreamReader input = asIOFunction(supplier).applyWithIO(getEngine());
-                return doParse(handler, input, asCloseable(input::close, onClose));
+                return doParse(handler, input, asCloseable(input::close));
             } catch (Error | RuntimeException | IOException ex) {
-                Resource.ensureClosed(ex, onClose);
+                Resource.ensureClosed(ex, fallback);
                 throw ex;
             }
         }
@@ -271,7 +273,7 @@ public class Stax {
 
         @Override
         public @NonNull T parseReader(@NonNull Reader resource) throws IOException {
-            return doParseOrClose(o -> o.createXMLEventReader(resource), NOTHING_TO_CLOSE);
+            return doParseOrClose(o -> o.createXMLEventReader(uncloseableReader(resource)), NOTHING_TO_CLOSE);
         }
 
         @Override
@@ -284,12 +286,12 @@ public class Stax {
             return doParseOrClose(o -> o.createXMLEventReader(uncloseableInputStream(resource), encoding.name()), NOTHING_TO_CLOSE);
         }
 
-        private T doParseOrClose(StaxFunction<XMLInputFactory, XMLEventReader> supplier, Closeable onClose) throws IOException {
+        private T doParseOrClose(StaxFunction<XMLInputFactory, XMLEventReader> supplier, Closeable fallback) throws IOException {
             try {
                 XMLEventReader input = asIOFunction(supplier).applyWithIO(getEngine());
-                return doParse(handler, input, asCloseable(input::close, onClose));
+                return doParse(handler, input, asCloseable(input::close));
             } catch (Error | RuntimeException | IOException ex) {
-                Resource.ensureClosed(ex, onClose);
+                Resource.ensureClosed(ex, fallback);
                 throw ex;
             }
         }
