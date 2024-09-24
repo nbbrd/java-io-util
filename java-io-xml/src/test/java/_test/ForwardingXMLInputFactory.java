@@ -107,4 +107,38 @@ public class ForwardingXMLInputFactory extends XMLInputFactory {
             }
         };
     }
+
+    public ForwardingXMLInputFactory onEventReader(UnaryOperator<XMLEventReader> func) {
+        return new ForwardingXMLInputFactory(this) {
+            @Override
+            public XMLEventReader createXMLEventReader(Reader reader) throws XMLStreamException {
+                return func.apply(super.createXMLEventReader(reader));
+            }
+
+            @Override
+            public XMLEventReader createXMLEventReader(InputStream is) throws XMLStreamException {
+                return func.apply(super.createXMLEventReader(is));
+            }
+
+            @Override
+            public XMLEventReader createXMLEventReader(String systemId, InputStream is) throws XMLStreamException {
+                return func.apply(super.createXMLEventReader(systemId, is));
+            }
+
+            @Override
+            public XMLEventReader createXMLEventReader(Source source) throws XMLStreamException {
+                return func.apply(super.createXMLEventReader(source));
+            }
+
+            @Override
+            public XMLEventReader createXMLEventReader(InputStream stream, String encoding) throws XMLStreamException {
+                return func.apply(super.createXMLEventReader(stream, encoding));
+            }
+
+            @Override
+            public XMLEventReader createXMLEventReader(String systemId, Reader reader) throws XMLStreamException {
+                return func.apply(super.createXMLEventReader(systemId, reader));
+            }
+        };
+    }
 }

@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix inconsistent behavior in Stax
+
 ## [0.0.31] - 2024-09-24
 
 ### Fixed
