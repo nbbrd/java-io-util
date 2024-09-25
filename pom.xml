@@ -5,7 +5,7 @@
 
     <groupId>com.github.nbbrd.java-io-util</groupId>
     <artifactId>java-io-parent</artifactId>
-    <version>0.0.32</version>
+    <version>0.0.33-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>java-io</name>
@@ -38,7 +38,7 @@
     <properties>
         <!-- Java 8+ config -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.outputTimestamp>2024-09-25T09:43:15Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2024-09-25T09:43:21Z</project.build.outputTimestamp>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
 
