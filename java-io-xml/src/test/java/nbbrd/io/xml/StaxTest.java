@@ -23,7 +23,6 @@ import _test.sample.XmlParserAssertions;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import lombok.NonNull;
-import nbbrd.io.Resource;
 import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IOSupplier;
 import org.junit.jupiter.api.Test;
@@ -34,15 +33,12 @@ import javax.xml.stream.*;
 import javax.xml.stream.events.Characters;
 import javax.xml.stream.events.StartElement;
 import javax.xml.stream.events.XMLEvent;
-import java.io.ByteArrayOutputStream;
-import java.io.Closeable;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 import static _test.sample.Person.BOOLS;
@@ -51,6 +47,7 @@ import static _test.sample.XmlFormatterAssertions.assertFormatterSafety;
 import static _test.sample.XmlFormatterAssertions.assertXmlFormatterCompliance;
 import static _test.sample.XmlParserAssertions.assertParserSafety;
 import static _test.sample.XmlParserAssertions.assertXmlParserCompliance;
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -70,14 +67,14 @@ public class StaxTest {
     private final IOSupplier<XMLOutputFactory> validOutputFactory = XMLOutputFactory::newInstance;
 
     @Test
-    @SuppressWarnings("null")
+    @SuppressWarnings({"null", "DataFlowIssue"})
     public void testPreventXXE() {
         assertThatNullPointerException().isThrownBy(() -> Stax.preventXXE(null));
         assertThatCode(() -> Stax.preventXXE(XMLInputFactory.newInstance())).doesNotThrowAnyException();
     }
 
     @Test
-    public void testXXE() throws IOException {
+    public void testXXE() {
         Stax.StreamParser<Person> stream = Stax.StreamParser.valueOf(StaxTest::parseByStream);
         XmlParserAssertions.testXXE(wire, stream, stream.withIgnoreXXE(true));
 
@@ -86,7 +83,7 @@ public class StaxTest {
     }
 
     @Test
-    @SuppressWarnings("null")
+    @SuppressWarnings({"null", "DataFlowIssue"})
     public void testStreamParserFactories(@TempDir Path temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> Stax.StreamParser.flowOf(null));
@@ -101,82 +98,237 @@ public class StaxTest {
 
     @Test
     public void testStreamParserCloseableFlow() throws IOException {
-        AtomicBoolean readerClosed = new AtomicBoolean(false);
-        Stax.StreamParser<CloseablePerson> x = Stax.StreamParser
-                .<CloseablePerson>builder()
-                .handler(CloseablePerson::new)
-                .factory(() -> new ForwardingXMLInputFactory(XMLInputFactory.newInstance()).onStreamReader(reader -> new ForwardingXMLStreamReader(reader).onClose(() -> readerClosed.set(true))))
+        AtomicInteger xmlStreamReaderCount = new AtomicInteger(0);
+        Stax.StreamParser<CloseableStreamPerson> x = Stax.StreamParser
+                .<CloseableStreamPerson>builder()
+                .handler(CloseableStreamPerson::new)
+                .factory(() -> new ForwardingXMLInputFactory(XMLInputFactory.newInstance()).onStreamReader(reader -> new ForwardingXMLStreamReader(reader).onClose(xmlStreamReaderCount::incrementAndGet)))
                 .build();
 
-        Charset encoding = StandardCharsets.UTF_8;
-
         {
-            readerClosed.set(false);
-            try (CloseablePerson closeable = x.parseFile(Person.getFile(encoding))) {
+            // Stax.StreamParser#parseFile(File)
+            xmlStreamReaderCount.set(0);
+            try (CloseableStreamPerson closeable = x.parseFile(Person.getFile(UTF_8))) {
                 assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
-                assertThat(readerClosed).isFalse();
+                assertThat(xmlStreamReaderCount).hasValue(0);
             }
-            assertThat(readerClosed).isTrue();
+            assertThat(xmlStreamReaderCount).hasValue(1);
 
-            readerClosed.set(false);
-            try (CloseablePerson closeable = x.parseFile(Person.getFile(encoding), encoding)) {
+            // Stax.StreamParser#parseFile(File, Charset)
+            xmlStreamReaderCount.set(0);
+            try (CloseableStreamPerson closeable = x.parseFile(Person.getFile(UTF_8), UTF_8)) {
                 assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
-                assertThat(readerClosed).isFalse();
+                assertThat(xmlStreamReaderCount).hasValue(0);
             }
-            assertThat(readerClosed).isTrue();
+            assertThat(xmlStreamReaderCount).hasValue(1);
         }
 
-        // FIXME: not able to detect if inputstream is closed outside of reader !
         {
-            AtomicBoolean streamClosed = new AtomicBoolean(false);
+            AtomicInteger readerCount = new AtomicInteger(0);
+            IOSupplier<Reader> johnDoeReader = Person.JOHN_DOE_READER
+                    .andThen(stream -> new ForwardingReader(stream).onClose(readerCount::incrementAndGet));
+
+            // Stax.StreamParser#parseReader(IOSupplier)
+            xmlStreamReaderCount.set(0);
+            readerCount.set(0);
+            try (CloseableStreamPerson closeable = x.parseReader(johnDoeReader)) {
+                assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
+                assertThat(xmlStreamReaderCount).hasValue(0);
+                assertThat(readerCount).hasValue(0);
+            }
+            assertThat(xmlStreamReaderCount).hasValue(1);
+            assertThat(readerCount).hasValue(1);
+
+            // Stax.StreamParser#parseReader(Reader)
+            xmlStreamReaderCount.set(0);
+            readerCount.set(0);
+            try (Reader reader = johnDoeReader.getWithIO()) {
+                try (CloseableStreamPerson closeable = x.parseReader(reader)) {
+                    assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
+                    assertThat(xmlStreamReaderCount).hasValue(0);
+                    assertThat(readerCount).hasValue(0);
+                }
+                assertThat(xmlStreamReaderCount).hasValue(1);
+                assertThat(readerCount).hasValue(0);
+            }
+            assertThat(xmlStreamReaderCount).hasValue(1);
+            assertThat(readerCount).hasValue(1);
+        }
+
+        {
+            AtomicInteger inputStreamCount = new AtomicInteger(0);
             IOSupplier<InputStream> johnDoeStream = Person.JOHN_DOE_STREAM
-                    .andThen(stream -> new ForwardingInputStream(stream).onClose(() -> streamClosed.set(true)));
+                    .andThen(stream -> new ForwardingInputStream(stream).onClose(inputStreamCount::incrementAndGet));
 
-            readerClosed.set(false);
-            streamClosed.set(false);
-            try (CloseablePerson closeable = x.parseStream(johnDoeStream)) {
+            // Stax.StreamParser#parseStream(IOSupplier)
+            xmlStreamReaderCount.set(0);
+            inputStreamCount.set(0);
+            try (CloseableStreamPerson closeable = x.parseStream(johnDoeStream)) {
                 assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
-                assertThat(readerClosed).isFalse();
-                assertThat(streamClosed.get()).isEqualTo(closeable.isEndDocument());
+                assertThat(xmlStreamReaderCount).hasValue(0);
+                assertThat(inputStreamCount).hasValue(0);
             }
-            assertThat(readerClosed).isTrue();
-            assertThat(streamClosed).isTrue();
+            assertThat(xmlStreamReaderCount).hasValue(1);
+            assertThat(inputStreamCount).hasValue(1);
 
-            readerClosed.set(false);
-            streamClosed.set(false);
-            try (CloseablePerson closeable = x.parseStream(johnDoeStream, encoding)) {
+            // Stax.StreamParser#parseStream(IOSupplier, Charset)
+            xmlStreamReaderCount.set(0);
+            inputStreamCount.set(0);
+            try (CloseableStreamPerson closeable = x.parseStream(johnDoeStream, UTF_8)) {
                 assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
-                assertThat(readerClosed).isFalse();
-                assertThat(streamClosed.get()).isEqualTo(closeable.isEndDocument());
+                assertThat(xmlStreamReaderCount).hasValue(0);
+                assertThat(inputStreamCount).hasValue(0);
             }
-            assertThat(readerClosed).isTrue();
-            assertThat(streamClosed).isTrue();
+            assertThat(xmlStreamReaderCount).hasValue(1);
+            assertThat(inputStreamCount).hasValue(1);
 
-            readerClosed.set(false);
-            streamClosed.set(false);
+            // Stax.StreamParser#parseStream(InputStream)
+            xmlStreamReaderCount.set(0);
+            inputStreamCount.set(0);
             try (InputStream stream = johnDoeStream.getWithIO()) {
-                try (CloseablePerson closeable = x.parseStream(stream)) {
+                try (CloseableStreamPerson closeable = x.parseStream(stream)) {
                     assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
-                    assertThat(readerClosed).isFalse();
-//                    assertThat(streamClosed.get()).isEqualTo(closeable.isEndDocument());
-                    assertThat(streamClosed.get()).isFalse();
+                    assertThat(xmlStreamReaderCount).hasValue(0);
+                    assertThat(inputStreamCount).hasValue(0);
                 }
+                assertThat(xmlStreamReaderCount).hasValue(1);
+                assertThat(inputStreamCount).hasValue(0);
             }
-            assertThat(readerClosed).isTrue();
-            assertThat(streamClosed).isTrue();
+            assertThat(xmlStreamReaderCount).hasValue(1);
+            assertThat(inputStreamCount).hasValue(1);
 
-            readerClosed.set(false);
-            streamClosed.set(false);
+            // Stax.StreamParser#parseStream(InputStream, Charset)
+            xmlStreamReaderCount.set(0);
+            inputStreamCount.set(0);
             try (InputStream stream = johnDoeStream.getWithIO()) {
-                try (CloseablePerson closeable = x.parseStream(stream, encoding)) {
+                try (CloseableStreamPerson closeable = x.parseStream(stream, UTF_8)) {
                     assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
-                    assertThat(readerClosed).isFalse();
-//                    assertThat(streamClosed.get()).isEqualTo(closeable.isEndDocument());
-                    assertThat(streamClosed.get()).isFalse();
+                    assertThat(xmlStreamReaderCount).hasValue(0);
+                    assertThat(inputStreamCount).hasValue(0);
                 }
+                assertThat(xmlStreamReaderCount).hasValue(1);
+                assertThat(inputStreamCount).hasValue(0);
             }
-            assertThat(readerClosed).isTrue();
-            assertThat(streamClosed).isTrue();
+            assertThat(xmlStreamReaderCount).hasValue(1);
+            assertThat(inputStreamCount).hasValue(1);
+        }
+    }
+
+    @Test
+    public void testEventParserCloseableFlow() throws IOException {
+        AtomicInteger xmlEventReaderCount = new AtomicInteger(0);
+        Stax.EventParser<CloseableEventPerson> x = Stax.EventParser
+                .<CloseableEventPerson>builder()
+                .handler(CloseableEventPerson::new)
+                .factory(() -> new ForwardingXMLInputFactory(XMLInputFactory.newInstance()).onEventReader(reader -> new ForwardingXMLEventReader(reader).onClose(xmlEventReaderCount::incrementAndGet)))
+                .build();
+
+        {
+            // Stax.EventParser#parseFile(File)
+            xmlEventReaderCount.set(0);
+            try (CloseableEventPerson closeable = x.parseFile(Person.getFile(UTF_8))) {
+                assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
+                assertThat(xmlEventReaderCount).hasValue(0);
+            }
+            assertThat(xmlEventReaderCount).hasValue(1);
+
+            // Stax.EventParser#parseFile(File, Charset)
+            xmlEventReaderCount.set(0);
+            try (CloseableEventPerson closeable = x.parseFile(Person.getFile(UTF_8), UTF_8)) {
+                assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
+                assertThat(xmlEventReaderCount).hasValue(0);
+            }
+            assertThat(xmlEventReaderCount).hasValue(1);
+        }
+
+        {
+            AtomicInteger readerCount = new AtomicInteger(0);
+            IOSupplier<Reader> johnDoeReader = Person.JOHN_DOE_READER
+                    .andThen(stream -> new ForwardingReader(stream).onClose(readerCount::incrementAndGet));
+
+            // Stax.EventParser#parseReader(IOSupplier)
+            xmlEventReaderCount.set(0);
+            readerCount.set(0);
+            try (CloseableEventPerson closeable = x.parseReader(johnDoeReader)) {
+                assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
+                assertThat(xmlEventReaderCount).hasValue(0);
+                assertThat(readerCount).hasValue(0);
+            }
+            assertThat(xmlEventReaderCount).hasValue(1);
+            assertThat(readerCount).hasValue(1);
+
+            // Stax.EventParser#parseReader(Reader)
+            xmlEventReaderCount.set(0);
+            readerCount.set(0);
+            try (Reader reader = johnDoeReader.getWithIO()) {
+                try (CloseableEventPerson closeable = x.parseReader(reader)) {
+                    assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
+                    assertThat(xmlEventReaderCount).hasValue(0);
+                    assertThat(readerCount).hasValue(0);
+                }
+                assertThat(xmlEventReaderCount).hasValue(1);
+                assertThat(readerCount).hasValue(0);
+            }
+            assertThat(xmlEventReaderCount).hasValue(1);
+            assertThat(readerCount).hasValue(1);
+        }
+
+        {
+            AtomicInteger inputStreamCount = new AtomicInteger(0);
+            IOSupplier<InputStream> johnDoeStream = Person.JOHN_DOE_STREAM
+                    .andThen(stream -> new ForwardingInputStream(stream).onClose(inputStreamCount::incrementAndGet));
+
+            // Stax.EventParser#parseStream(IOSupplier)
+            xmlEventReaderCount.set(0);
+            inputStreamCount.set(0);
+            try (CloseableEventPerson closeable = x.parseStream(johnDoeStream)) {
+                assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
+                assertThat(xmlEventReaderCount).hasValue(0);
+                assertThat(inputStreamCount).hasValue(0);
+            }
+            assertThat(xmlEventReaderCount).hasValue(1);
+            assertThat(inputStreamCount).hasValue(1);
+
+            // Stax.EventParser#parseStream(IOSupplier, Charset)
+            xmlEventReaderCount.set(0);
+            inputStreamCount.set(0);
+            try (CloseableEventPerson closeable = x.parseStream(johnDoeStream, UTF_8)) {
+                assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
+                assertThat(xmlEventReaderCount).hasValue(0);
+                assertThat(inputStreamCount).hasValue(0);
+            }
+            assertThat(xmlEventReaderCount).hasValue(1);
+            assertThat(inputStreamCount).hasValue(1);
+
+            // Stax.EventParser#parseStream(InputStream)
+            xmlEventReaderCount.set(0);
+            inputStreamCount.set(0);
+            try (InputStream stream = johnDoeStream.getWithIO()) {
+                try (CloseableEventPerson closeable = x.parseStream(stream)) {
+                    assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
+                    assertThat(xmlEventReaderCount).hasValue(0);
+                    assertThat(inputStreamCount).hasValue(0);
+                }
+                assertThat(xmlEventReaderCount).hasValue(1);
+                assertThat(inputStreamCount).hasValue(0);
+            }
+            assertThat(xmlEventReaderCount).hasValue(1);
+            assertThat(inputStreamCount).hasValue(1);
+
+            // Stax.EventParser#parseStream(InputStream, Charset)
+            xmlEventReaderCount.set(0);
+            inputStreamCount.set(0);
+            try (InputStream stream = johnDoeStream.getWithIO()) {
+                try (CloseableEventPerson closeable = x.parseStream(stream, UTF_8)) {
+                    assertThat(closeable.getPerson()).isEqualTo(Person.JOHN_DOE);
+                    assertThat(xmlEventReaderCount).hasValue(0);
+                    assertThat(inputStreamCount).hasValue(0);
+                }
+                assertThat(xmlEventReaderCount).hasValue(1);
+                assertThat(inputStreamCount).hasValue(0);
+            }
+            assertThat(xmlEventReaderCount).hasValue(1);
+            assertThat(inputStreamCount).hasValue(1);
         }
     }
 
@@ -195,8 +347,8 @@ public class StaxTest {
     }
 
     @Test
-    @SuppressWarnings("null")
-    public void testStreamParserWither() throws IOException {
+    @SuppressWarnings({"null", "DataFlowIssue", "ResultOfMethodCallIgnored"})
+    public void testStreamParserWither() {
         Stax.StreamParser<Person> parser = Stax.StreamParser.valueOf(StaxTest::parseByStream);
 
         assertThatNullPointerException()
@@ -207,7 +359,7 @@ public class StaxTest {
     }
 
     @Test
-    @SuppressWarnings("null")
+    @SuppressWarnings({"null", "DataFlowIssue"})
     public void testEventParserFactories(@TempDir Path temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> Stax.EventParser.flowOf(null));
@@ -235,8 +387,8 @@ public class StaxTest {
     }
 
     @Test
-    @SuppressWarnings("null")
-    public void testEventParserWither() throws IOException {
+    @SuppressWarnings({"null", "DataFlowIssue", "ResultOfMethodCallIgnored"})
+    public void testEventParserWither() {
         Stax.EventParser<Person> parser = Stax.EventParser.valueOf(StaxTest::parseByEvent);
 
         assertThatNullPointerException()
@@ -247,7 +399,7 @@ public class StaxTest {
     }
 
     @Test
-    @SuppressWarnings("null")
+    @SuppressWarnings({"null", "DataFlowIssue"})
     public void testStreamFormatterFactories(@TempDir Path temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> Stax.StreamFormatter.of(null));
@@ -267,8 +419,8 @@ public class StaxTest {
     }
 
     @Test
-    @SuppressWarnings("null")
-    public void testStreamFormatterWither() throws IOException {
+    @SuppressWarnings({"null", "DataFlowIssue", "ResultOfMethodCallIgnored", "deprecation"})
+    public void testStreamFormatterWither() {
         Stax.StreamFormatter<Person> formatter = Stax.StreamFormatter.of(StaxTest::formatByStream);
 
         assertThatNullPointerException()
@@ -282,7 +434,7 @@ public class StaxTest {
     }
 
     @Test
-    @SuppressWarnings("null")
+    @SuppressWarnings({"null", "DataFlowIssue", "ResultOfMethodCallIgnored"})
     public void testStreamFormatterWithAlternateEncoding() throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> Stax.StreamFormatter.of(StaxTest::formatByStream).withEncoding(null));
@@ -294,7 +446,7 @@ public class StaxTest {
     }
 
     @Test
-    @SuppressWarnings("null")
+    @SuppressWarnings({"null", "DataFlowIssue"})
     public void testEventFormatterFactories(@TempDir Path temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> Stax.EventFormatter.of(null));
@@ -314,8 +466,8 @@ public class StaxTest {
     }
 
     @Test
-    @SuppressWarnings("null")
-    public void testEventFormatterWither() throws IOException {
+    @SuppressWarnings({"null", "DataFlowIssue", "ResultOfMethodCallIgnored", "deprecation"})
+    public void testEventFormatterWither() {
         Stax.EventFormatter<Person> formatter = Stax.EventFormatter.of(StaxTest::formatByEvent);
 
         assertThatNullPointerException()
@@ -329,7 +481,7 @@ public class StaxTest {
     }
 
     @Test
-    @SuppressWarnings("null")
+    @SuppressWarnings({"null", "DataFlowIssue", "ResultOfMethodCallIgnored"})
     public void testEventFormatterWithAlternateEncoding() throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> Stax.EventFormatter.of(StaxTest::formatByEvent).withEncoding(null));
@@ -341,7 +493,7 @@ public class StaxTest {
     }
 
     @Test
-    public void testParserSafety() throws IOException {
+    public void testParserSafety() {
         ResourceCounter counter = new ResourceCounter();
 
         List<Meta<IOSupplier<XMLInputFactory>>> factories = Meta.<IOSupplier<XMLInputFactory>>builder()
@@ -458,17 +610,13 @@ public class StaxTest {
 
     @lombok.Getter
     @lombok.RequiredArgsConstructor
-    private static class CloseablePerson implements Closeable {
+    private static class CloseableStreamPerson implements Closeable {
 
         @NonNull
         private final XMLStreamReader reader;
 
         @NonNull
         private final Closeable onClose;
-
-        public boolean isEndDocument() {
-            return reader.getEventType() == XMLStreamConstants.END_DOCUMENT;
-        }
 
         public Person getPerson() throws IOException {
             try {
@@ -480,12 +628,30 @@ public class StaxTest {
 
         @Override
         public void close() throws IOException {
+            onClose.close();
+        }
+    }
+
+    @lombok.Getter
+    @lombok.RequiredArgsConstructor
+    private static class CloseableEventPerson implements Closeable {
+
+        @NonNull
+        private final XMLEventReader reader;
+
+        @NonNull
+        private final Closeable onClose;
+
+        public Person getPerson() throws IOException {
             try {
-                reader.close();
+                return parseByEvent(reader);
             } catch (XMLStreamException ex) {
-                Resource.ensureClosed(ex, onClose);
                 throw WrappedIOException.wrap(ex);
             }
+        }
+
+        @Override
+        public void close() throws IOException {
             onClose.close();
         }
     }

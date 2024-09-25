@@ -24,7 +24,6 @@ import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IOSupplier;
-import nbbrd.io.text.TextResource;
 
 import javax.xml.stream.*;
 import java.io.*;
@@ -143,31 +142,31 @@ public class Stax {
         @Override
         public @NonNull T parseFile(@NonNull File source) throws IOException {
             InputStream resource = LegacyFiles.openInputStream(source);
-            return doParseOrClose(o -> o.createXMLStreamReader(LegacyFiles.toSystemId(source), resource), resource);
+            return doParseOrClose(o -> o.createXMLStreamReader(LegacyFiles.toSystemId(source), uncloseableInputStream(resource)), resource);
         }
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
             InputStream resource = LegacyFiles.openInputStream(source);
-            return doParseOrClose(o -> o.createXMLStreamReader(LegacyFiles.toSystemId(source), resource), resource);
+            return doParseOrClose(o -> o.createXMLStreamReader(LegacyFiles.toSystemId(source), uncloseableInputStream(resource)), resource);
         }
 
         @Override
         public @NonNull T parseReader(@NonNull IOSupplier<? extends Reader> source) throws IOException {
             Reader resource = LegacyFiles.openReader(source);
-            return doParseOrClose(o -> o.createXMLStreamReader(resource), resource);
+            return doParseOrClose(o -> o.createXMLStreamReader(uncloseableReader(resource)), resource);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source) throws IOException {
             InputStream resource = LegacyFiles.openInputStream(source);
-            return doParseOrClose(o -> o.createXMLStreamReader(resource), resource);
+            return doParseOrClose(o -> o.createXMLStreamReader(uncloseableInputStream(resource)), resource);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
             InputStream resource = LegacyFiles.openInputStream(source);
-            return doParseOrClose(o -> o.createXMLStreamReader(resource, encoding.name()), resource);
+            return doParseOrClose(o -> o.createXMLStreamReader(uncloseableInputStream(resource), encoding.name()), resource);
         }
 
         @Override
@@ -190,13 +189,26 @@ public class Stax {
             return doParse(handler, input, onClose);
         }
 
-        private T doParseOrClose(StaxFunction<XMLInputFactory, XMLStreamReader> supplier, Closeable fallback) throws IOException {
+        private T doParseOrClose(StaxFunction<XMLInputFactory, XMLStreamReader> supplier, Closeable inputSource) throws IOException {
             try {
                 XMLStreamReader input = asIOFunction(supplier).applyWithIO(getEngine());
-                return doParse(handler, input, asCloseable(input::close));
+                return doParse(handler, input, closingReaderAndSource(input, inputSource));
             } catch (Error | RuntimeException | IOException ex) {
-                Resource.ensureClosed(ex, fallback);
+                Resource.ensureClosed(ex, inputSource);
                 throw ex;
+            }
+        }
+
+        // XMLStreamReader#close() should not close the underlying input source !
+        private static Closeable closingReaderAndSource(XMLStreamReader reader, Closeable inputSource) {
+            return () -> Resource.closeBoth(() -> closeWithIO(reader), inputSource);
+        }
+
+        private static void closeWithIO(XMLStreamReader reader) throws IOException {
+            try {
+                reader.close();
+            } catch (XMLStreamException ex) {
+                throw wrapXMLStreamException(ex);
             }
         }
 
@@ -244,31 +256,31 @@ public class Stax {
         @Override
         public @NonNull T parseFile(@NonNull File source) throws IOException {
             InputStream resource = LegacyFiles.openInputStream(source);
-            return doParseOrClose(o -> o.createXMLEventReader(LegacyFiles.toSystemId(source), resource), resource);
+            return doParseOrClose(o -> o.createXMLEventReader(LegacyFiles.toSystemId(source), uncloseableInputStream(resource)), resource);
         }
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
             InputStream resource = LegacyFiles.openInputStream(source);
-            return doParseOrClose(o -> o.createXMLEventReader(LegacyFiles.toSystemId(source), resource), resource);
+            return doParseOrClose(o -> o.createXMLEventReader(LegacyFiles.toSystemId(source), uncloseableInputStream(resource)), resource);
         }
 
         @Override
         public @NonNull T parseReader(@NonNull IOSupplier<? extends Reader> source) throws IOException {
             Reader resource = LegacyFiles.openReader(source);
-            return doParseOrClose(o -> o.createXMLEventReader(resource), resource);
+            return doParseOrClose(o -> o.createXMLEventReader(uncloseableReader(resource)), resource);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source) throws IOException {
             InputStream resource = LegacyFiles.openInputStream(source);
-            return doParseOrClose(o -> o.createXMLEventReader(resource), resource);
+            return doParseOrClose(o -> o.createXMLEventReader(uncloseableInputStream(resource)), resource);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
             InputStream resource = LegacyFiles.openInputStream(source);
-            return doParseOrClose(o -> o.createXMLEventReader(resource, encoding.name()), resource);
+            return doParseOrClose(o -> o.createXMLEventReader(uncloseableInputStream(resource), encoding.name()), resource);
         }
 
         @Override
@@ -286,13 +298,26 @@ public class Stax {
             return doParseOrClose(o -> o.createXMLEventReader(uncloseableInputStream(resource), encoding.name()), NOTHING_TO_CLOSE);
         }
 
-        private T doParseOrClose(StaxFunction<XMLInputFactory, XMLEventReader> supplier, Closeable fallback) throws IOException {
+        private T doParseOrClose(StaxFunction<XMLInputFactory, XMLEventReader> supplier, Closeable inputSource) throws IOException {
             try {
                 XMLEventReader input = asIOFunction(supplier).applyWithIO(getEngine());
-                return doParse(handler, input, asCloseable(input::close));
+                return doParse(handler, input, closingReaderAndSource(input, inputSource));
             } catch (Error | RuntimeException | IOException ex) {
-                Resource.ensureClosed(ex, fallback);
+                Resource.ensureClosed(ex, inputSource);
                 throw ex;
+            }
+        }
+
+        // XmlEventReader#close() should not close the underlying input source !
+        private static Closeable closingReaderAndSource(XMLEventReader reader, Closeable inputSource) {
+            return () -> Resource.closeBoth(() -> closeWithIO(reader), inputSource);
+        }
+
+        private static void closeWithIO(XMLEventReader reader) throws IOException {
+            try {
+                reader.close();
+            } catch (XMLStreamException ex) {
+                throw wrapXMLStreamException(ex);
             }
         }
 
@@ -389,8 +414,16 @@ public class Stax {
         private void format(T value, StaxFunction<XMLOutputFactory, XMLStreamWriter> supplier, Charset realEncoding) throws IOException {
             try {
                 XMLStreamWriter output = supplier.applyWithXMLStream(getEngine());
-                doFormat(handler2, value, output, realEncoding, asCloseable(output::close));
+                doFormat(handler2, value, output, realEncoding, () -> closeWithIO(output));
                 output.close();
+            } catch (XMLStreamException ex) {
+                throw wrapXMLStreamException(ex);
+            }
+        }
+
+        private static void closeWithIO(XMLStreamWriter writer) throws IOException {
+            try {
+                writer.close();
             } catch (XMLStreamException ex) {
                 throw wrapXMLStreamException(ex);
             }
@@ -489,8 +522,16 @@ public class Stax {
         private void format(T value, StaxFunction<XMLOutputFactory, XMLEventWriter> supplier, Charset realEncoding) throws IOException {
             try {
                 XMLEventWriter output = supplier.applyWithXMLStream(getEngine());
-                doFormat(handler2, value, output, realEncoding, asCloseable(output::close));
+                doFormat(handler2, value, output, realEncoding, () -> closeWithIO(output));
                 output.close();
+            } catch (XMLStreamException ex) {
+                throw wrapXMLStreamException(ex);
+            }
+        }
+
+        private static void closeWithIO(XMLEventWriter writer) throws IOException {
+            try {
+                writer.close();
             } catch (XMLStreamException ex) {
                 throw wrapXMLStreamException(ex);
             }
@@ -533,20 +574,6 @@ public class Stax {
         }
     }
 
-    private static Closeable asCloseable(StaxRunnable first) {
-        return () -> {
-            try {
-                first.runWithXMLStream();
-            } catch (XMLStreamException ex) {
-                throw wrapXMLStreamException(ex);
-            }
-        };
-    }
-
-    private static Closeable asCloseable(StaxRunnable first, Closeable second) {
-        return () -> Resource.closeBoth(asCloseable(first), second);
-    }
-
     private static <T, R> IOFunction<T, R> asIOFunction(StaxFunction<T, R> function) {
         return t -> {
             try {
@@ -555,12 +582,6 @@ public class Stax {
                 throw wrapXMLStreamException(ex);
             }
         };
-    }
-
-    @FunctionalInterface
-    private interface StaxRunnable {
-
-        void runWithXMLStream() throws XMLStreamException;
     }
 
     @FunctionalInterface
