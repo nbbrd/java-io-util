@@ -1,5 +1,6 @@
 package nbbrd.io;
 
+import nbbrd.design.MightBePromoted;
 import nbbrd.io.function.IOBiConsumer;
 import nbbrd.io.function.IOFunction;
 import org.junit.jupiter.api.Test;
@@ -74,7 +75,12 @@ public class FileFormatterTest {
                 value, value.toUpperCase(ROOT).getBytes(UTF_8));
     }
 
+    @MightBePromoted
     private final IOBiConsumer<String, OutputStream> serialize = (value, resource) -> resource.write(value.getBytes(UTF_8));
+
+    @MightBePromoted
     private final IOBiConsumer<Object, OutputStream> close = (value, resource) -> resource.close();
+
+    @MightBePromoted
     private final IOFunction<String, String> upperCase = s -> s.toUpperCase(ROOT);
 }

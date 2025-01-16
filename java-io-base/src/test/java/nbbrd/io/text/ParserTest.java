@@ -25,6 +25,7 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -120,7 +121,8 @@ public class ParserTest {
     public void testOnFile() {
         Parser<File> p = onFile();
         assertCompliance(p, "test.xml");
-        assertThat(p.parse("test.xml")).isEqualTo(new File("test.xml"));
+        assertThat(p.parse("test.xml")).isEqualTo(Paths.get("test.xml").toFile());
+        assertThat(p.parse(Util.INVALID_FILE_PATH)).isNull();
     }
 
     @Test

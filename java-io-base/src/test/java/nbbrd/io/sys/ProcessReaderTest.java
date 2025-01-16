@@ -2,9 +2,9 @@ package nbbrd.io.sys;
 
 import org.junit.jupiter.api.Test;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.file.Paths;
 import java.util.UUID;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -32,12 +32,12 @@ public class ProcessReaderTest {
     public void testContent() throws IOException {
         switch (OS.NAME) {
             case WINDOWS:
-                assertThat(new File(readToString(Charset.defaultCharset(), "where", "where"))).exists();
+                assertThat(Paths.get(readToString(Charset.defaultCharset(), "where", "where"))).exists();
                 break;
             case LINUX:
             case MACOS:
             case SOLARIS:
-                assertThat(new File(readToString(Charset.defaultCharset(), "which", "which"))).exists();
+                assertThat(Paths.get(readToString(Charset.defaultCharset(), "which", "which"))).exists();
                 break;
         }
     }

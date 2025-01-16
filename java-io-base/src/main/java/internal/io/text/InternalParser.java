@@ -22,6 +22,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 import java.text.DateFormat;
 import java.text.NumberFormat;
 import java.time.format.DateTimeFormatter;
@@ -151,7 +153,12 @@ public class InternalParser {
     }
 
     public File parseFile(CharSequence input) {
-        return input != null ? new File(input.toString()) : null;
+        if (input == null) return null;
+        try {
+            return Paths.get(input.toString()).toFile();
+        } catch (InvalidPathException ex) {
+            return null;
+        }
     }
 
     @SuppressWarnings("unchecked")

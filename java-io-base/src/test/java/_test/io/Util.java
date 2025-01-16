@@ -23,6 +23,8 @@ import static java.util.stream.Collectors.toList;
 
 public final class Util {
 
+    public static final String INVALID_FILE_PATH = "*\"/\\<>:|?\0";
+
     public static boolean isJDK8() {
         return SystemProperties.DEFAULT.getJavaVersion().contains("1.8");
     }
@@ -83,7 +85,6 @@ public final class Util {
             return InternalResource.readAllBytes(input);
         }
     }
-
 
     public static Condition<Throwable> wrappedIOExceptionOfType(Class<?> type) {
         return new Condition<>((Throwable o) -> o instanceof WrappedIOException && type.isInstance(o.getCause()), "");

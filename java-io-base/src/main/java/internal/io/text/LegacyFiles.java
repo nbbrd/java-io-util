@@ -17,11 +17,16 @@
 package internal.io.text;
 
 import lombok.NonNull;
+import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IOSupplier;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.FileSystemNotFoundException;
+import java.nio.file.Files;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Paths;
 
 /**
  * @author Philippe Charles
@@ -56,7 +61,11 @@ public class LegacyFiles {
 
     @NonNull
     public static OutputStream openOutputStream(@NonNull File target) throws IOException {
-        return new BufferedOutputStream(new FileOutputStream(FileSystemExceptions.checkTarget(target)));
+        try {
+            return new BufferedOutputStream(Files.newOutputStream(FileSystemExceptions.checkTarget(target).toPath()));
+        } catch (InvalidPathException ex) {
+            throw WrappedIOException.wrap(ex);
+        }
     }
 
     public String toSystemId(@NonNull File file) {
@@ -66,8 +75,8 @@ public class LegacyFiles {
     public File fromSystemId(@NonNull String systemId) {
         if (systemId.startsWith("file:/")) {
             try {
-                return new File(new URI(systemId));
-            } catch (URISyntaxException ignore) {
+                return Paths.get(new URI(systemId)).toFile();
+            } catch (URISyntaxException | IllegalArgumentException | FileSystemNotFoundException ignore) {
             }
         }
         return null;

@@ -13,6 +13,7 @@ import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -26,8 +27,8 @@ import static org.assertj.core.api.Assertions.atIndex;
 public class CurlTest {
 
     @Test
-    public void testCommandBuilder(@TempDir File temp) throws MalformedURLException {
-        File file = new File(temp, "abc.txt");
+    public void testCommandBuilder(@TempDir Path temp) throws MalformedURLException {
+        File file = temp.resolve("abc.txt").toFile();
 
         assertThat(new Curl.CommandBuilder().request("GET").build())
                 .containsExactly("curl");
