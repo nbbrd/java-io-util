@@ -18,7 +18,7 @@ package nbbrd.io.xml;
 
 import _test.sample.Person;
 import internal.io.InternalResource;
-import internal.io.text.BufferedInputStreamWithFile;
+import internal.io.xml.BufferedInputStreamWithId;
 import lombok.NonNull;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -156,8 +156,8 @@ public class XmlTest {
         }
 
         private static String getFile(InputStream resource) {
-            return resource instanceof BufferedInputStreamWithFile
-                    ? ((BufferedInputStreamWithFile) resource).getFile().toString()
+            return resource instanceof BufferedInputStreamWithId
+                    ? ((BufferedInputStreamWithId) resource).getId()
                     : null;
         }
     }

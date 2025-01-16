@@ -1,9 +1,6 @@
 package nbbrd.io;
 
-import internal.io.ComposeFileFormatter;
-import internal.io.EncodingFileFormatter;
-import internal.io.FunctionalFileFormatter;
-import internal.io.LockingFileFormatter;
+import internal.io.*;
 import internal.io.text.LegacyFiles;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
@@ -11,6 +8,7 @@ import nbbrd.io.function.IOBiConsumer;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -22,8 +20,8 @@ import java.util.zip.GZIPOutputStream;
 public interface FileFormatter<T> {
 
     default void formatFile(@NonNull T value, @NonNull File target) throws IOException {
-        try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
-            formatStream(value, resource);
+        try (BufferedOutputStream bufferedResource = new BufferedOutputStream(LegacyFiles.newOutputStream(target))) {
+            formatStream(value, bufferedResource);
         }
     }
 
@@ -37,7 +35,7 @@ public interface FileFormatter<T> {
     }
 
     default void formatStream(@NonNull T value, @NonNull IOSupplier<? extends OutputStream> target) throws IOException {
-        try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
+        try (OutputStream resource = InternalResource.openOutputStream(target)) {
             formatStream(value, resource);
         }
     }

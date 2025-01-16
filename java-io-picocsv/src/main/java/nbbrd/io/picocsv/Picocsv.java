@@ -57,7 +57,7 @@ public class Picocsv {
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            try (InputStream resource = LegacyFiles.openInputStream(source)) {
+            try (InputStream resource = LegacyFiles.newInputStream(source)) {
                 CharsetDecoder decoder = encoding.newDecoder();
                 return parse(newBufferedReader(resource, decoder), TextBuffers.of(source.toPath(), decoder));
             }
@@ -131,7 +131,7 @@ public class Picocsv {
 
         @Override
         public void formatFile(@NonNull T value, @NonNull File target, @NonNull Charset encoding) throws IOException {
-            try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
+            try (OutputStream resource = LegacyFiles.newOutputStream(target)) {
                 CharsetEncoder encoder = encoding.newEncoder();
                 format(value, newBufferedWriter(resource, encoder), TextBuffers.of(target.toPath(), encoder));
             }

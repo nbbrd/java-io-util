@@ -153,12 +153,14 @@ public class InternalParser {
     }
 
     public File parseFile(CharSequence input) {
-        if (input == null) return null;
-        try {
-            return Paths.get(input.toString()).toFile();
-        } catch (InvalidPathException ex) {
-            return null;
+        if (input != null) {
+            try {
+                return Paths.get(input.toString()).toFile();
+            } catch (InvalidPathException ex) {
+                doNothing(ex);
+            }
         }
+        return null;
     }
 
     @SuppressWarnings("unchecked")

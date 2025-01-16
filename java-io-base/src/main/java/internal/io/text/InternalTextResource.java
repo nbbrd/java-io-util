@@ -1,10 +1,10 @@
 package internal.io.text;
 
+import internal.io.InternalResource;
 import lombok.NonNull;
+import nbbrd.io.function.IOSupplier;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.Reader;
+import java.io.*;
 import java.util.stream.Stream;
 
 @lombok.experimental.UtilityClass
@@ -44,5 +44,17 @@ public class InternalTextResource {
             }
         }
         return appendable;
+    }
+
+    public static Reader openReader(CharSequence source) {
+        return new StringReader(source.toString());
+    }
+
+    public static Reader openReader(IOSupplier<? extends Reader> source) throws IOException {
+        return InternalResource.checkResource(source.getWithIO(), "Missing Reader");
+    }
+
+    public static Writer openWriter(IOSupplier<? extends Writer> source) throws IOException {
+        return InternalResource.checkResource(source.getWithIO(), "Missing Writer");
     }
 }

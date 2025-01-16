@@ -18,15 +18,12 @@ package internal.io.text;
 
 import lombok.NonNull;
 import nbbrd.io.WrappedIOException;
-import nbbrd.io.function.IOSupplier;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.*;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.FileSystemNotFoundException;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Paths;
+import java.nio.file.*;
 
 /**
  * @author Philippe Charles
@@ -34,35 +31,17 @@ import java.nio.file.Paths;
 @lombok.experimental.UtilityClass
 public class LegacyFiles {
 
-    public static Reader openReader(CharSequence source) {
-        return new StringReader(source.toString());
+    public static @NonNull InputStream newInputStream(@NonNull File source) throws IOException {
+        return Files.newInputStream(FileSystemExceptions.checkSource(toPathOrRaiseIO(source)));
     }
 
-    public static Reader openReader(IOSupplier<? extends Reader> source) throws IOException {
-        return checkResource(source.getWithIO(), "Missing Reader");
+    public static @NonNull OutputStream newOutputStream(@NonNull File target) throws IOException {
+        return Files.newOutputStream(FileSystemExceptions.checkTarget(toPathOrRaiseIO(target)));
     }
 
-    public static InputStream openInputStream(IOSupplier<? extends InputStream> source) throws IOException {
-        return checkResource(source.getWithIO(), "Missing InputStream");
-    }
-
-    @NonNull
-    public static InputStream openInputStream(@NonNull File source) throws IOException {
-        return new BufferedInputStreamWithFile(FileSystemExceptions.checkSource(source));
-    }
-
-    public static Writer openWriter(IOSupplier<? extends Writer> source) throws IOException {
-        return checkResource(source.getWithIO(), "Missing Writer");
-    }
-
-    public static OutputStream openOutputStream(IOSupplier<? extends OutputStream> source) throws IOException {
-        return checkResource(source.getWithIO(), "Missing OutputStream");
-    }
-
-    @NonNull
-    public static OutputStream openOutputStream(@NonNull File target) throws IOException {
+    public static @NonNull Path toPathOrRaiseIO(@NonNull File source) throws IOException {
         try {
-            return new BufferedOutputStream(Files.newOutputStream(FileSystemExceptions.checkTarget(target).toPath()));
+            return source.toPath();
         } catch (InvalidPathException ex) {
             throw WrappedIOException.wrap(ex);
         }
@@ -72,7 +51,7 @@ public class LegacyFiles {
         return file.toURI().toASCIIString();
     }
 
-    public File fromSystemId(@NonNull String systemId) {
+    public @Nullable File fromSystemId(@NonNull String systemId) {
         if (systemId.startsWith("file:/")) {
             try {
                 return Paths.get(new URI(systemId)).toFile();
@@ -80,12 +59,5 @@ public class LegacyFiles {
             }
         }
         return null;
-    }
-
-    private static <T extends Closeable> T checkResource(T resource, String message) throws IOException {
-        if (resource == null) {
-            throw new IOException(message);
-        }
-        return resource;
     }
 }

@@ -1,15 +1,13 @@
 package nbbrd.io;
 
-import internal.io.AndThenFileParser;
-import internal.io.DecodingFileParser;
-import internal.io.FunctionalFileParser;
-import internal.io.LockingFileParser;
+import internal.io.*;
 import internal.io.text.LegacyFiles;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
 
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -21,8 +19,8 @@ import java.util.zip.GZIPInputStream;
 public interface FileParser<T> {
 
     default @NonNull T parseFile(@NonNull File source) throws IOException {
-        try (InputStream resource = LegacyFiles.openInputStream(source)) {
-            return parseStream(resource);
+        try (BufferedInputStream bufferedResource = new BufferedInputStream(LegacyFiles.newInputStream(source))) {
+            return parseStream(bufferedResource);
         }
     }
 
@@ -40,7 +38,7 @@ public interface FileParser<T> {
     }
 
     default @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source) throws IOException {
-        try (InputStream resource = LegacyFiles.openInputStream(source)) {
+        try (InputStream resource = InternalResource.openInputStream(source)) {
             return parseStream(resource);
         }
     }
