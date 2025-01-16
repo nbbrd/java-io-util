@@ -26,6 +26,7 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.text.NumberFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -121,7 +122,7 @@ public class FormatterTest {
     @Test
     public void testFile() {
         Formatter<File> f = onFile();
-        assertCompliance(f, new File("test.xml"), "test.xml");
+        assertCompliance(f, Paths.get("test.xml").toFile(), "test.xml");
     }
 
     @Test

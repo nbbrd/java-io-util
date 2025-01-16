@@ -78,7 +78,7 @@ public class Resource {
     @NonNull
     public Optional<File> getFile(@NonNull Path path) {
         return path.getFileSystem() == FileSystems.getDefault()
-                ? Optional.of(new File(path.toString()))
+                ? Optional.of(path.toFile())
                 : Optional.empty();
     }
 
