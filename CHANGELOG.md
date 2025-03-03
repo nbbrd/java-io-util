@@ -9,7 +9,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- Add shortcuts to Picocsv parser/formatter
+- Add static factory shortcuts to Picocsv parser/formatter
+- Add path shortcuts to CScriptWrapper and PowerShellWrapper
 
 ### Changed
 

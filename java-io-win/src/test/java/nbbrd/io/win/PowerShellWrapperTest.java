@@ -46,11 +46,19 @@ public class PowerShellWrapperTest {
     @SuppressWarnings("DataFlowIssue")
     @Test
     public void testParameters(@TempDir Path temp) throws IOException {
-        assertThatNullPointerException()
-                .isThrownBy(() -> exec(null, ""));
+        Path tempFile = createTempFile(temp, "a", "b");
 
         assertThatNullPointerException()
-                .isThrownBy(() -> exec(createTempFile(temp, "a", "b").toFile(), (String[]) null));
+                .isThrownBy(() -> exec((File) null, ""));
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> exec(tempFile.toFile(), (String[]) null));
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> exec((Path) null, ""));
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> exec(tempFile, (String[]) null));
     }
 
     @Test

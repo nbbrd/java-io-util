@@ -44,12 +44,20 @@ public class CScriptWrapperTest {
 
     @SuppressWarnings("DataFlowIssue")
     @Test
-    public void testParameters(@TempDir Path temp) {
-        assertThatNullPointerException()
-                .isThrownBy(() -> exec(null, NO_TIMEOUT, ""));
+    public void testParameters(@TempDir Path temp) throws IOException {
+        Path tempFile = createTempFile(temp, "a", "b");
 
         assertThatNullPointerException()
-                .isThrownBy(() -> exec(createTempFile(temp, "a", "b").toFile(), NO_TIMEOUT, (String[]) null));
+                .isThrownBy(() -> exec((File) null, NO_TIMEOUT, ""));
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> exec(tempFile.toFile(), NO_TIMEOUT, (String[]) null));
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> exec((Path) null, NO_TIMEOUT, ""));
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> exec(tempFile, NO_TIMEOUT, (String[]) null));
     }
 
     @Test
