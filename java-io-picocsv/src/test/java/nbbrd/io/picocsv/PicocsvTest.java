@@ -41,6 +41,15 @@ public class PicocsvTest {
     }
 
     @Test
+    public void testParserOf() throws IOException {
+        assertThatNullPointerException().isThrownBy(() -> Picocsv.Parser.of(null));
+
+        Picocsv.Parser<String> x = Picocsv.Parser.of(reader -> "hello");
+
+        assertThat(x.parseChars("world")).isEqualTo("hello");
+    }
+
+    @Test
     public void testParseCsv() throws IOException {
         Picocsv.Parser<List<User>> x = Picocsv.Parser
                 .builder(User::parse)
@@ -84,6 +93,15 @@ public class PicocsvTest {
         String expected = normalizeNewlines(RESOURCE_ID.copyToString(UTF_8));
 
         assertTextFormatterCompliance(temp, x, USERS, encoding -> expected, ENCODINGS);
+    }
+
+    @Test
+    public void testFormatterOf() throws IOException {
+        assertThatNullPointerException().isThrownBy(() -> Picocsv.Formatter.of(null));
+
+        Picocsv.Formatter<Object> x = Picocsv.Formatter.of((value, writer) -> writer.writeField("hello"));
+
+        assertThat(x.formatToString("world")).isEqualTo("hello");
     }
 
     private static String normalizeNewlines(CharSequence actual) {

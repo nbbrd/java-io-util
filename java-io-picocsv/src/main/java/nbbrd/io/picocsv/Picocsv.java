@@ -2,6 +2,7 @@ package nbbrd.io.picocsv;
 
 import internal.io.text.LegacyFiles;
 import lombok.NonNull;
+import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.net.MediaType;
 import nbbrd.io.text.TextBuffers;
@@ -37,6 +38,11 @@ public class Picocsv {
 
     @lombok.Builder(toBuilder = true)
     public static final class Parser<T> implements TextParser<T> {
+
+        @StaticFactoryMethod
+        public static <T> @NonNull Parser<T> of(@NonNull InputHandler<T> handler) {
+            return builder(handler).build();
+        }
 
         public static <T> @NonNull Builder<T> builder(@NonNull InputHandler<T> handler) {
             return new Builder<T>().handler(handler);
@@ -111,6 +117,11 @@ public class Picocsv {
 
     @lombok.Builder(toBuilder = true)
     public static final class Formatter<T> implements TextFormatter<T> {
+
+        @StaticFactoryMethod
+        public static <T> @NonNull Formatter<T> of(@NonNull OutputHandler<T> handler) {
+            return builder(handler).build();
+        }
 
         public static <T> @NonNull Builder<T> builder(@NonNull OutputHandler<T> handler) {
             return new Builder<T>().handler(handler);
