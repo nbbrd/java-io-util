@@ -16,6 +16,8 @@
  */
 package nbbrd.io.xml;
 
+import internal.io.xml.BufferedInputStreamWithId;
+import internal.io.text.LegacyFiles;
 import lombok.NonNull;
 import nbbrd.io.FileFormatter;
 import nbbrd.io.FileParser;
@@ -44,6 +46,18 @@ public class Xml {
     public interface Parser<T> extends FileParser<T>, TextParser<T> {
 
         boolean isIgnoreXXE();
+
+        default @NonNull T parseFile(@NonNull File source) throws IOException {
+            try (BufferedInputStreamWithId bufferedResource = new BufferedInputStreamWithId(LegacyFiles.newInputStream(source), source.toString())) {
+                return parseStream(bufferedResource);
+            }
+        }
+
+        default @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
+            try (BufferedInputStreamWithId bufferedResource = new BufferedInputStreamWithId(LegacyFiles.newInputStream(source), source.toString())) {
+                return parseStream(bufferedResource, encoding);
+            }
+        }
 
         default <V> @NonNull Parser<V> andThen(@NonNull IOFunction<? super T, ? extends V> after) {
             return new AdaptedParser<>(this, FileParser.super.andThen(after), TextParser.super.andThen(after));

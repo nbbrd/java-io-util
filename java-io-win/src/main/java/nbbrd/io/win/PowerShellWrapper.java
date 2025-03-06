@@ -20,6 +20,7 @@ import lombok.NonNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -31,6 +32,11 @@ import java.util.List;
 public class PowerShellWrapper {
 
     public static final String COMMAND = "powershell";
+
+    @NonNull
+    public Process exec(@NonNull Path script, @NonNull String... args) throws IOException {
+        return exec(script.toFile(), args);
+    }
 
     @NonNull
     public Process exec(@NonNull File script, @NonNull String... args) throws IOException {

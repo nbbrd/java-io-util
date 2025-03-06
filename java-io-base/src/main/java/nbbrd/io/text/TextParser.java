@@ -1,5 +1,6 @@
 package nbbrd.io.text;
 
+import internal.io.InternalResource;
 import internal.io.text.*;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
@@ -7,11 +8,9 @@ import nbbrd.io.FileParser;
 import nbbrd.io.Resource;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
+import nbbrd.io.sys.ProcessReader;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -23,14 +22,14 @@ import java.util.stream.Stream;
 public interface TextParser<T> {
 
     default @NonNull T parseChars(@NonNull CharSequence source) throws IOException {
-        try (Reader reader = LegacyFiles.openReader(source)) {
+        try (Reader reader = InternalTextResource.openReader(source)) {
             return parseReader(reader);
         }
     }
 
     default @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-        try (InputStream resource = LegacyFiles.openInputStream(source)) {
-            return parseStream(resource, encoding);
+        try (BufferedInputStream bufferedResource = new BufferedInputStream(LegacyFiles.newInputStream(source))) {
+            return parseStream(bufferedResource, encoding);
         }
     }
 
@@ -41,6 +40,12 @@ public interface TextParser<T> {
                 : parseStream(() -> Files.newInputStream(source), encoding);
     }
 
+    default @NonNull T parseProcess(@NonNull Process process, @NonNull Charset encoding) throws IOException {
+        try (Reader resource = ProcessReader.newReader(encoding, process)) {
+            return parseReader(resource);
+        }
+    }
+
     default @NonNull T parseResource(@NonNull Class<?> type, @NonNull String name, @NonNull Charset encoding) throws IOException {
         try (InputStream resource = Resource.newInputStream(type, name)) {
             return parseStream(resource, encoding);
@@ -48,13 +53,13 @@ public interface TextParser<T> {
     }
 
     default @NonNull T parseReader(@NonNull IOSupplier<? extends Reader> source) throws IOException {
-        try (Reader resource = LegacyFiles.openReader(source)) {
+        try (Reader resource = InternalTextResource.openReader(source)) {
             return parseReader(resource);
         }
     }
 
     default @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
-        try (InputStream resource = LegacyFiles.openInputStream(source)) {
+        try (InputStream resource = InternalResource.openInputStream(source)) {
             return parseStream(resource, encoding);
         }
     }

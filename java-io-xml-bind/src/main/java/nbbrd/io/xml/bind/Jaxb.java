@@ -196,12 +196,14 @@ public class Jaxb {
         }
 
         private static Object parseFileXXE(Unmarshaller engine, File source, XMLInputFactory xxe) throws IOException {
-            try (InputStream resource = LegacyFiles.openInputStream(source)) {
-                XMLStreamReader reader = xxe.createXMLStreamReader(LegacyFiles.toSystemId(source), resource);
-                try {
-                    return engine.unmarshal(reader);
-                } finally {
-                    reader.close();
+            try {
+                try (BufferedInputStream bufferedResource = new BufferedInputStream(LegacyFiles.newInputStream(source))) {
+                    XMLStreamReader reader = xxe.createXMLStreamReader(LegacyFiles.toSystemId(source), bufferedResource);
+                    try {
+                        return engine.unmarshal(reader);
+                    } finally {
+                        reader.close();
+                    }
                 }
             } catch (XMLStreamException ex) {
                 throw Stax.toIOException(ex);

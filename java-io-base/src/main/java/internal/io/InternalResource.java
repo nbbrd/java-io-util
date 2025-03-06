@@ -1,9 +1,8 @@
 package internal.io;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import nbbrd.io.function.IOSupplier;
+
+import java.io.*;
 
 @lombok.experimental.UtilityClass
 public class InternalResource {
@@ -22,5 +21,20 @@ public class InternalResource {
         while ((read = input.read(buffer, 0, DEFAULT_BUFFER_SIZE)) >= 0) {
             output.write(buffer, 0, read);
         }
+    }
+
+    public static InputStream openInputStream(IOSupplier<? extends InputStream> source) throws IOException {
+        return checkResource(source.getWithIO(), "Missing InputStream");
+    }
+
+    public static OutputStream openOutputStream(IOSupplier<? extends OutputStream> source) throws IOException {
+        return checkResource(source.getWithIO(), "Missing OutputStream");
+    }
+
+    public static <T extends Closeable> T checkResource(T resource, String message) throws IOException {
+        if (resource == null) {
+            throw new IOException(message);
+        }
+        return resource;
     }
 }

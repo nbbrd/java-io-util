@@ -2,6 +2,7 @@ package nbbrd.io.picocsv;
 
 import internal.io.text.LegacyFiles;
 import lombok.NonNull;
+import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.net.MediaType;
 import nbbrd.io.text.TextBuffers;
@@ -38,6 +39,11 @@ public class Picocsv {
     @lombok.Builder(toBuilder = true)
     public static final class Parser<T> implements TextParser<T> {
 
+        @StaticFactoryMethod
+        public static <T> @NonNull Parser<T> of(@NonNull InputHandler<T> handler) {
+            return builder(handler).build();
+        }
+
         public static <T> @NonNull Builder<T> builder(@NonNull InputHandler<T> handler) {
             return new Builder<T>().handler(handler);
         }
@@ -57,7 +63,7 @@ public class Picocsv {
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            try (InputStream resource = LegacyFiles.openInputStream(source)) {
+            try (InputStream resource = LegacyFiles.newInputStream(source)) {
                 CharsetDecoder decoder = encoding.newDecoder();
                 return parse(newBufferedReader(resource, decoder), TextBuffers.of(source.toPath(), decoder));
             }
@@ -112,6 +118,11 @@ public class Picocsv {
     @lombok.Builder(toBuilder = true)
     public static final class Formatter<T> implements TextFormatter<T> {
 
+        @StaticFactoryMethod
+        public static <T> @NonNull Formatter<T> of(@NonNull OutputHandler<T> handler) {
+            return builder(handler).build();
+        }
+
         public static <T> @NonNull Builder<T> builder(@NonNull OutputHandler<T> handler) {
             return new Builder<T>().handler(handler);
         }
@@ -131,7 +142,7 @@ public class Picocsv {
 
         @Override
         public void formatFile(@NonNull T value, @NonNull File target, @NonNull Charset encoding) throws IOException {
-            try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
+            try (OutputStream resource = LegacyFiles.newOutputStream(target)) {
                 CharsetEncoder encoder = encoding.newEncoder();
                 format(value, newBufferedWriter(resource, encoder), TextBuffers.of(target.toPath(), encoder));
             }

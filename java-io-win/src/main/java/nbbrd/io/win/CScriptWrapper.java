@@ -20,6 +20,7 @@ import lombok.NonNull;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,6 +33,11 @@ public class CScriptWrapper {
 
     public static final String COMMAND = "cscript";
     public static final short NO_TIMEOUT = -1;
+
+    @NonNull
+    public Process exec(@NonNull Path script, short timeoutInSeconds, @NonNull String... args) throws IOException {
+        return exec(script.toFile(), timeoutInSeconds, args);
+    }
 
     @NonNull
     public Process exec(@NonNull File script, short timeoutInSeconds, @NonNull String... args) throws IOException {

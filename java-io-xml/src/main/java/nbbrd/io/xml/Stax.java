@@ -16,6 +16,8 @@
  */
 package nbbrd.io.xml;
 
+import internal.io.InternalResource;
+import internal.io.text.InternalTextResource;
 import internal.io.text.LegacyFiles;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
@@ -141,31 +143,31 @@ public class Stax {
 
         @Override
         public @NonNull T parseFile(@NonNull File source) throws IOException {
-            InputStream resource = LegacyFiles.openInputStream(source);
-            return doParseOrClose(o -> o.createXMLStreamReader(LegacyFiles.toSystemId(source), uncloseableInputStream(resource)), resource);
+            BufferedInputStream bufferedResource = new BufferedInputStream(LegacyFiles.newInputStream(source));
+            return doParseOrClose(o -> o.createXMLStreamReader(LegacyFiles.toSystemId(source), uncloseableInputStream(bufferedResource)), bufferedResource);
         }
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            InputStream resource = LegacyFiles.openInputStream(source);
-            return doParseOrClose(o -> o.createXMLStreamReader(LegacyFiles.toSystemId(source), uncloseableInputStream(resource)), resource);
+            BufferedInputStream bufferedResource = new BufferedInputStream(LegacyFiles.newInputStream(source));
+            return doParseOrClose(o -> o.createXMLStreamReader(LegacyFiles.toSystemId(source), uncloseableInputStream(bufferedResource)), bufferedResource);
         }
 
         @Override
         public @NonNull T parseReader(@NonNull IOSupplier<? extends Reader> source) throws IOException {
-            Reader resource = LegacyFiles.openReader(source);
+            Reader resource = InternalTextResource.openReader(source);
             return doParseOrClose(o -> o.createXMLStreamReader(uncloseableReader(resource)), resource);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source) throws IOException {
-            InputStream resource = LegacyFiles.openInputStream(source);
+            InputStream resource = InternalResource.openInputStream(source);
             return doParseOrClose(o -> o.createXMLStreamReader(uncloseableInputStream(resource)), resource);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
-            InputStream resource = LegacyFiles.openInputStream(source);
+            InputStream resource = InternalResource.openInputStream(source);
             return doParseOrClose(o -> o.createXMLStreamReader(uncloseableInputStream(resource), encoding.name()), resource);
         }
 
@@ -255,31 +257,31 @@ public class Stax {
 
         @Override
         public @NonNull T parseFile(@NonNull File source) throws IOException {
-            InputStream resource = LegacyFiles.openInputStream(source);
-            return doParseOrClose(o -> o.createXMLEventReader(LegacyFiles.toSystemId(source), uncloseableInputStream(resource)), resource);
+            BufferedInputStream bufferedResource = new BufferedInputStream(LegacyFiles.newInputStream(source));
+            return doParseOrClose(o -> o.createXMLEventReader(LegacyFiles.toSystemId(source), uncloseableInputStream(bufferedResource)), bufferedResource);
         }
 
         @Override
         public @NonNull T parseFile(@NonNull File source, @NonNull Charset encoding) throws IOException {
-            InputStream resource = LegacyFiles.openInputStream(source);
-            return doParseOrClose(o -> o.createXMLEventReader(LegacyFiles.toSystemId(source), uncloseableInputStream(resource)), resource);
+            BufferedInputStream bufferedResource = new BufferedInputStream(LegacyFiles.newInputStream(source));
+            return doParseOrClose(o -> o.createXMLEventReader(LegacyFiles.toSystemId(source), uncloseableInputStream(bufferedResource)), bufferedResource);
         }
 
         @Override
         public @NonNull T parseReader(@NonNull IOSupplier<? extends Reader> source) throws IOException {
-            Reader resource = LegacyFiles.openReader(source);
+            Reader resource = InternalTextResource.openReader(source);
             return doParseOrClose(o -> o.createXMLEventReader(uncloseableReader(resource)), resource);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source) throws IOException {
-            InputStream resource = LegacyFiles.openInputStream(source);
+            InputStream resource = InternalResource.openInputStream(source);
             return doParseOrClose(o -> o.createXMLEventReader(uncloseableInputStream(resource)), resource);
         }
 
         @Override
         public @NonNull T parseStream(@NonNull IOSupplier<? extends InputStream> source, @NonNull Charset encoding) throws IOException {
-            InputStream resource = LegacyFiles.openInputStream(source);
+            InputStream resource = InternalResource.openInputStream(source);
             return doParseOrClose(o -> o.createXMLEventReader(uncloseableInputStream(resource), encoding.name()), resource);
         }
 
@@ -377,21 +379,21 @@ public class Stax {
 
         @Override
         public void formatFile(@NonNull T value, @NonNull File target) throws IOException {
-            try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
-                format(value, o -> o.createXMLStreamWriter(resource, getDefaultEncoding().name()), getDefaultEncoding());
+            try (BufferedOutputStream bufferedResource = new BufferedOutputStream(LegacyFiles.newOutputStream(target))) {
+                format(value, o -> o.createXMLStreamWriter(bufferedResource, getDefaultEncoding().name()), getDefaultEncoding());
             }
         }
 
         @Override
         public void formatWriter(@NonNull T value, @NonNull IOSupplier<? extends Writer> target) throws IOException {
-            try (Writer resource = LegacyFiles.openWriter(target)) {
+            try (Writer resource = InternalTextResource.openWriter(target)) {
                 format(value, o -> o.createXMLStreamWriter(resource), getDefaultEncoding());
             }
         }
 
         @Override
         public void formatStream(@NonNull T value, @NonNull IOSupplier<? extends OutputStream> target) throws IOException {
-            try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
+            try (OutputStream resource = InternalResource.openOutputStream(target)) {
                 format(value, o -> o.createXMLStreamWriter(resource, getDefaultEncoding().name()), getDefaultEncoding());
             }
         }
@@ -485,21 +487,21 @@ public class Stax {
 
         @Override
         public void formatFile(@NonNull T value, @NonNull File target) throws IOException {
-            try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
-                format(value, o -> o.createXMLEventWriter(resource, getDefaultEncoding().name()), getDefaultEncoding());
+            try (BufferedOutputStream bufferedResource = new BufferedOutputStream(LegacyFiles.newOutputStream(target))) {
+                format(value, o -> o.createXMLEventWriter(bufferedResource, getDefaultEncoding().name()), getDefaultEncoding());
             }
         }
 
         @Override
         public void formatWriter(@NonNull T value, @NonNull IOSupplier<? extends Writer> target) throws IOException {
-            try (Writer resource = LegacyFiles.openWriter(target)) {
+            try (Writer resource = InternalTextResource.openWriter(target)) {
                 format(value, o -> o.createXMLEventWriter(resource), getDefaultEncoding());
             }
         }
 
         @Override
         public void formatStream(@NonNull T value, @NonNull IOSupplier<? extends OutputStream> target) throws IOException {
-            try (OutputStream resource = LegacyFiles.openOutputStream(target)) {
+            try (OutputStream resource = InternalResource.openOutputStream(target)) {
                 format(value, o -> o.createXMLEventWriter(resource, getDefaultEncoding().name()), getDefaultEncoding());
             }
         }

@@ -15,6 +15,7 @@ import java.io.*;
 import java.net.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.BiConsumer;
 
@@ -78,8 +79,9 @@ public final class CurlHttpURLConnection extends HttpURLConnection {
         this.tempDir = tempDir != null ? tempDir : DEFAULT_TEMP_DIR;
         this.id = id != null ? id : UUID.randomUUID();
         this.onError = onError != null ? onError : DEFAULT_ON_ERROR;
-        this.inputFile = new File(this.tempDir, "curl_" + this.id + "_input.tmp");
-        this.outputFile = new File(this.tempDir, "curl_" + this.id + "_output.tmp");
+        Path tmpPath = this.tempDir.toPath();
+        this.inputFile = tmpPath.resolve("curl_" + this.id + "_input.tmp").toFile();
+        this.outputFile = tmpPath.resolve("curl_" + this.id + "_output.tmp").toFile();
     }
 
     @Override

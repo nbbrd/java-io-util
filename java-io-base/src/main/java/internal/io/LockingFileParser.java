@@ -6,13 +6,13 @@ import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IOSupplier;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 import java.nio.channels.OverlappingFileLockException;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
@@ -25,12 +25,10 @@ public final class LockingFileParser<T> implements FileParser<T> {
 
     @Override
     public @NonNull T parseFile(@NonNull File source) throws IOException {
-        try (FileInputStream stream = new FileInputStream(checkSource(source))) {
-            try (FileLock ignore = stream.getChannel().lock(0, Long.MAX_VALUE, true)) {
-                return delegate.parseStream(stream);
-            } catch (OverlappingFileLockException ex) {
-                throw WrappedIOException.wrap(ex);
-            }
+        try {
+            return parsePath(source.toPath());
+        } catch (InvalidPathException ex) {
+            throw WrappedIOException.wrap(ex);
         }
     }
 
