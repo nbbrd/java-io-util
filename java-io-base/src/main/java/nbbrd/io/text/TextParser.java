@@ -8,6 +8,7 @@ import nbbrd.io.FileParser;
 import nbbrd.io.Resource;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
+import nbbrd.io.sys.ProcessReader;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -37,6 +38,12 @@ public interface TextParser<T> {
         return file.isPresent()
                 ? parseFile(file.get(), encoding)
                 : parseStream(() -> Files.newInputStream(source), encoding);
+    }
+
+    default @NonNull T parseProcess(@NonNull Process process, @NonNull Charset encoding) throws IOException {
+        try (Reader resource = ProcessReader.newReader(encoding, process)) {
+            return parseReader(resource);
+        }
     }
 
     default @NonNull T parseResource(@NonNull Class<?> type, @NonNull String name, @NonNull Charset encoding) throws IOException {

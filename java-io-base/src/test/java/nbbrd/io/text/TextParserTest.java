@@ -2,12 +2,15 @@ package nbbrd.io.text;
 
 import _test.io.ResourceId;
 import internal.io.text.InternalTextResource;
+import nbbrd.io.sys.OS;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -116,6 +119,27 @@ public class TextParserTest {
         ParserTest.assertCompliance(ko, "hello");
     }
 
+    @SuppressWarnings("DataFlowIssue")
+    @Test
+    public void testParseProcess() throws IOException {
+        TextParser<Path> x = onParsingReader(TextParserTest::toPath);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> x.parseProcess(null, UTF_8))
+                .withMessageContaining("process");
+
+        switch (OS.NAME) {
+            case WINDOWS:
+                assertThat(x.parseProcess(new ProcessBuilder("where", "where").start(), Charset.defaultCharset())).exists();
+                break;
+            case LINUX:
+            case MACOS:
+            case SOLARIS:
+                assertThat(x.parseProcess(new ProcessBuilder("which", "which").start(), Charset.defaultCharset())).exists();
+                break;
+        }
+    }
+
     private static String toUpperCase(Reader resource) throws IOException {
         return InternalTextResource.copyToString(resource).toUpperCase(Locale.ROOT);
     }
@@ -126,5 +150,9 @@ public class TextParserTest {
 
     private static String duplicate(String value) {
         return value + value;
+    }
+
+    private static Path toPath(Reader reader) throws IOException {
+        return Paths.get(InternalTextResource.copyByLineToString(reader, System.lineSeparator()));
     }
 }
