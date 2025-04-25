@@ -14,6 +14,7 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -45,6 +46,14 @@ public interface TextParser<T> {
         try (Reader resource = ProcessReader.newReader(encoding, process)) {
             return parseReader(resource);
         }
+    }
+
+    default @NonNull T parseProcess(@NonNull ProcessBuilder processBuilder, @NonNull Charset encoding) throws IOException {
+        return parseProcess(processBuilder.start(), encoding);
+    }
+
+    default @NonNull T parseProcess(@NonNull List<String> command, @NonNull Charset encoding) throws IOException {
+        return parseProcess(new ProcessBuilder(command), encoding);
     }
 
     default @NonNull T parseResource(@NonNull Class<?> type, @NonNull String name, @NonNull Charset encoding) throws IOException {

@@ -10,6 +10,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Add collector-based static factory to TextParser
+- Add more process shortcuts to TextParser
 
 ## [0.0.33] - 2025-03-06
 

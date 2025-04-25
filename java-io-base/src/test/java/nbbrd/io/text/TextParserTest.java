@@ -8,7 +8,6 @@ import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -19,7 +18,9 @@ import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 import static _test.io.text.TextParserAssertions.assertTextParserCompliance;
+import static java.nio.charset.Charset.defaultCharset;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.*;
@@ -139,21 +140,61 @@ public class TextParserTest {
 
     @SuppressWarnings("DataFlowIssue")
     @Test
-    public void testParseProcess() throws IOException {
+    public void testParseProcessOfProcess() throws IOException {
         TextParser<Path> x = onParsingReader(TextParserTest::toPath);
 
         assertThatNullPointerException()
-                .isThrownBy(() -> x.parseProcess(null, UTF_8))
+                .isThrownBy(() -> x.parseProcess((Process) null, UTF_8))
                 .withMessageContaining("process");
 
         switch (OS.NAME) {
             case WINDOWS:
-                assertThat(x.parseProcess(new ProcessBuilder("where", "where").start(), Charset.defaultCharset())).exists();
+                assertThat(x.parseProcess(new ProcessBuilder("where", "where").start(), defaultCharset())).exists();
                 break;
             case LINUX:
             case MACOS:
             case SOLARIS:
-                assertThat(x.parseProcess(new ProcessBuilder("which", "which").start(), Charset.defaultCharset())).exists();
+                assertThat(x.parseProcess(new ProcessBuilder("which", "which").start(), defaultCharset())).exists();
+                break;
+        }
+    }
+    @SuppressWarnings("DataFlowIssue")
+    @Test
+    public void testParseProcessOfProcessBuilder() throws IOException {
+        TextParser<Path> x = onParsingReader(TextParserTest::toPath);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> x.parseProcess((ProcessBuilder) null, UTF_8))
+                .withMessageContaining("processBuilder");
+
+        switch (OS.NAME) {
+            case WINDOWS:
+                assertThat(x.parseProcess(new ProcessBuilder("where", "where"), defaultCharset())).exists();
+                break;
+            case LINUX:
+            case MACOS:
+            case SOLARIS:
+                assertThat(x.parseProcess(new ProcessBuilder("which", "which"), defaultCharset())).exists();
+                break;
+        }
+    }
+    @SuppressWarnings("DataFlowIssue")
+    @Test
+    public void testParseProcessOfCommand() throws IOException {
+        TextParser<Path> x = onParsingReader(TextParserTest::toPath);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> x.parseProcess((List<String>) null, UTF_8))
+                .withMessageContaining("command");
+
+        switch (OS.NAME) {
+            case WINDOWS:
+                assertThat(x.parseProcess(asList("where", "where"), defaultCharset())).exists();
+                break;
+            case LINUX:
+            case MACOS:
+            case SOLARIS:
+                assertThat(x.parseProcess(asList("which", "which"), defaultCharset())).exists();
                 break;
         }
     }
