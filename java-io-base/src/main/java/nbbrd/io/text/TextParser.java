@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 public interface TextParser<T> {
@@ -101,5 +102,10 @@ public interface TextParser<T> {
     @StaticFactoryMethod
     static <T> @NonNull TextParser<T> onParsingLines(@NonNull Function<? super Stream<String>, ? extends T> function) {
         return new FunctionalTextParser<>(IOFunction.checked(function).compose(InternalTextResource::asLines));
+    }
+
+    @StaticFactoryMethod
+    static <T> @NonNull TextParser<T> onParsingLines(@NonNull Collector<? super String, ?, ? extends T> collector) {
+        return onParsingLines(stream -> stream.collect(collector));
     }
 }

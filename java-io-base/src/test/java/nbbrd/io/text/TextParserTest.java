@@ -14,15 +14,16 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.function.Function;
+import java.util.stream.Collector;
+import java.util.stream.Stream;
 
 import static _test.io.text.TextParserAssertions.assertTextParserCompliance;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
-import static nbbrd.io.text.TextParser.onParsingLines;
-import static nbbrd.io.text.TextParser.onParsingReader;
+import static java.util.stream.Collectors.*;
+import static nbbrd.io.text.TextParser.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
@@ -32,7 +33,8 @@ public class TextParserTest {
     public void testCompliance(@TempDir Path temp) throws IOException {
         ResourceId resourceId = new ResourceId(TextParserTest.class, "hello.txt");
         assertTextParserCompliance(temp, onParsingReader(TextParserTest::toUpperCase), "WORLD", encoding -> resourceId, singleton(UTF_8), true);
-        assertTextParserCompliance(temp, onParsingLines(lines -> lines.map(s -> s.toUpperCase(Locale.ROOT)).collect(joining())), "WORLD", encoding -> resourceId, singleton(UTF_8), true);
+        assertTextParserCompliance(temp, onParsingLines(lines -> lines.map(TextParserTest::toUpperCase).collect(joining())), "WORLD", encoding -> resourceId, singleton(UTF_8), true);
+        assertTextParserCompliance(temp, onParsingLines(mapping(TextParserTest::toUpperCase, joining())), "WORLD", encoding -> resourceId, singleton(UTF_8), true);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -71,22 +73,38 @@ public class TextParserTest {
                 .isEqualTo("upper");
     }
 
+    @SuppressWarnings("DataFlowIssue")
     @Test
-    public void testOnParsingLines() throws IOException {
+    public void testOnParsingLinesByFunction() throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> onParsingLines(null))
+                .isThrownBy(() -> onParsingLines((Function<? super Stream<String>, ?>) null))
                 .withMessageContaining("function");
 
         assertThatNullPointerException()
                 .isThrownBy(() -> onParsingLines(o -> null).parseChars(""))
                 .withMessageContaining("result");
 
-        assertThat(onParsingLines(lines -> lines.map(s -> s.toUpperCase(Locale.ROOT)).collect(toList())).parseChars("hello\nworld"))
+        assertThat(onParsingLines(lines -> lines.map(TextParserTest::toUpperCase).collect(toList())).parseChars("hello\nworld"))
                 .containsExactly("HELLO", "WORLD");
 
         assertThat(onParsingLines((AutoCloseable lower) -> (Iterable<String>) singletonList("upper")).parseChars(""))
                 .describedAs("Check lower & upper bounded types")
                 .containsExactly("upper");
+    }
+
+    @SuppressWarnings("DataFlowIssue")
+    @Test
+    public void testOnParsingLinesByCollector() throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> onParsingLines((Collector<? super String, ?, ?>) null))
+                .withMessageContaining("collector");
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> onParsingLines(reducing(null, (l, r) -> null)).parseChars(""))
+                .withMessageContaining("result");
+
+        assertThat(onParsingLines(mapping(TextParserTest::toUpperCase, toList())).parseChars("hello\nworld"))
+                .containsExactly("HELLO", "WORLD");
     }
 
     @Test
@@ -142,6 +160,10 @@ public class TextParserTest {
 
     private static String toUpperCase(Reader resource) throws IOException {
         return InternalTextResource.copyToString(resource).toUpperCase(Locale.ROOT);
+    }
+
+    private static String toUpperCase(String s) {
+        return s.toUpperCase(Locale.ROOT);
     }
 
     private static String fail(Reader resource) throws IOException {
