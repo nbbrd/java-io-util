@@ -1,15 +1,20 @@
 package nbbrd.io.text;
 
+import _test.io.text.Properties2;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.io.Writer;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
 
+import static _test.io.text.Properties2.PROPERTIES_CHARSET;
 import static _test.io.text.TextFormatterAssertions.assertTextFormatterCompliance;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singleton;
@@ -80,6 +85,22 @@ public class TextFormatterTest {
         assertThat(ko.format(null)).isNull();
         assertThat(errors).hasSize(1);
         FormatterTest.assertCompliance(ko, "hello", null);
+    }
+
+    @Test
+    public void onFormattingProperties(@TempDir Path temp) throws IOException {
+        Path file = temp.resolve("example.properties");
+        Properties example = new Properties();
+        example.setProperty("hello", "world");
+
+        onFormattingWriter(Properties2::storeToWriter).formatPath(example, file, PROPERTIES_CHARSET);
+
+        Properties properties = new Properties();
+        try (Reader input = Files.newBufferedReader(file, PROPERTIES_CHARSET)) {
+            properties.load(input);
+        }
+
+        assertThat(properties).containsExactlyEntriesOf(example);
     }
 
     private static void toUpperCase(String value, Writer resource) throws IOException {

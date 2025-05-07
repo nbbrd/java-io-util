@@ -1,5 +1,6 @@
 package nbbrd.io;
 
+import _test.io.text.Properties2;
 import nbbrd.design.MightBePromoted;
 import nbbrd.io.function.IOBiConsumer;
 import nbbrd.io.function.IOFunction;
@@ -7,8 +8,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Properties;
 import java.util.zip.GZIPOutputStream;
 
 import static _test.io.FileFormatterAssertions.assertFileFormatterCompliance;
@@ -16,6 +20,7 @@ import static _test.io.Util.encode;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Locale.ROOT;
 import static nbbrd.io.FileFormatter.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 public class FileFormatterTest {
@@ -89,6 +94,22 @@ public class FileFormatterTest {
         assertFileFormatterCompliance(temp,
                 onFormattingLock(formatter).compose(upperCase),
                 value, value.toUpperCase(ROOT).getBytes(UTF_8));
+    }
+
+    @Test
+    public void onFormattingProperties(@TempDir Path temp) throws IOException {
+        Path file = temp.resolve("example.properties");
+        Properties example = new Properties();
+        example.setProperty("hello", "world");
+
+        onFormattingStream(Properties2::storeToStream).formatPath(example, file);
+
+        Properties properties;
+        try (InputStream input = Files.newInputStream(file)) {
+            properties = Properties2.loadFromStream(input);
+        }
+
+        assertThat(properties).containsExactlyEntriesOf(example);
     }
 
     @MightBePromoted

@@ -1,22 +1,27 @@
 package nbbrd.io.text;
 
 import _test.io.ResourceId;
+import _test.io.text.Properties2;
 import internal.io.text.InternalTextResource;
 import nbbrd.io.sys.OS;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Reader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
+import static _test.io.text.Properties2.PROPERTIES_CHARSET;
 import static _test.io.text.TextParserAssertions.assertTextParserCompliance;
 import static java.nio.charset.Charset.defaultCharset;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -24,7 +29,8 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.*;
-import static nbbrd.io.text.TextParser.*;
+import static nbbrd.io.text.TextParser.onParsingLines;
+import static nbbrd.io.text.TextParser.onParsingReader;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
@@ -158,6 +164,7 @@ public class TextParserTest {
                 break;
         }
     }
+
     @SuppressWarnings("DataFlowIssue")
     @Test
     public void testParseProcessOfProcessBuilder() throws IOException {
@@ -178,6 +185,7 @@ public class TextParserTest {
                 break;
         }
     }
+
     @SuppressWarnings("DataFlowIssue")
     @Test
     public void testParseProcessOfCommand() throws IOException {
@@ -197,6 +205,20 @@ public class TextParserTest {
                 assertThat(x.parseProcess(asList("which", "which"), defaultCharset())).exists();
                 break;
         }
+    }
+
+    @Test
+    public void onParsingProperties(@TempDir Path temp) throws IOException {
+        Path file = temp.resolve("example.properties");
+        Properties example = new Properties();
+        example.setProperty("hello", "world");
+
+        try (OutputStream output = Files.newOutputStream(file)) {
+            Properties2.storeToStream(example, output);
+        }
+
+        assertThat(onParsingReader(Properties2::loadFromReader).parsePath(file, PROPERTIES_CHARSET))
+                .containsExactlyEntriesOf(example);
     }
 
     private static String toUpperCase(Reader resource) throws IOException {
