@@ -8,10 +8,7 @@ import nbbrd.io.function.IOBiConsumer;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -51,9 +48,22 @@ public interface FileFormatter<T> {
         return new FunctionalFileFormatter<>(function);
     }
 
+    /**
+     * @param formatter the formatter to be wrapped
+     * @param <T>       the type of the formatted object
+     * @return a non-null {@link FileFormatter} that formats a GZIP compressed file
+     * @deprecated Use {@link #onFormattingEncoder(FileFormatter, IOFunction)} instead
+     */
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
     @StaticFactoryMethod
     static <T> @NonNull FileFormatter<T> onFormattingGzip(@NonNull FileFormatter<T> formatter) {
-        return new EncodingFileFormatter<>(formatter, GZIPOutputStream::new);
+        return onFormattingEncoder(formatter, GZIPOutputStream::new);
+    }
+
+    @StaticFactoryMethod
+    static <T> @NonNull FileFormatter<T> onFormattingEncoder(@NonNull FileFormatter<T> formatter, @NonNull IOFunction<OutputStream, ? extends FilterOutputStream> encoder) {
+        return new EncodingFileFormatter<>(formatter, encoder);
     }
 
     @StaticFactoryMethod

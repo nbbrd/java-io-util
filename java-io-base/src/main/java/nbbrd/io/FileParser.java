@@ -7,10 +7,7 @@ import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
 
-import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -43,7 +40,8 @@ public interface FileParser<T> {
         }
     }
 
-    @NonNull T parseStream(@NonNull InputStream resource) throws IOException;
+    @NonNull
+    T parseStream(@NonNull InputStream resource) throws IOException;
 
     default <V> @NonNull FileParser<V> andThen(@NonNull IOFunction<? super T, ? extends V> after) {
         return new AndThenFileParser<>(this, after);
@@ -54,9 +52,22 @@ public interface FileParser<T> {
         return new FunctionalFileParser<>(function);
     }
 
+    /**
+     * @param parser the parser to be wrapped
+     * @param <T>    the type of the parsed object
+     * @return a non-null {@link FileParser} that parses a GZIP compressed file
+     * @deprecated Use {@link #onParsingDecoder(FileParser, IOFunction)} instead
+     */
+    @SuppressWarnings("DeprecatedIsStillUsed")
+    @Deprecated
     @StaticFactoryMethod
     static <T> @NonNull FileParser<T> onParsingGzip(@NonNull FileParser<T> parser) {
-        return new DecodingFileParser<>(parser, GZIPInputStream::new);
+        return onParsingDecoder(parser, GZIPInputStream::new);
+    }
+
+    @StaticFactoryMethod
+    static <T> @NonNull FileParser<T> onParsingDecoder(@NonNull FileParser<T> parser, @NonNull IOFunction<InputStream, ? extends FilterInputStream> decoder) {
+        return new DecodingFileParser<>(parser, decoder);
     }
 
     @StaticFactoryMethod

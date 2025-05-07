@@ -16,12 +16,17 @@
  */
 package nbbrd.io.text;
 
+import _test.io.ForwardingReader;
+import _test.io.ForwardingWriter;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import static _test.io.Util.nullReader;
+import static _test.io.Util.nullWriter;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static nbbrd.io.text.TextResource.*;
 import static org.assertj.core.api.Assertions.*;
@@ -65,7 +70,7 @@ public class TextResourceTest {
     @SuppressWarnings({"resource", "DataFlowIssue"})
     @Test
     public void testNewBufferedReader() throws IOException {
-        byte[] bytes = "world" .getBytes(UTF_8);
+        byte[] bytes = "world".getBytes(UTF_8);
 
         assertThatNullPointerException().isThrownBy(() -> newBufferedReader(null, UTF_8));
         assertThatNullPointerException().isThrownBy(() -> newBufferedReader(new ByteArrayInputStream(bytes), (Charset) null));
@@ -89,5 +94,35 @@ public class TextResourceTest {
         assertThat(output.toByteArray())
                 .asString(UTF_8)
                 .isEqualTo("world");
+    }
+
+    @SuppressWarnings({"DataFlowIssue", "resource", "EmptyTryBlock"})
+    @Test
+    public void testUncloseableReader() throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> uncloseableReader(null));
+
+        AtomicInteger closeCount = new AtomicInteger(0);
+        try (Reader delegate = new ForwardingReader(nullReader()).onClose(closeCount::incrementAndGet)) {
+            try (Reader x = uncloseableReader(delegate)) {
+            }
+            assertThat(closeCount).hasValue(0);
+        }
+        assertThat(closeCount).hasValue(1);
+    }
+
+    @SuppressWarnings({"DataFlowIssue", "resource", "EmptyTryBlock"})
+    @Test
+    public void testUncloseableWriter() throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> uncloseableWriter(null));
+
+        AtomicInteger closeCount = new AtomicInteger(0);
+        try (Writer delegate = new ForwardingWriter(nullWriter()).onClose(closeCount::incrementAndGet)) {
+            try (Writer x = uncloseableWriter(delegate)) {
+            }
+            assertThat(closeCount).hasValue(0);
+        }
+        assertThat(closeCount).hasValue(1);
     }
 }

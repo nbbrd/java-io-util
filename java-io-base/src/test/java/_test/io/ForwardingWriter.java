@@ -18,21 +18,21 @@ package _test.io;
 
 import nbbrd.io.function.IORunnable;
 
-import java.io.FilterOutputStream;
+import java.io.FilterWriter;
 import java.io.IOException;
-import java.io.OutputStream;
+import java.io.Writer;
 
 /**
  * @author Philippe Charles
  */
-public class ForwardingOutputStream extends FilterOutputStream {
+public class ForwardingWriter extends FilterWriter {
 
-    public ForwardingOutputStream(OutputStream out) {
+    public ForwardingWriter(Writer out) {
         super(out);
     }
 
-    public ForwardingOutputStream onClose(IORunnable onClose) {
-        return new ForwardingOutputStream(this) {
+    public ForwardingWriter onClose(IORunnable onClose) {
+        return new ForwardingWriter(this) {
             @Override
             public void close() throws IOException {
                 onClose.runWithIO();

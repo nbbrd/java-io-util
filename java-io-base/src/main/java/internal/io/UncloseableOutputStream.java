@@ -1,22 +1,21 @@
 package internal.io;
 
-import lombok.NonNull;
 import nbbrd.design.MightBePromoted;
 
-import java.io.Closeable;
+import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
 @MightBePromoted
-@lombok.AllArgsConstructor
-public final class UncloseableOutputStream extends OutputStream {
+public final class UncloseableOutputStream extends FilterOutputStream {
 
-    @lombok.experimental.Delegate(excludes = Closeable.class)
-    private final @NonNull OutputStream delegate;
+    public UncloseableOutputStream(OutputStream out) {
+        super(out);
+    }
 
     @Override
     public void close() throws IOException {
         flush();
-        super.close();
+        // do not close
     }
 }

@@ -39,22 +39,38 @@ public class FileFormatterTest {
                 value, value.toUpperCase(ROOT).getBytes(UTF_8));
     }
 
+    @SuppressWarnings({"DataFlowIssue", "deprecation"})
     @Test
     public void testOnFormattingGzip(@TempDir Path temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> onFormattingGzip(null))
                 .withMessageContaining("formatter");
+    }
 
+    @SuppressWarnings("DataFlowIssue")
+    @Test
+    public void testOnFormattingEncoder(@TempDir Path temp) throws IOException {
         FileFormatter<String> formatter = onFormattingStream(serialize.andThen(close));
         String value = "testOnFormattingGzip";
 
+        assertThatNullPointerException()
+                .isThrownBy(() -> onFormattingEncoder(null, GZIPOutputStream::new))
+                .withMessageContaining("formatter");
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> onFormattingEncoder(formatter, null))
+                .withMessageContaining("encoder");
+
         assertFileFormatterCompliance(temp,
-                onFormattingGzip(formatter),
+                onFormattingEncoder(formatter, GZIPOutputStream::new),
                 value, encode(value.getBytes(UTF_8), GZIPOutputStream::new));
 
         assertFileFormatterCompliance(temp,
-                onFormattingGzip(formatter).compose(upperCase),
+                onFormattingEncoder(formatter, GZIPOutputStream::new).compose(upperCase),
                 value, encode(value.toUpperCase(ROOT).getBytes(UTF_8), GZIPOutputStream::new));
+
+        IOFunction<OutputStream, GZIPOutputStream> encoder = GZIPOutputStream::new;
+        onFormattingEncoder(formatter, encoder);
     }
 
     @Test

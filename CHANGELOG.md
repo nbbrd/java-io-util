@@ -12,6 +12,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Add collector-based static factory to TextParser
 - Add more process shortcuts to TextParser
 
+### Changed
+
+- Replace gzip factories with filter factories in `File*` utilities
+
 ## [0.0.33] - 2025-03-06
 
 ### Added

@@ -2,19 +2,18 @@ package internal.io.text;
 
 import lombok.NonNull;
 
-import java.io.Closeable;
-import java.io.Reader;
-import java.io.Writer;
+import java.io.*;
 
 //@MightBePromoted
-@lombok.AllArgsConstructor
-public final class UncloseableWriter extends Writer {
+public final class UncloseableWriter extends FilterWriter {
 
-    @lombok.experimental.Delegate(excludes = Closeable.class)
-    private final @NonNull Writer delegate;
+    public UncloseableWriter(Writer out) {
+        super(out);
+    }
 
     @Override
-    public void close() {
-        // do nothing
+    public void close() throws IOException {
+        out.flush();
+        // do not close
     }
 }

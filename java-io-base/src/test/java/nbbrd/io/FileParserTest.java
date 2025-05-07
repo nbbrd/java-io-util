@@ -7,16 +7,20 @@ import nbbrd.io.text.TextResource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
 import java.nio.file.Path;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import static _test.io.FileParserAssertions.assertFileParserCompliance;
 import static _test.io.Util.emptyInputStream;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Locale.ROOT;
 import static nbbrd.io.FileParser.*;
+import static nbbrd.io.FileParser.onParsingDecoder;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 public class FileParserTest {
@@ -44,22 +48,38 @@ public class FileParserTest {
                 value.toUpperCase(ROOT), new ResourceId(FileParserTest.class, "text/hello2.txt"), true);
     }
 
+    @SuppressWarnings({"DataFlowIssue", "deprecation"})
     @Test
     public void testOnParsingGzip(@TempDir Path temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> onParsingGzip(null))
                 .withMessageContaining("parser");
+    }
 
+    @SuppressWarnings("DataFlowIssue")
+    @Test
+    public void testOnParsingDecoder(@TempDir Path temp) throws IOException {
         FileParser<String> parser = onParsingStream(deserializeAndClose);
         String value = "world";
 
+        assertThatNullPointerException()
+                .isThrownBy(() -> onParsingDecoder(null, GZIPInputStream::new))
+                .withMessageContaining("parser");
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> onParsingDecoder(parser, null))
+                .withMessageContaining("decoder");
+
         assertFileParserCompliance(temp,
-                onParsingGzip(parser),
+                onParsingDecoder(parser, GZIPInputStream::new),
                 value, new ResourceId(FileParserTest.class, "text/hello.txt.gz"), true);
 
         assertFileParserCompliance(temp,
-                onParsingGzip(parser).andThen(upperCase),
+                onParsingDecoder(parser, GZIPInputStream::new).andThen(upperCase),
                 value.toUpperCase(ROOT), new ResourceId(FileParserTest.class, "text/hello2.txt.gz"), true);
+
+        IOFunction<InputStream, GZIPInputStream> decoder = GZIPInputStream::new;
+        onParsingDecoder(parser, decoder);
     }
 
     @Test

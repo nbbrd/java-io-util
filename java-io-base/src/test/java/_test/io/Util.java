@@ -61,6 +61,22 @@ public final class Util {
         return new ByteArrayInputStream(new byte[0]);
     }
 
+    public static InputStream nullInputStream() {
+        return new ByteArrayInputStream(new byte[0]);
+    }
+
+    public static OutputStream nullOutputStream() {
+        return new ByteArrayOutputStream();
+    }
+
+    public static Reader nullReader() {
+        return new StringReader("");
+    }
+
+    public static Writer nullWriter() {
+        return new StringWriter();
+    }
+
     public static Path checkDefaultProvider(Path path) throws IllegalArgumentException {
         if (!Resource.getFile(path).isPresent()) {
             throw new IllegalArgumentException("Path not in default provider: '" + path + "'");

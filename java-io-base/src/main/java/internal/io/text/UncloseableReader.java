@@ -1,19 +1,17 @@
 package internal.io.text;
 
-import lombok.NonNull;
-
-import java.io.Closeable;
+import java.io.FilterReader;
 import java.io.Reader;
 
 //@MightBePromoted
-@lombok.AllArgsConstructor
-public final class UncloseableReader extends Reader {
+public final class UncloseableReader extends FilterReader {
 
-    @lombok.experimental.Delegate(excludes = Closeable.class)
-    private final @NonNull Reader delegate;
+    public UncloseableReader(Reader in) {
+        super(in);
+    }
 
     @Override
     public void close() {
-        // do nothing
+        // do not close
     }
 }
