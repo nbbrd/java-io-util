@@ -1,17 +1,20 @@
 package internal.io;
 
 import lombok.NonNull;
+import nbbrd.design.DecoratorPattern;
 import nbbrd.io.FileParser;
+import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
-import nbbrd.io.function.IOUnaryOperator;
 
 import java.io.File;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 
 import static nbbrd.io.Resource.uncloseableInputStream;
 
+@DecoratorPattern
 @lombok.RequiredArgsConstructor
 public final class DecodingFileParser<T> implements FileParser<T> {
 
@@ -19,7 +22,7 @@ public final class DecodingFileParser<T> implements FileParser<T> {
     final FileParser<T> parser;
 
     @NonNull
-    final IOUnaryOperator<InputStream> decoder;
+    final IOFunction<InputStream, ? extends FilterInputStream> decoder;
 
     @Override
     public @NonNull T parseFile(@NonNull File source) throws IOException {
@@ -47,7 +50,7 @@ public final class DecodingFileParser<T> implements FileParser<T> {
 
     @Override
     public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
-        try (InputStream decoding = decoder.applyWithIO(uncloseableInputStream(resource))) {
+        try (FilterInputStream decoding = decoder.applyWithIO(uncloseableInputStream(resource))) {
             return parser.parseStream(decoding);
         }
     }

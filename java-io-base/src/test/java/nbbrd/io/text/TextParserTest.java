@@ -1,26 +1,34 @@
 package nbbrd.io.text;
 
 import _test.io.ResourceId;
+import _test.io.text.Properties2;
 import internal.io.text.InternalTextResource;
 import nbbrd.io.sys.OS;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.io.Reader;
-import java.nio.charset.Charset;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Properties;
+import java.util.function.Function;
+import java.util.stream.Collector;
+import java.util.stream.Stream;
 
+import static _test.io.text.Properties2.PROPERTIES_CHARSET;
 import static _test.io.text.TextParserAssertions.assertTextParserCompliance;
+import static java.nio.charset.Charset.defaultCharset;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.joining;
-import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.*;
 import static nbbrd.io.text.TextParser.onParsingLines;
 import static nbbrd.io.text.TextParser.onParsingReader;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,7 +40,8 @@ public class TextParserTest {
     public void testCompliance(@TempDir Path temp) throws IOException {
         ResourceId resourceId = new ResourceId(TextParserTest.class, "hello.txt");
         assertTextParserCompliance(temp, onParsingReader(TextParserTest::toUpperCase), "WORLD", encoding -> resourceId, singleton(UTF_8), true);
-        assertTextParserCompliance(temp, onParsingLines(lines -> lines.map(s -> s.toUpperCase(Locale.ROOT)).collect(joining())), "WORLD", encoding -> resourceId, singleton(UTF_8), true);
+        assertTextParserCompliance(temp, onParsingLines(lines -> lines.map(TextParserTest::toUpperCase).collect(joining())), "WORLD", encoding -> resourceId, singleton(UTF_8), true);
+        assertTextParserCompliance(temp, onParsingLines(mapping(TextParserTest::toUpperCase, joining())), "WORLD", encoding -> resourceId, singleton(UTF_8), true);
     }
 
     @SuppressWarnings("ConstantConditions")
@@ -71,22 +80,38 @@ public class TextParserTest {
                 .isEqualTo("upper");
     }
 
+    @SuppressWarnings("DataFlowIssue")
     @Test
-    public void testOnParsingLines() throws IOException {
+    public void testOnParsingLinesByFunction() throws IOException {
         assertThatNullPointerException()
-                .isThrownBy(() -> onParsingLines(null))
+                .isThrownBy(() -> onParsingLines((Function<? super Stream<String>, ?>) null))
                 .withMessageContaining("function");
 
         assertThatNullPointerException()
                 .isThrownBy(() -> onParsingLines(o -> null).parseChars(""))
                 .withMessageContaining("result");
 
-        assertThat(onParsingLines(lines -> lines.map(s -> s.toUpperCase(Locale.ROOT)).collect(toList())).parseChars("hello\nworld"))
+        assertThat(onParsingLines(lines -> lines.map(TextParserTest::toUpperCase).collect(toList())).parseChars("hello\nworld"))
                 .containsExactly("HELLO", "WORLD");
 
         assertThat(onParsingLines((AutoCloseable lower) -> (Iterable<String>) singletonList("upper")).parseChars(""))
                 .describedAs("Check lower & upper bounded types")
                 .containsExactly("upper");
+    }
+
+    @SuppressWarnings("DataFlowIssue")
+    @Test
+    public void testOnParsingLinesByCollector() throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> onParsingLines((Collector<? super String, ?, ?>) null))
+                .withMessageContaining("collector");
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> onParsingLines(reducing(null, (l, r) -> null)).parseChars(""))
+                .withMessageContaining("result");
+
+        assertThat(onParsingLines(mapping(TextParserTest::toUpperCase, toList())).parseChars("hello\nworld"))
+                .containsExactly("HELLO", "WORLD");
     }
 
     @Test
@@ -121,27 +146,87 @@ public class TextParserTest {
 
     @SuppressWarnings("DataFlowIssue")
     @Test
-    public void testParseProcess() throws IOException {
+    public void testParseProcessOfProcess() throws IOException {
         TextParser<Path> x = onParsingReader(TextParserTest::toPath);
 
         assertThatNullPointerException()
-                .isThrownBy(() -> x.parseProcess(null, UTF_8))
+                .isThrownBy(() -> x.parseProcess((Process) null, UTF_8))
                 .withMessageContaining("process");
 
         switch (OS.NAME) {
             case WINDOWS:
-                assertThat(x.parseProcess(new ProcessBuilder("where", "where").start(), Charset.defaultCharset())).exists();
+                assertThat(x.parseProcess(new ProcessBuilder("where", "where").start(), defaultCharset())).exists();
                 break;
             case LINUX:
             case MACOS:
             case SOLARIS:
-                assertThat(x.parseProcess(new ProcessBuilder("which", "which").start(), Charset.defaultCharset())).exists();
+                assertThat(x.parseProcess(new ProcessBuilder("which", "which").start(), defaultCharset())).exists();
                 break;
         }
     }
 
+    @SuppressWarnings("DataFlowIssue")
+    @Test
+    public void testParseProcessOfProcessBuilder() throws IOException {
+        TextParser<Path> x = onParsingReader(TextParserTest::toPath);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> x.parseProcess((ProcessBuilder) null, UTF_8))
+                .withMessageContaining("processBuilder");
+
+        switch (OS.NAME) {
+            case WINDOWS:
+                assertThat(x.parseProcess(new ProcessBuilder("where", "where"), defaultCharset())).exists();
+                break;
+            case LINUX:
+            case MACOS:
+            case SOLARIS:
+                assertThat(x.parseProcess(new ProcessBuilder("which", "which"), defaultCharset())).exists();
+                break;
+        }
+    }
+
+    @SuppressWarnings("DataFlowIssue")
+    @Test
+    public void testParseProcessOfCommand() throws IOException {
+        TextParser<Path> x = onParsingReader(TextParserTest::toPath);
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> x.parseProcess((List<String>) null, UTF_8))
+                .withMessageContaining("command");
+
+        switch (OS.NAME) {
+            case WINDOWS:
+                assertThat(x.parseProcess(asList("where", "where"), defaultCharset())).exists();
+                break;
+            case LINUX:
+            case MACOS:
+            case SOLARIS:
+                assertThat(x.parseProcess(asList("which", "which"), defaultCharset())).exists();
+                break;
+        }
+    }
+
+    @Test
+    public void onParsingProperties(@TempDir Path temp) throws IOException {
+        Path file = temp.resolve("example.properties");
+        Properties example = new Properties();
+        example.setProperty("hello", "world");
+
+        try (OutputStream output = Files.newOutputStream(file)) {
+            Properties2.storeToStream(example, output);
+        }
+
+        assertThat(onParsingReader(Properties2::loadFromReader).parsePath(file, PROPERTIES_CHARSET))
+                .containsExactlyEntriesOf(example);
+    }
+
     private static String toUpperCase(Reader resource) throws IOException {
         return InternalTextResource.copyToString(resource).toUpperCase(Locale.ROOT);
+    }
+
+    private static String toUpperCase(String s) {
+        return s.toUpperCase(Locale.ROOT);
     }
 
     private static String fail(Reader resource) throws IOException {

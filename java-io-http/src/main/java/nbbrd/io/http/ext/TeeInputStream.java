@@ -1,11 +1,13 @@
 package nbbrd.io.http.ext;
 
+import nbbrd.design.DecoratorPattern;
 import nbbrd.io.Resource;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+@DecoratorPattern
 @lombok.AllArgsConstructor
 final class TeeInputStream extends InputStream {
 

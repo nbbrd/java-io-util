@@ -18,16 +18,15 @@ package nbbrd.io;
 
 import _test.io.Error1;
 import _test.io.Error2;
+import _test.io.ForwardingInputStream;
+import _test.io.ForwardingOutputStream;
 import nbbrd.io.function.IOConsumer;
 import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IORunnableTest;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-import java.io.Closeable;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -35,11 +34,13 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static nbbrd.io.Resource.getResourceAsStream;
-import static nbbrd.io.Resource.newInputStream;
+import static _test.io.Util.nullInputStream;
+import static _test.io.Util.nullOutputStream;
+import static nbbrd.io.Resource.*;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -167,5 +168,35 @@ public class ResourceTest {
 
         Resource.process(url.toURI(), o -> assertThat(o).exists());
         Resource.process(Object.class.getResource("Object.class").toURI(), o -> assertThat(o.endsWith("Object.class")));
+    }
+
+    @SuppressWarnings({"DataFlowIssue", "resource", "EmptyTryBlock"})
+    @Test
+    public void testUncloseableInputStream() throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> uncloseableInputStream(null));
+
+        AtomicInteger closeCount = new AtomicInteger(0);
+        try (InputStream delegate = new ForwardingInputStream(nullInputStream()).onClose(closeCount::incrementAndGet)) {
+            try (InputStream x = uncloseableInputStream(delegate)) {
+            }
+            assertThat(closeCount).hasValue(0);
+        }
+        assertThat(closeCount).hasValue(1);
+    }
+
+    @SuppressWarnings({"DataFlowIssue", "resource", "EmptyTryBlock"})
+    @Test
+    public void testUncloseableOutputStream() throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> uncloseableOutputStream(null));
+
+        AtomicInteger closeCount = new AtomicInteger(0);
+        try (OutputStream delegate = new ForwardingOutputStream(nullOutputStream()).onClose(closeCount::incrementAndGet)) {
+            try (OutputStream x = uncloseableOutputStream(delegate)) {
+            }
+            assertThat(closeCount).hasValue(0);
+        }
+        assertThat(closeCount).hasValue(1);
     }
 }

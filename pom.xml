@@ -5,7 +5,7 @@
 
     <groupId>com.github.nbbrd.java-io-util</groupId>
     <artifactId>java-io-parent</artifactId>
-    <version>0.0.33</version>
+    <version>0.0.34</version>
     <packaging>pom</packaging>
 
     <name>java-io</name>
@@ -38,7 +38,7 @@
     <properties>
         <!-- Java 8+ config -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.outputTimestamp>2025-03-06T09:42:01Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2025-05-08T20:38:18Z</project.build.outputTimestamp>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
 
@@ -64,14 +64,14 @@
             <dependency>
                 <groupId>org.checkerframework</groupId>
                 <artifactId>checker-qual</artifactId>
-                <version>3.49.1</version>
+                <version>3.49.3</version>
             </dependency>
 
             <!-- test libraries -->
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.12.0</version>
+                <version>5.12.2</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -154,7 +154,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.2</version>
+                    <version>3.5.3</version>
                 </plugin>
                 <!-- Other plugins -->
                 <plugin>
@@ -175,7 +175,7 @@
                 <plugin>
                     <groupId>de.thetaphi</groupId>
                     <artifactId>forbiddenapis</artifactId>
-                    <version>3.8</version>
+                    <version>3.9</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.nbbrd.heylogs</groupId>
@@ -210,12 +210,12 @@
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.12</version>
+                    <version>0.8.13</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jreleaser</groupId>
                     <artifactId>jreleaser-maven-plugin</artifactId>
-                    <version>1.17.0</version>
+                    <version>1.18.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -321,8 +321,8 @@
                 </property>
             </activation>
             <properties>
-                <lombok.version>1.18.36</lombok.version>
-                <java-design.version>1.5.1</java-design.version>
+                <lombok.version>1.18.38</lombok.version>
+                <java-design.version>1.6.0</java-design.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -459,7 +459,7 @@
                             <dependency>
                                 <groupId>org.codehaus.mojo</groupId>
                                 <artifactId>extra-enforcer-rules</artifactId>
-                                <version>1.9.0</version>
+                                <version>1.10.0</version>
                             </dependency>
                         </dependencies>
                         <executions>

@@ -1,6 +1,7 @@
 package nbbrd.io.http.ext;
 
 import lombok.NonNull;
+import nbbrd.design.DecoratorPattern;
 import nbbrd.io.Resource;
 import nbbrd.io.http.HttpClient;
 import nbbrd.io.http.HttpRequest;
@@ -14,6 +15,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 
+@DecoratorPattern
 @lombok.AllArgsConstructor
 public final class DumpingClient implements HttpClient {
 
@@ -45,6 +47,7 @@ public final class DumpingClient implements HttpClient {
         }
     }
 
+    @DecoratorPattern
     @lombok.AllArgsConstructor
     private static final class DumpingResponse implements HttpResponse {
 

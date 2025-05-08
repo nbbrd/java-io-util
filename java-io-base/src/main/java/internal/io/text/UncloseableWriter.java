@@ -1,20 +1,21 @@
 package internal.io.text;
 
-import lombok.NonNull;
+import nbbrd.design.DecoratorPattern;
 
-import java.io.Closeable;
-import java.io.Reader;
+import java.io.FilterWriter;
+import java.io.IOException;
 import java.io.Writer;
 
-//@MightBePromoted
-@lombok.AllArgsConstructor
-public final class UncloseableWriter extends Writer {
+@DecoratorPattern(Writer.class)
+public final class UncloseableWriter extends FilterWriter {
 
-    @lombok.experimental.Delegate(excludes = Closeable.class)
-    private final @NonNull Writer delegate;
+    public UncloseableWriter(Writer out) {
+        super(out);
+    }
 
     @Override
-    public void close() {
-        // do nothing
+    public void close() throws IOException {
+        out.flush();
+        // do not close
     }
 }

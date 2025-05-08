@@ -14,9 +14,11 @@ import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collector;
 import java.util.stream.Stream;
 
 public interface TextParser<T> {
@@ -44,6 +46,14 @@ public interface TextParser<T> {
         try (Reader resource = ProcessReader.newReader(encoding, process)) {
             return parseReader(resource);
         }
+    }
+
+    default @NonNull T parseProcess(@NonNull ProcessBuilder processBuilder, @NonNull Charset encoding) throws IOException {
+        return parseProcess(processBuilder.start(), encoding);
+    }
+
+    default @NonNull T parseProcess(@NonNull List<String> command, @NonNull Charset encoding) throws IOException {
+        return parseProcess(new ProcessBuilder(command), encoding);
     }
 
     default @NonNull T parseResource(@NonNull Class<?> type, @NonNull String name, @NonNull Charset encoding) throws IOException {
@@ -101,5 +111,10 @@ public interface TextParser<T> {
     @StaticFactoryMethod
     static <T> @NonNull TextParser<T> onParsingLines(@NonNull Function<? super Stream<String>, ? extends T> function) {
         return new FunctionalTextParser<>(IOFunction.checked(function).compose(InternalTextResource::asLines));
+    }
+
+    @StaticFactoryMethod
+    static <T> @NonNull TextParser<T> onParsingLines(@NonNull Collector<? super String, ?, ? extends T> collector) {
+        return onParsingLines(stream -> stream.collect(collector));
     }
 }

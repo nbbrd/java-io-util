@@ -1,15 +1,20 @@
 package internal.io;
 
-import lombok.NonNull;
-import nbbrd.design.MightBePromoted;
+import nbbrd.design.DecoratorPattern;
 
-import java.io.Closeable;
+import java.io.FilterInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
-@MightBePromoted
-@lombok.AllArgsConstructor
-public final class UncloseableInputStream extends InputStream {
+@DecoratorPattern(InputStream.class)
+public final class UncloseableInputStream extends FilterInputStream {
 
-    @lombok.experimental.Delegate(excludes = Closeable.class)
-    private final @NonNull InputStream delegate;
+    public UncloseableInputStream(InputStream in) {
+        super(in);
+    }
+
+    @Override
+    public void close() throws IOException {
+        // do not close
+    }
 }

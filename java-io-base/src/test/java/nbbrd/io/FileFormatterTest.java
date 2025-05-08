@@ -1,5 +1,6 @@
 package nbbrd.io;
 
+import _test.io.text.Properties2;
 import nbbrd.design.MightBePromoted;
 import nbbrd.io.function.IOBiConsumer;
 import nbbrd.io.function.IOFunction;
@@ -7,8 +8,11 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Properties;
 import java.util.zip.GZIPOutputStream;
 
 import static _test.io.FileFormatterAssertions.assertFileFormatterCompliance;
@@ -16,6 +20,7 @@ import static _test.io.Util.encode;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Locale.ROOT;
 import static nbbrd.io.FileFormatter.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 public class FileFormatterTest {
@@ -39,22 +44,38 @@ public class FileFormatterTest {
                 value, value.toUpperCase(ROOT).getBytes(UTF_8));
     }
 
+    @SuppressWarnings({"DataFlowIssue", "deprecation"})
     @Test
     public void testOnFormattingGzip(@TempDir Path temp) throws IOException {
         assertThatNullPointerException()
                 .isThrownBy(() -> onFormattingGzip(null))
                 .withMessageContaining("formatter");
+    }
 
+    @SuppressWarnings("DataFlowIssue")
+    @Test
+    public void testOnFormattingEncoder(@TempDir Path temp) throws IOException {
         FileFormatter<String> formatter = onFormattingStream(serialize.andThen(close));
         String value = "testOnFormattingGzip";
 
+        assertThatNullPointerException()
+                .isThrownBy(() -> onFormattingEncoder(null, GZIPOutputStream::new))
+                .withMessageContaining("formatter");
+
+        assertThatNullPointerException()
+                .isThrownBy(() -> onFormattingEncoder(formatter, null))
+                .withMessageContaining("encoder");
+
         assertFileFormatterCompliance(temp,
-                onFormattingGzip(formatter),
+                onFormattingEncoder(formatter, GZIPOutputStream::new),
                 value, encode(value.getBytes(UTF_8), GZIPOutputStream::new));
 
         assertFileFormatterCompliance(temp,
-                onFormattingGzip(formatter).compose(upperCase),
+                onFormattingEncoder(formatter, GZIPOutputStream::new).compose(upperCase),
                 value, encode(value.toUpperCase(ROOT).getBytes(UTF_8), GZIPOutputStream::new));
+
+        IOFunction<OutputStream, GZIPOutputStream> encoder = GZIPOutputStream::new;
+        onFormattingEncoder(formatter, encoder);
     }
 
     @Test
@@ -73,6 +94,22 @@ public class FileFormatterTest {
         assertFileFormatterCompliance(temp,
                 onFormattingLock(formatter).compose(upperCase),
                 value, value.toUpperCase(ROOT).getBytes(UTF_8));
+    }
+
+    @Test
+    public void onFormattingProperties(@TempDir Path temp) throws IOException {
+        Path file = temp.resolve("example.properties");
+        Properties example = new Properties();
+        example.setProperty("hello", "world");
+
+        onFormattingStream(Properties2::storeToStream).formatPath(example, file);
+
+        Properties properties;
+        try (InputStream input = Files.newInputStream(file)) {
+            properties = Properties2.loadFromStream(input);
+        }
+
+        assertThat(properties).containsExactlyEntriesOf(example);
     }
 
     @MightBePromoted

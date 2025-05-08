@@ -27,16 +27,19 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.io.*;
 import java.net.URI;
-import java.nio.file.FileSystem;
 import java.nio.file.*;
+import java.nio.file.FileSystem;
 import java.util.Collections;
 import java.util.Optional;
 
 /**
  * @author Philippe Charles
  */
-@lombok.experimental.UtilityClass
-public class Resource {
+public final class Resource {
+
+    private Resource() {
+        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
 
     public interface Loader<K> extends Closeable {
 
@@ -76,7 +79,7 @@ public class Resource {
      * associated with the default provider
      */
     @NonNull
-    public Optional<File> getFile(@NonNull Path path) {
+    public static Optional<File> getFile(@NonNull Path path) {
         return path.getFileSystem() == FileSystems.getDefault()
                 ? Optional.of(path.toFile())
                 : Optional.empty();
@@ -86,10 +89,11 @@ public class Resource {
      * @deprecated use {@link #newInputStream(Class, String)} instead.
      */
     @Deprecated
-    public @NonNull Optional<InputStream> getResourceAsStream(@NonNull Class<?> anchor, @NonNull String name) {
+    public static @NonNull Optional<InputStream> getResourceAsStream(@NonNull Class<?> anchor, @NonNull String name) {
         return Optional.ofNullable(anchor.getResourceAsStream(name));
     }
 
+    @StaticFactoryMethod(InputStream.class)
     public static @NonNull InputStream newInputStream(@NonNull Class<?> anchor, @NonNull String name) throws IOException {
         InputStream result = anchor.getResourceAsStream(name);
         if (result == null) {
@@ -99,7 +103,7 @@ public class Resource {
     }
 
     @SuppressWarnings("ThrowableResultIgnored")
-    public void ensureClosed(@NonNull Throwable exception, @Nullable Closeable closeable) {
+    public static void ensureClosed(@NonNull Throwable exception, @Nullable Closeable closeable) {
         if (closeable != null) {
             try {
                 closeable.close();
@@ -112,7 +116,7 @@ public class Resource {
         }
     }
 
-    public void closeBoth(@Nullable Closeable first, @Nullable Closeable second) throws IOException {
+    public static void closeBoth(@Nullable Closeable first, @Nullable Closeable second) throws IOException {
         if (first != null) {
             try {
                 first.close();
@@ -134,7 +138,7 @@ public class Resource {
      * @throws IOException
      * @see <a href="https://stackoverflow.com/a/36021165">https://stackoverflow.com/a/36021165</a>
      */
-    public void process(@NonNull URI uri, @NonNull IOConsumer<? super Path> action) throws IOException {
+    public static void process(@NonNull URI uri, @NonNull IOConsumer<? super Path> action) throws IOException {
         try {
             action.acceptWithIO(Paths.get(uri));
         } catch (FileSystemNotFoundException ex) {
@@ -144,12 +148,16 @@ public class Resource {
         }
     }
 
-    @lombok.RequiredArgsConstructor
     private static final class FunctionalLoader<K> implements Loader<K> {
 
         private final @NonNull IOFunction<? super K, ? extends InputStream> loader;
         private final @NonNull Closeable closer;
         private boolean closed = false;
+
+        public FunctionalLoader(@NonNull IOFunction<? super K, ? extends InputStream> loader, @NonNull Closeable closer) {
+            this.loader = loader;
+            this.closer = closer;
+        }
 
         @Override
         public @NonNull InputStream load(@NonNull K key) throws IOException {
@@ -170,10 +178,12 @@ public class Resource {
         }
     }
 
+    @StaticFactoryMethod(InputStream.class)
     public static @NonNull InputStream uncloseableInputStream(@NonNull InputStream delegate) {
         return new UncloseableInputStream(delegate);
     }
 
+    @StaticFactoryMethod(OutputStream.class)
     public static @NonNull OutputStream uncloseableOutputStream(@NonNull OutputStream delegate) {
         return new UncloseableOutputStream(delegate);
     }
