@@ -1,6 +1,7 @@
 package nbbrd.io.http.ext;
 
 import lombok.NonNull;
+import nbbrd.design.DecoratorPattern;
 import nbbrd.io.Resource;
 import nbbrd.io.http.HttpClient;
 import nbbrd.io.http.HttpRequest;
@@ -8,6 +9,7 @@ import nbbrd.io.http.HttpResponse;
 
 import java.io.IOException;
 
+@DecoratorPattern
 @lombok.AllArgsConstructor
 public final class InterceptingClient implements HttpClient {
 

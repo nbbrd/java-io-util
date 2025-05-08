@@ -1,6 +1,7 @@
 package internal.io;
 
 import lombok.NonNull;
+import nbbrd.design.DecoratorPattern;
 import nbbrd.io.FileParser;
 import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IOSupplier;
@@ -18,6 +19,7 @@ import java.nio.file.StandardOpenOption;
 
 import static internal.io.text.FileSystemExceptions.checkSource;
 
+@DecoratorPattern
 @lombok.RequiredArgsConstructor
 public final class LockingFileParser<T> implements FileParser<T> {
 

@@ -1,10 +1,12 @@
 package internal.io.text;
 
-import lombok.NonNull;
+import nbbrd.design.DecoratorPattern;
 
-import java.io.*;
+import java.io.FilterWriter;
+import java.io.IOException;
+import java.io.Writer;
 
-//@MightBePromoted
+@DecoratorPattern(Writer.class)
 public final class UncloseableWriter extends FilterWriter {
 
     public UncloseableWriter(Writer out) {

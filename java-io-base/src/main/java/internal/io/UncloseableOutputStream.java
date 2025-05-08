@@ -1,12 +1,12 @@
 package internal.io;
 
-import nbbrd.design.MightBePromoted;
+import nbbrd.design.DecoratorPattern;
 
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
-@MightBePromoted
+@DecoratorPattern(OutputStream.class)
 public final class UncloseableOutputStream extends FilterOutputStream {
 
     public UncloseableOutputStream(OutputStream out) {

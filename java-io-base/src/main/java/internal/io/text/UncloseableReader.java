@@ -1,9 +1,11 @@
 package internal.io.text;
 
+import nbbrd.design.DecoratorPattern;
+
 import java.io.FilterReader;
 import java.io.Reader;
 
-//@MightBePromoted
+@DecoratorPattern(Reader.class)
 public final class UncloseableReader extends FilterReader {
 
     public UncloseableReader(Reader in) {

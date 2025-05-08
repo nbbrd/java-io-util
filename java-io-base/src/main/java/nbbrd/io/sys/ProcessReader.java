@@ -21,16 +21,18 @@ import lombok.NonNull;
 import nbbrd.io.text.TextResource;
 
 import java.io.BufferedReader;
-import java.io.Closeable;
+import java.io.FilterInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.Charset;
 
 /**
  * @author Philippe Charles
  */
-@lombok.experimental.UtilityClass
-public class ProcessReader {
+public final class ProcessReader {
+
+    private ProcessReader() {
+        throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");
+    }
 
     @Deprecated
     public static @NonNull BufferedReader newReader(@NonNull String... args) throws IOException {
@@ -74,15 +76,12 @@ public class ProcessReader {
         return Charset.defaultCharset();
     }
 
-    private static final class ProcessInputStream extends InputStream {
-
-        @lombok.experimental.Delegate(excludes = Closeable.class)
-        private final InputStream delegate;
+    private static final class ProcessInputStream extends FilterInputStream {
 
         private final Process process;
 
         public ProcessInputStream(Process process) {
-            this.delegate = process.getInputStream();
+            super(process.getInputStream());
             this.process = process;
         }
 
@@ -92,14 +91,14 @@ public class ProcessReader {
                 readUntilEnd();
                 waitForEndOfProcess();
             } finally {
-                delegate.close();
+                super.close();
             }
         }
 
         // we need the process to end, else we'll get an illegal Thread State Exception
         @SuppressWarnings("StatementWithEmptyBody")
         private void readUntilEnd() throws IOException {
-            while (delegate.read() != -1) {
+            while (super.read() != -1) {
             }
         }
 

@@ -1,6 +1,7 @@
 package internal.io;
 
 import lombok.NonNull;
+import nbbrd.design.DecoratorPattern;
 import nbbrd.io.FileFormatter;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IOSupplier;
@@ -13,6 +14,7 @@ import java.nio.file.Path;
 
 import static nbbrd.io.Resource.uncloseableOutputStream;
 
+@DecoratorPattern
 @lombok.RequiredArgsConstructor
 public final class EncodingFileFormatter<T> implements FileFormatter<T> {
 

@@ -1,6 +1,7 @@
 package nbbrd.io.sys;
 
 import internal.io.text.InternalTextResource;
+import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.text.TextResource;
 
 import java.io.BufferedReader;
@@ -9,6 +10,7 @@ import java.nio.charset.Charset;
 
 public final class EndOfProcessException extends IOException {
 
+    @StaticFactoryMethod
     public static EndOfProcessException of(Process process) throws IOException {
         return new EndOfProcessException(process.exitValue(), readErrorStream(process));
     }
