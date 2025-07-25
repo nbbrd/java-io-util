@@ -18,7 +18,7 @@ package internal.io.text;
 
 import lombok.NonNull;
 import nbbrd.io.WrappedIOException;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.*;
 import java.net.URI;

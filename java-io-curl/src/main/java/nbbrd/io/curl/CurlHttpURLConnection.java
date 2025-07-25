@@ -9,7 +9,7 @@ import nbbrd.io.sys.EndOfProcessException;
 import nbbrd.io.sys.OS;
 import nbbrd.io.sys.ProcessReader;
 import nbbrd.io.sys.SystemProperties;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.*;
 import java.net.*;

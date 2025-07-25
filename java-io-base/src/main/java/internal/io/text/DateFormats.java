@@ -2,7 +2,7 @@ package internal.io.text;
 
 import lombok.NonNull;
 import nbbrd.design.VisibleForTesting;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.text.DateFormat;
 import java.text.DateFormatSymbols;

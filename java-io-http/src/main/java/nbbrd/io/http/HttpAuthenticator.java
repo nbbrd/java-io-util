@@ -2,7 +2,7 @@ package nbbrd.io.http;
 
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.net.PasswordAuthentication;
 import java.net.URL;

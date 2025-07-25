@@ -20,7 +20,7 @@ import lombok.NonNull;
 import nbbrd.design.VisibleForTesting;
 import nbbrd.io.sys.EndOfProcessException;
 import nbbrd.io.sys.ProcessReader;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.IOException;
