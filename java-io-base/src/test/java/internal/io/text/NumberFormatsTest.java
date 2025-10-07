@@ -103,7 +103,7 @@ public class NumberFormatsTest {
         final double number = 1234.5;
 
         @Test
-        @EnabledForJreRange(max = JRE.JAVA_12)
+        @EnabledForJreRange(min = JRE.JAVA_8, max = JRE.JAVA_12)
         public void testNBSP() throws ParseException {
             String text = "1\u00A0234,5";
             assertThat(symbols.getGroupingSeparator()).isEqualTo('\u00A0');
