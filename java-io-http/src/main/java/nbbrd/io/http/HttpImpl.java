@@ -17,11 +17,9 @@
 package nbbrd.io.http;
 
 import lombok.NonNull;
-import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.PasswordAuthentication;
 import java.net.Proxy;
 import java.net.URL;
 import java.util.Locale;
@@ -34,19 +32,6 @@ import java.util.zip.InflaterInputStream;
  */
 @lombok.experimental.UtilityClass
 class HttpImpl {
-
-    enum Authenticators implements HttpAuthenticator {
-        NONE {
-            @Override
-            public @Nullable PasswordAuthentication getPasswordAuthentication(@NonNull URL url) {
-                return null;
-            }
-
-            @Override
-            public void invalidate(@NonNull URL url) {
-            }
-        }
-    }
 
     enum EventListeners implements HttpEventListener {
         NONE {

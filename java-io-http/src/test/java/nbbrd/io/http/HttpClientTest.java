@@ -21,7 +21,6 @@ import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.matching.AbsentPattern;
 import com.github.tomakehurst.wiremock.matching.AnythingPattern;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
-import lombok.NonNull;
 import nbbrd.io.net.MediaType;
 import org.assertj.core.api.Assumptions;
 import org.junit.jupiter.api.Test;
@@ -380,20 +379,21 @@ public abstract class HttpClientTest {
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(authenticatorOf("validUser", "validPassword"))
+                .authenticator(authenticatorOf("user", "password"))
                 .authScheme(authScheme)
                 .build();
         HttpClient x = getClient(context);
 
         wire.resetAll();
         wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
-        wire.stubFor(get(SAMPLE_URL).withBasicAuth("validUser", "validPassword").willReturn(okXml(SAMPLE_XML)));
+        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
+        wire.stubFor(get(SAMPLE_URL).withHeader(HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
 
         try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build())) {
             assertSameSampleContent(response);
         }
 
-        wire.verify(authScheme.equals(HttpAuthScheme.BASIC) ? 1 : 2, getRequestedFor(urlEqualTo(SAMPLE_URL)));
+        wire.verify(authScheme.equals(HttpAuthScheme.NONE) ? 2 : 1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
     }
 
     @ParameterizedTest
@@ -411,6 +411,7 @@ public abstract class HttpClientTest {
         wire.resetAll();
         wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
         wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
+        wire.stubFor(get(SAMPLE_URL).withHeader(HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
 
         assertThatIOException()
                 .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build()))
@@ -430,7 +431,7 @@ public abstract class HttpClientTest {
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(authenticatorOf("user", "xyz"))
+                .authenticator(authenticatorOf("user", "boom"))
                 .authScheme(authScheme)
                 .build();
         HttpClient x = getClient(context);
@@ -438,7 +439,8 @@ public abstract class HttpClientTest {
         wire.resetAll();
         wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
         wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
-        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "xyz").willReturn(unauthorized().withHeader(HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
+        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "boom").willReturn(unauthorized().withHeader(HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
+        wire.stubFor(get(SAMPLE_URL).withHeader(HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
 
         assertThatIOException()
                 .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build()))
@@ -466,6 +468,7 @@ public abstract class HttpClientTest {
         wire.resetAll();
         wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
         wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
+        wire.stubFor(get(SAMPLE_URL).withHeader(HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
 
         String location = wireHttpUrl(SAMPLE_URL);
 
@@ -473,7 +476,7 @@ public abstract class HttpClientTest {
                 .isThrownBy(() -> x.send(HttpRequest.builder().query(new URL(location)).mediaType(GENERIC_DATA_21).build()))
                 .withMessageContaining("Insecure protocol");
 
-        wire.verify(authScheme.equals(HttpAuthScheme.BASIC) ? 0 : 1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
+        wire.verify(!authScheme.equals(HttpAuthScheme.NONE) ? 0 : 1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
     }
 
     @ParameterizedTest
@@ -491,6 +494,7 @@ public abstract class HttpClientTest {
         wire.resetAll();
         wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized()));
         wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
+        wire.stubFor(get(SAMPLE_URL).withHeader(HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
 
         HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build();
         switch (authScheme) {
@@ -504,6 +508,7 @@ public abstract class HttpClientTest {
                         });
                 break;
             case BASIC:
+            case BEARER:
                 try (HttpResponse response = x.send(request)) {
                     assertSameSampleContent(response);
                 }
@@ -581,16 +586,7 @@ public abstract class HttpClientTest {
     }
 
     private HttpAuthenticator authenticatorOf(String username, String password) {
-        return new HttpAuthenticator() {
-            @Override
-            public @NonNull PasswordAuthentication getPasswordAuthentication(@NonNull URL url) {
-                return new PasswordAuthentication(username, password.toCharArray());
-            }
-
-            @Override
-            public void invalidate(@NonNull URL url) {
-            }
-        };
+        return HttpAuthenticator.ofPassword(ignore -> new PasswordAuthentication(username, password.toCharArray()));
     }
 
     protected List<Integer> getHttpRedirectionCodes() {

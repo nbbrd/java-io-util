@@ -231,6 +231,36 @@ public final class DefaultHttpClient implements HttpClient {
                 String value = http.getHeaderField(HTTP_AUTHENTICATE_HEADER);
                 return value != null && value.startsWith("Basic");
             }
+
+            private String getBasicAuthHeader(PasswordAuthentication auth) {
+                String basicAuth = auth.getUserName() + ':' + String.valueOf(auth.getPassword());
+                return "Basic " + toBase64(basicAuth);
+            }
+
+            private String toBase64(String input) {
+                return Base64.getEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
+            }
+        },
+        BEARER(HttpAuthScheme.BEARER) {
+            @Override
+            boolean isSecureRequest(URL url) {
+                return isHttpsProtocol(url);
+            }
+
+            @Override
+            Map<String, List<String>> getRequestHeaders(URL url, HttpAuthenticator authenticator) {
+                PasswordAuthentication auth = authenticator.getPasswordAuthentication(url);
+                return auth != null ? new HttpHeadersBuilder().put(HTTP_AUTHORIZATION_HEADER, getBearerAuthHeader(auth)).build() : emptyMap();
+            }
+
+            @Override
+            boolean hasResponseHeader(HttpURLConnection http) {
+                return false;
+            }
+
+            private String getBearerAuthHeader(PasswordAuthentication auth) {
+                return "Bearer " + String.valueOf(auth.getPassword());
+            }
         };
 
         private final HttpAuthScheme authScheme;
@@ -240,15 +270,6 @@ public final class DefaultHttpClient implements HttpClient {
         abstract Map<String, List<String>> getRequestHeaders(URL query, HttpAuthenticator authenticator);
 
         abstract boolean hasResponseHeader(HttpURLConnection http) throws IOException;
-
-        private static String getBasicAuthHeader(PasswordAuthentication auth) {
-            String basicAuth = auth.getUserName() + ':' + String.valueOf(auth.getPassword());
-            return "Basic " + toBase64(basicAuth);
-        }
-
-        private static String toBase64(String input) {
-            return Base64.getEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
-        }
 
         public static Optional<AuthSchemeHelper> find(HttpURLConnection http) {
             return Stream.of(AuthSchemeHelper.values())
@@ -264,10 +285,12 @@ public final class DefaultHttpClient implements HttpClient {
 
         public static AuthSchemeHelper of(HttpAuthScheme authScheme) {
             switch (authScheme) {
-                case BASIC:
-                    return BASIC;
                 case NONE:
                     return NONE;
+                case BASIC:
+                    return BASIC;
+                case BEARER:
+                    return BEARER;
                 default:
                     throw new IllegalArgumentException("Unknown auth scheme: " + authScheme);
             }
