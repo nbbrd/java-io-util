@@ -221,9 +221,14 @@ public final class DefaultHttpClient implements HttpClient {
             }
 
             @Override
-            Map<String, List<String>> getRequestHeaders(URL url, HttpAuthenticator authenticator) {
+            Map<String, List<String>> getRequestHeaders(URL url, HttpAuthenticator authenticator) throws IOException {
                 PasswordAuthentication auth = authenticator.getPasswordAuthentication(url);
-                return auth != null ? new HttpHeadersBuilder().put(HTTP_AUTHORIZATION_HEADER, getBasicAuthHeader(auth)).build() : emptyMap();
+                if (auth == null) {
+                    throw new IOException("Missing BASIC authentication for " + url);
+                }
+                return new HttpHeadersBuilder()
+                        .put(HTTP_AUTHORIZATION_HEADER, getBasicAuthHeader(auth))
+                        .build();
             }
 
             @Override
@@ -248,9 +253,14 @@ public final class DefaultHttpClient implements HttpClient {
             }
 
             @Override
-            Map<String, List<String>> getRequestHeaders(URL url, HttpAuthenticator authenticator) {
+            Map<String, List<String>> getRequestHeaders(URL url, HttpAuthenticator authenticator) throws IOException {
                 PasswordAuthentication auth = authenticator.getPasswordAuthentication(url);
-                return auth != null ? new HttpHeadersBuilder().put(HTTP_AUTHORIZATION_HEADER, getBearerAuthHeader(auth)).build() : emptyMap();
+                if (auth == null) {
+                    throw new IOException("Missing BEARER authentication for " + url);
+                }
+                return new HttpHeadersBuilder()
+                        .put(HTTP_AUTHORIZATION_HEADER, getBearerAuthHeader(auth))
+                        .build();
             }
 
             @Override
@@ -267,7 +277,7 @@ public final class DefaultHttpClient implements HttpClient {
 
         abstract boolean isSecureRequest(URL query);
 
-        abstract Map<String, List<String>> getRequestHeaders(URL query, HttpAuthenticator authenticator);
+        abstract Map<String, List<String>> getRequestHeaders(URL query, HttpAuthenticator authenticator) throws IOException;
 
         abstract boolean hasResponseHeader(HttpURLConnection http) throws IOException;
 

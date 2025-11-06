@@ -29,10 +29,10 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import javax.net.ssl.*;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.PasswordAuthentication;
 import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
@@ -46,6 +46,9 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static nbbrd.io.http.HttpAuthScheme.BASIC;
+import static nbbrd.io.http.HttpAuthScheme.NONE;
+import static nbbrd.io.http.HttpAuthenticator.newPassword;
 import static nbbrd.io.http.HttpConstants.*;
 import static nbbrd.io.http.HttpMethod.POST;
 import static org.assertj.core.api.Assertions.*;
@@ -379,7 +382,7 @@ public abstract class HttpClientTest {
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(authenticatorOf("user", "password"))
+                .authenticator(ignore -> newPassword("user", "password"))
                 .authScheme(authScheme)
                 .build();
         HttpClient x = getClient(context);
@@ -393,12 +396,12 @@ public abstract class HttpClientTest {
             assertSameSampleContent(response);
         }
 
-        wire.verify(authScheme.equals(HttpAuthScheme.NONE) ? 2 : 1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
+        wire.verify(authScheme.equals(NONE) ? 2 : 1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
     }
 
     @ParameterizedTest
     @EnumSource(HttpAuthScheme.class)
-    public void testNoAuth(HttpAuthScheme authScheme) {
+    public void testNoAuthenticator(HttpAuthScheme authScheme) throws MalformedURLException {
         HttpContext context = HttpContext
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
@@ -413,15 +416,40 @@ public abstract class HttpClientTest {
         wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
         wire.stubFor(get(SAMPLE_URL).withHeader(HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
 
+        HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build();
         assertThatIOException()
-                .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build()))
-                .withMessage("401: Unauthorized")
-                .isInstanceOfSatisfying(HttpResponseException.class, ex -> {
-                    assertThat(ex.getResponseCode()).isEqualTo(HttpsURLConnection.HTTP_UNAUTHORIZED);
-                    assertThat(ex.getResponseMessage()).isEqualTo("Unauthorized");
-                });
+                .isThrownBy(() -> x.send(request))
+                .withMessage("Missing " + (authScheme.equals(NONE) ? BASIC : authScheme) + " authentication for " + request.getQuery());
 
-        wire.verify(authScheme.equals(HttpAuthScheme.BASIC) ? 1 : 2, getRequestedFor(urlEqualTo(SAMPLE_URL)));
+        wire.verify(authScheme.equals(NONE) ? 1 : 0, getRequestedFor(urlEqualTo(SAMPLE_URL)));
+    }
+
+    @ParameterizedTest
+    @EnumSource(HttpAuthScheme.class)
+    public void testFailingAuthenticator(HttpAuthScheme authScheme) throws MalformedURLException {
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .authenticator(ignore -> {
+                    throw new FileNotFoundException("boom");
+                })
+                .authScheme(authScheme)
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
+        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
+        wire.stubFor(get(SAMPLE_URL).withHeader(HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
+
+        HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build();
+        assertThatIOException()
+                .isThrownBy(() -> x.send(request))
+                .isInstanceOf(FileNotFoundException.class)
+                .withMessage("boom");
+
+        wire.verify(authScheme.equals(NONE) ? 1 : 0, getRequestedFor(urlEqualTo(SAMPLE_URL)));
     }
 
     @ParameterizedTest
@@ -431,7 +459,7 @@ public abstract class HttpClientTest {
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(authenticatorOf("user", "boom"))
+                .authenticator(ignore -> newPassword("user", "boom"))
                 .authScheme(authScheme)
                 .build();
         HttpClient x = getClient(context);
@@ -450,7 +478,7 @@ public abstract class HttpClientTest {
                     assertThat(ex.getResponseMessage()).isEqualTo("Unauthorized");
                 });
 
-        wire.verify(authScheme.equals(HttpAuthScheme.BASIC) ? 1 : 2, getRequestedFor(urlEqualTo(SAMPLE_URL)));
+        wire.verify(authScheme.equals(BASIC) ? 1 : 2, getRequestedFor(urlEqualTo(SAMPLE_URL)));
     }
 
     @ParameterizedTest
@@ -460,7 +488,7 @@ public abstract class HttpClientTest {
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(authenticatorOf("user", "password"))
+                .authenticator(ignore -> newPassword("user", "password"))
                 .authScheme(authScheme)
                 .build();
         HttpClient x = getClient(context);
@@ -476,7 +504,7 @@ public abstract class HttpClientTest {
                 .isThrownBy(() -> x.send(HttpRequest.builder().query(new URL(location)).mediaType(GENERIC_DATA_21).build()))
                 .withMessageContaining("Insecure protocol");
 
-        wire.verify(!authScheme.equals(HttpAuthScheme.NONE) ? 0 : 1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
+        wire.verify(!authScheme.equals(NONE) ? 0 : 1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
     }
 
     @ParameterizedTest
@@ -486,7 +514,7 @@ public abstract class HttpClientTest {
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(authenticatorOf("user", "password"))
+                .authenticator(ignore -> newPassword("user", "password"))
                 .authScheme(authScheme)
                 .build();
         HttpClient x = getClient(context);
@@ -583,10 +611,6 @@ public abstract class HttpClientTest {
         try (InputStream stream = response.getBody()) {
             assertThat(stream).hasContent(SAMPLE_XML);
         }
-    }
-
-    private HttpAuthenticator authenticatorOf(String username, String password) {
-        return HttpAuthenticator.ofPassword(ignore -> new PasswordAuthentication(username, password.toCharArray()));
     }
 
     protected List<Integer> getHttpRedirectionCodes() {
