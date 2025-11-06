@@ -55,7 +55,7 @@ public class HttpContext {
     HttpAuthenticator authenticator = HttpAuthenticator.noOp();
 
     @lombok.Builder.Default
-    boolean preemptiveAuthentication = false;
+    HttpAuthScheme authScheme = HttpAuthScheme.NONE;
 
     @lombok.Builder.Default
     String userAgent = null;
