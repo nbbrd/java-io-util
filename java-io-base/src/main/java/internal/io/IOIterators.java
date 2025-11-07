@@ -22,7 +22,7 @@ import nbbrd.io.function.IOConsumer;
 import nbbrd.io.function.IOPredicate;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.function.IOUnaryOperator;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

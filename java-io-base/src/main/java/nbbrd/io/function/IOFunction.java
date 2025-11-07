@@ -19,7 +19,7 @@ package nbbrd.io.function;
 import internal.io.JdkWithIO;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;

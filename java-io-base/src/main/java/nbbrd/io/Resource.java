@@ -23,7 +23,7 @@ import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.function.IOConsumer;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.function.IORunnable;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.*;
 import java.net.URI;

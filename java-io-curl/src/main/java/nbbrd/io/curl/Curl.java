@@ -3,7 +3,7 @@ package nbbrd.io.curl;
 import lombok.NonNull;
 import nbbrd.design.BuilderPattern;
 import nbbrd.design.VisibleForTesting;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.File;

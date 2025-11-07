@@ -4,7 +4,7 @@ import lombok.AccessLevel;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.BlockSizer;
-import org.checkerframework.checker.index.qual.NonNegative;
+import nbbrd.design.NonNegative;
 
 import java.io.*;
 import java.nio.channels.Channels;

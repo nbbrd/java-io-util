@@ -41,7 +41,7 @@ public class HttpConstants {
     // https://developer.mozilla.org/en-US/docs/Web/HTTP/Status
     public enum ResponseType {
 
-        INFORMATIONAL, SUCCESSFUL, REDIRECTION, CLIENT_ERROR, SERVER_ERROR, UNKNOWN;
+        UNKNOWN, INFORMATIONAL, SUCCESSFUL, REDIRECTION, CLIENT_ERROR, SERVER_ERROR;
 
         @StaticFactoryMethod
         public static ResponseType ofResponseCode(int code) {

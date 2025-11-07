@@ -17,7 +17,7 @@
 package internal.io.text;
 
 import lombok.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.text.DecimalFormat;
 import java.text.NumberFormat;

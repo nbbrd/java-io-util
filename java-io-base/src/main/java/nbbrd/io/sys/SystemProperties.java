@@ -1,7 +1,7 @@
 package nbbrd.io.sys;
 
 import lombok.NonNull;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.net.MalformedURLException;
 import java.net.URL;

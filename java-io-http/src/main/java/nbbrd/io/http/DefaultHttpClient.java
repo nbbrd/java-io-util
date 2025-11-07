@@ -57,7 +57,7 @@ public final class DefaultHttpClient implements HttpClient {
 
     @Override
     public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
-        return open(request, 0, getPreemptiveAuthScheme());
+        return open(request, 0, AuthSchemeHelper.of(context.getAuthScheme()));
     }
 
     private HttpResponse open(HttpRequest request, int redirects, AuthSchemeHelper requestScheme) throws IOException {
@@ -129,10 +129,6 @@ public final class DefaultHttpClient implements HttpClient {
                 .collect(Collectors.joining(", "));
     }
 
-    private AuthSchemeHelper getPreemptiveAuthScheme() {
-        return context.isPreemptiveAuthentication() ? AuthSchemeHelper.BASIC : AuthSchemeHelper.NONE;
-    }
-
     private Proxy getProxy(URL url) throws IOException {
         List<Proxy> proxies = context.getProxySelector().get().select(toURI(url));
         return proxies.isEmpty() ? Proxy.NO_PROXY : proxies.get(0);
@@ -161,13 +157,13 @@ public final class DefaultHttpClient implements HttpClient {
         }
 
         context.getListener().onRedirection(oldUrl, newUrl);
-        return open(request.toBuilder().query(newUrl).build(), redirects + 1, getPreemptiveAuthScheme());
+        return open(request.toBuilder().query(newUrl).build(), redirects + 1, AuthSchemeHelper.of(context.getAuthScheme()));
     }
 
     private HttpResponse recoverClientError(HttpURLConnection connection, HttpRequest request, int redirects, AuthSchemeHelper requestScheme) throws IOException {
         if (connection.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-            AuthSchemeHelper responseScheme = AuthSchemeHelper.get(connection).orElse(AuthSchemeHelper.BASIC);
-            if (!requestScheme.equals(responseScheme)) {
+            AuthSchemeHelper responseScheme = AuthSchemeHelper.find(connection).orElse(null);
+            if (responseScheme != null && !requestScheme.equals(responseScheme)) {
                 context.getListener().onUnauthorized(connection.getURL(), requestScheme.authScheme, responseScheme.authScheme);
                 return open(request, redirects + 1, responseScheme);
             }
@@ -201,24 +197,7 @@ public final class DefaultHttpClient implements HttpClient {
 
     @lombok.AllArgsConstructor
     private enum AuthSchemeHelper {
-        BASIC(HttpAuthScheme.BASIC) {
-            @Override
-            boolean isSecureRequest(URL url) {
-                return isHttpsProtocol(url);
-            }
 
-            @Override
-            Map<String, List<String>> getRequestHeaders(URL url, HttpAuthenticator authenticator) {
-                PasswordAuthentication auth = authenticator.getPasswordAuthentication(url);
-                return auth != null ? new HttpHeadersBuilder().put(HTTP_AUTHORIZATION_HEADER, getBasicAuthHeader(auth)).build() : emptyMap();
-            }
-
-            @Override
-            boolean hasResponseHeader(HttpURLConnection http) {
-                String value = http.getHeaderField(HTTP_AUTHENTICATE_HEADER);
-                return value != null && value.startsWith("Basic");
-            }
-        },
         NONE(HttpAuthScheme.NONE) {
             @Override
             boolean isSecureRequest(URL query) {
@@ -234,17 +213,75 @@ public final class DefaultHttpClient implements HttpClient {
             boolean hasResponseHeader(HttpURLConnection http) {
                 return false;
             }
+        },
+        BASIC(HttpAuthScheme.BASIC) {
+            @Override
+            boolean isSecureRequest(URL url) {
+                return isHttpsProtocol(url);
+            }
+
+            @Override
+            Map<String, List<String>> getRequestHeaders(URL url, HttpAuthenticator authenticator) throws IOException {
+                PasswordAuthentication auth = authenticator.getPasswordAuthentication(url);
+                if (auth == null) {
+                    throw new IOException("Missing BASIC authentication for " + url);
+                }
+                return new HttpHeadersBuilder()
+                        .put(HTTP_AUTHORIZATION_HEADER, getBasicAuthHeader(auth))
+                        .build();
+            }
+
+            @Override
+            boolean hasResponseHeader(HttpURLConnection http) {
+                String value = http.getHeaderField(HTTP_AUTHENTICATE_HEADER);
+                return value != null && value.startsWith("Basic");
+            }
+
+            private String getBasicAuthHeader(PasswordAuthentication auth) {
+                String basicAuth = auth.getUserName() + ':' + String.valueOf(auth.getPassword());
+                return "Basic " + toBase64(basicAuth);
+            }
+
+            private String toBase64(String input) {
+                return Base64.getEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
+            }
+        },
+        BEARER(HttpAuthScheme.BEARER) {
+            @Override
+            boolean isSecureRequest(URL url) {
+                return isHttpsProtocol(url);
+            }
+
+            @Override
+            Map<String, List<String>> getRequestHeaders(URL url, HttpAuthenticator authenticator) throws IOException {
+                PasswordAuthentication auth = authenticator.getPasswordAuthentication(url);
+                if (auth == null) {
+                    throw new IOException("Missing BEARER authentication for " + url);
+                }
+                return new HttpHeadersBuilder()
+                        .put(HTTP_AUTHORIZATION_HEADER, getBearerAuthHeader(auth))
+                        .build();
+            }
+
+            @Override
+            boolean hasResponseHeader(HttpURLConnection http) {
+                return false;
+            }
+
+            private String getBearerAuthHeader(PasswordAuthentication auth) {
+                return "Bearer " + String.valueOf(auth.getPassword());
+            }
         };
 
         private final HttpAuthScheme authScheme;
 
         abstract boolean isSecureRequest(URL query);
 
-        abstract Map<String, List<String>> getRequestHeaders(URL query, HttpAuthenticator authenticator);
+        abstract Map<String, List<String>> getRequestHeaders(URL query, HttpAuthenticator authenticator) throws IOException;
 
         abstract boolean hasResponseHeader(HttpURLConnection http) throws IOException;
 
-        static Optional<AuthSchemeHelper> get(HttpURLConnection http) {
+        public static Optional<AuthSchemeHelper> find(HttpURLConnection http) {
             return Stream.of(AuthSchemeHelper.values())
                     .filter(authScheme -> {
                         try {
@@ -256,13 +293,17 @@ public final class DefaultHttpClient implements HttpClient {
                     .findFirst();
         }
 
-        private static String getBasicAuthHeader(PasswordAuthentication auth) {
-            String basicAuth = auth.getUserName() + ':' + String.valueOf(auth.getPassword());
-            return "Basic " + toBase64(basicAuth);
-        }
-
-        private static String toBase64(String input) {
-            return Base64.getEncoder().encodeToString(input.getBytes(StandardCharsets.UTF_8));
+        public static AuthSchemeHelper of(HttpAuthScheme authScheme) {
+            switch (authScheme) {
+                case NONE:
+                    return NONE;
+                case BASIC:
+                    return BASIC;
+                case BEARER:
+                    return BEARER;
+                default:
+                    throw new IllegalArgumentException("Unknown auth scheme: " + authScheme);
+            }
         }
     }
 

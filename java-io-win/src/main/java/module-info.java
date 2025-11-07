@@ -17,7 +17,7 @@
 
 module nbbrd.io.win {
 
-    requires static org.checkerframework.checker.qual;
+    requires static org.jspecify;
     requires static lombok;
     requires static nbbrd.design;
 

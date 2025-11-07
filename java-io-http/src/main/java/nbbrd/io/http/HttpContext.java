@@ -1,6 +1,6 @@
 package nbbrd.io.http;
 
-import org.checkerframework.checker.index.qual.NonNegative;
+import nbbrd.design.NonNegative;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -55,7 +55,7 @@ public class HttpContext {
     HttpAuthenticator authenticator = HttpAuthenticator.noOp();
 
     @lombok.Builder.Default
-    boolean preemptiveAuthentication = false;
+    HttpAuthScheme authScheme = HttpAuthScheme.NONE;
 
     @lombok.Builder.Default
     String userAgent = null;

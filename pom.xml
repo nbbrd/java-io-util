@@ -5,7 +5,7 @@
 
     <groupId>com.github.nbbrd.java-io-util</groupId>
     <artifactId>java-io-parent</artifactId>
-    <version>0.0.34</version>
+    <version>0.0.35</version>
     <packaging>pom</packaging>
 
     <name>java-io</name>
@@ -38,7 +38,7 @@
     <properties>
         <!-- Java 8+ config -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.outputTimestamp>2025-05-08T20:38:18Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2025-11-07T11:22:36Z</project.build.outputTimestamp>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
 
@@ -62,23 +62,23 @@
         <dependencies>
             <!-- annotations & processors -->
             <dependency>
-                <groupId>org.checkerframework</groupId>
-                <artifactId>checker-qual</artifactId>
-                <version>3.49.3</version>
+                <groupId>org.jspecify</groupId>
+                <artifactId>jspecify</artifactId>
+                <version>1.0.0</version>
             </dependency>
 
             <!-- test libraries -->
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>5.12.2</version>
+                <version>6.0.1</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
             <dependency>
                 <groupId>org.assertj</groupId>
                 <artifactId>assertj-core</artifactId>
-                <version>3.27.3</version>
+                <version>3.27.6</version>
             </dependency>
             <dependency>
                 <groupId>com.github.tomakehurst</groupId>
@@ -119,12 +119,12 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.4.1</version>
+                    <version>3.5.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.14.0</version>
+                    <version>3.14.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -154,33 +154,33 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-surefire-plugin</artifactId>
-                    <version>3.5.3</version>
+                    <version>3.5.4</version>
                 </plugin>
                 <!-- Other plugins -->
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-dependency-plugin</artifactId>
-                    <version>3.8.1</version>
+                    <version>3.9.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
-                    <version>3.5.0</version>
+                    <version>3.6.2</version>
                 </plugin>
                 <plugin>
                     <groupId>org.gaul</groupId>
                     <artifactId>modernizer-maven-plugin</artifactId>
-                    <version>3.1.0</version>
+                    <version>3.2.0</version>
                 </plugin>
                 <plugin>
                     <groupId>de.thetaphi</groupId>
                     <artifactId>forbiddenapis</artifactId>
-                    <version>3.9</version>
+                    <version>3.10</version>
                 </plugin>
                 <plugin>
                     <groupId>com.github.nbbrd.heylogs</groupId>
                     <artifactId>heylogs-maven-plugin</artifactId>
-                    <version>0.9.3</version>
+                    <version>0.14.1</version>
                 </plugin>
                 <plugin>
                     <groupId>com.amashchenko.maven.plugin</groupId>
@@ -195,7 +195,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-javadoc-plugin</artifactId>
-                    <version>3.11.2</version>
+                    <version>3.12.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.simplify4u.plugins</groupId>
@@ -203,19 +203,19 @@
                     <version>1.1.0</version>
                 </plugin>
                 <plugin>
-                    <groupId>org.sonatype.plugins</groupId>
-                    <artifactId>nexus-staging-maven-plugin</artifactId>
-                    <version>1.7.0</version>
+                    <groupId>org.sonatype.central</groupId>
+                    <artifactId>central-publishing-maven-plugin</artifactId>
+                    <version>0.9.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.13</version>
+                    <version>0.8.14</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jreleaser</groupId>
                     <artifactId>jreleaser-maven-plugin</artifactId>
-                    <version>1.18.0</version>
+                    <version>1.21.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>
@@ -230,11 +230,12 @@
                             <goal>check</goal>
                         </goals>
                         <inherited>false</inherited>
-                        <configuration>
-                            <semver>true</semver>
-                        </configuration>
                     </execution>
                 </executions>
+                <configuration>
+                    <versioning>semver</versioning>
+                    <tagging>prefix:v</tagging>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -321,8 +322,8 @@
                 </property>
             </activation>
             <properties>
-                <lombok.version>1.18.38</lombok.version>
-                <java-design.version>1.6.0</java-design.version>
+                <lombok.version>1.18.42</lombok.version>
+                <java-design.version>1.8.0</java-design.version>
             </properties>
             <dependencyManagement>
                 <dependencies>
@@ -459,7 +460,7 @@
                             <dependency>
                                 <groupId>org.codehaus.mojo</groupId>
                                 <artifactId>extra-enforcer-rules</artifactId>
-                                <version>1.10.0</version>
+                                <version>1.11.0</version>
                             </dependency>
                         </dependencies>
                         <executions>
@@ -643,52 +644,38 @@
             </build>
         </profile>
 
-        <!-- Deploy SNAPSHOTS to OSSRH -->
+        <!-- Deploy SNAPSHOTS to Central Portal -->
         <profile>
             <id>snapshot-deploy</id>
-            <distributionManagement>
-                <snapshotRepository>
-                    <id>ossrh</id>
-                    <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
-                </snapshotRepository>
-            </distributionManagement>
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
                         <extensions>true</extensions>
                         <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                            <stagingProgressTimeoutMinutes>10</stagingProgressTimeoutMinutes>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>true</autoPublish>
+                            <waitUntil>published</waitUntil>
+                            <centralSnapshotsUrl>https://central.sonatype.com/repository/maven-snapshots/</centralSnapshotsUrl>
                         </configuration>
                     </plugin>
                 </plugins>
             </build>
         </profile>
 
-        <!-- Deploy RELEASES to OSSRH -->
+        <!-- Deploy RELEASES to Central Portal -->
         <profile>
             <id>release-deploy</id>
-            <distributionManagement>
-                <repository>
-                    <id>ossrh</id>
-                    <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-                </repository>
-            </distributionManagement>
             <build>
                 <plugins>
                     <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
                         <extensions>true</extensions>
                         <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                            <stagingProgressTimeoutMinutes>10</stagingProgressTimeoutMinutes>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>true</autoPublish>
                         </configuration>
                     </plugin>
                 </plugins>

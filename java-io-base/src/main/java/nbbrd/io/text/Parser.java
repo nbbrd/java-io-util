@@ -19,7 +19,7 @@ package nbbrd.io.text;
 import internal.io.text.InternalParser;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 import java.io.File;
 import java.net.URI;
