@@ -98,6 +98,24 @@ public class ResourceTest {
         }
     }
 
+    @SuppressWarnings("DataFlowIssue")
+    @Test
+    public void testCopy(@TempDir Path tmp) throws IOException {
+        Path hello = tmp.resolve("hello.zip");
+
+        assertThatNullPointerException().isThrownBy(() -> copy(null, "", hello));
+        assertThatNullPointerException().isThrownBy(() -> copy(ResourceTest.class, null, hello));
+        assertThatNullPointerException().isThrownBy(() -> copy(ResourceTest.class, "", null));
+
+        assertThatIOException()
+                .isThrownBy(() -> copy(ResourceTest.class, "missing_resource", hello))
+                .withMessageContaining("missing_resource")
+                .withMessageContaining(ResourceTest.class.getName());
+
+        assertThat(copy(ResourceTest.class, "/nbbrd/io/zip/test.zip", hello)).isEqualTo(440);
+        assertThat(hello).exists().isRegularFile().hasSize(440);
+    }
+
     @Test
     @SuppressWarnings({"null", "DataFlowIssue"})
     public void testEnsureClosed() throws IOException {

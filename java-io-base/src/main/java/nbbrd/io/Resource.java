@@ -102,6 +102,12 @@ public final class Resource {
         return result;
     }
 
+    public static long copy(@NonNull Class<?> anchor, @NonNull String name, @NonNull Path target, @NonNull CopyOption... options) throws IOException {
+        try (InputStream stream = Resource.newInputStream(anchor, name)) {
+            return Files.copy(stream, target, options);
+        }
+    }
+
     @SuppressWarnings("ThrowableResultIgnored")
     public static void ensureClosed(@NonNull Throwable exception, @Nullable Closeable closeable) {
         if (closeable != null) {
