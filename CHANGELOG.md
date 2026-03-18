@@ -10,6 +10,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Add copy shortcut in Resource
+- Add shortcuts in http module
+- Add properties utility
 
 ## [0.0.35] - 2025-11-07
 

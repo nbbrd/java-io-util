@@ -1,6 +1,6 @@
 package nbbrd.io.text;
 
-import _test.io.text.Properties2;
+import nbbrd.io.Properties2;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -14,7 +14,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Properties;
 
-import static _test.io.text.Properties2.PROPERTIES_CHARSET;
+import static nbbrd.io.Properties2.PROPERTIES_CHARSET;
 import static _test.io.text.TextFormatterAssertions.assertTextFormatterCompliance;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singleton;
