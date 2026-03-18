@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.0.36] - 2026-03-18
+
 ### Added
 
 - Add copy shortcut in Resource
@@ -324,7 +326,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Initial release
 
-[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.35...HEAD
+[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.36...HEAD
+[0.0.36]: https://github.com/nbbrd/java-io-util/compare/v0.0.35...v0.0.36
 [0.0.35]: https://github.com/nbbrd/java-io-util/compare/v0.0.34...v0.0.35
 [0.0.34]: https://github.com/nbbrd/java-io-util/compare/v0.0.33...v0.0.34
 [0.0.33]: https://github.com/nbbrd/java-io-util/compare/v0.0.32...v0.0.33
