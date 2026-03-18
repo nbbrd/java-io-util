@@ -1,4 +1,6 @@
-package _test.io.text;
+package nbbrd.io;
+
+import lombok.NonNull;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -14,23 +16,23 @@ public final class Properties2 {
 
     public static final Charset PROPERTIES_CHARSET = ISO_8859_1;
 
-    public static Properties loadFromStream(InputStream stream) throws IOException {
+    public static @NonNull Properties loadFromStream(@NonNull InputStream stream) throws IOException {
         Properties properties = new Properties();
         properties.load(stream);
         return properties;
     }
 
-    public static void storeToStream(Properties properties, OutputStream stream) throws IOException {
+    public static void storeToStream(@NonNull Properties properties, @NonNull OutputStream stream) throws IOException {
         properties.store(stream, "");
     }
 
-    public static Properties loadFromReader(Reader reader) throws IOException {
+    public static @NonNull Properties loadFromReader(@NonNull Reader reader) throws IOException {
         Properties properties = new Properties();
         properties.load(reader);
         return properties;
     }
 
-    public static void storeToWriter(Properties properties, Writer writer) throws IOException {
+    public static void storeToWriter(@NonNull Properties properties, @NonNull Writer writer) throws IOException {
         properties.store(writer, "");
     }
 }

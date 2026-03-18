@@ -1,7 +1,7 @@
 package nbbrd.io.text;
 
 import _test.io.ResourceId;
-import _test.io.text.Properties2;
+import nbbrd.io.Properties2;
 import internal.io.text.InternalTextResource;
 import nbbrd.io.sys.OS;
 import org.junit.jupiter.api.Test;
@@ -21,7 +21,7 @@ import java.util.function.Function;
 import java.util.stream.Collector;
 import java.util.stream.Stream;
 
-import static _test.io.text.Properties2.PROPERTIES_CHARSET;
+import static nbbrd.io.Properties2.PROPERTIES_CHARSET;
 import static _test.io.text.TextParserAssertions.assertTextParserCompliance;
 import static java.nio.charset.Charset.defaultCharset;
 import static java.nio.charset.StandardCharsets.UTF_8;

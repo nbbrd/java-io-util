@@ -18,6 +18,7 @@ package nbbrd.io.text;
 
 import _test.io.ForwardingReader;
 import _test.io.ForwardingWriter;
+import org.jspecify.annotations.NonNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
@@ -124,5 +125,49 @@ public class TextResourceTest {
             assertThat(closeCount).hasValue(0);
         }
         assertThat(closeCount).hasValue(1);
+    }
+
+    @SuppressWarnings({"null", "DataFlowIssue"})
+    @Test
+    public void testReadToString() throws IOException {
+        assertThatNullPointerException()
+                .isThrownBy(() -> readToString(null));
+
+        assertThat(readToString(new StringReader("")))
+                .isEmpty();
+
+        assertThat(readToString(new StringReader("hello\r\nworld\n")))
+                .isEqualTo("hello\r\nworld\n");
+
+        String expected = repeat('a', 8 * 1024 + 17);
+        assertThat(readToString(new StringReader(expected)))
+                .isEqualTo(expected);
+    }
+
+    @Test
+    public void testReadToStringIOException() {
+        IOException expected = new IOException("boom");
+        Reader failing = new Reader() {
+            @Override
+            public int read(char @NonNull [] cbuf, int off, int len) throws IOException {
+                throw expected;
+            }
+
+            @Override
+            public void close() {
+            }
+        };
+
+        assertThatIOException()
+                .isThrownBy(() -> readToString(failing))
+                .isSameAs(expected);
+    }
+
+    private static String repeat(char c, int count) {
+        StringBuilder result = new StringBuilder(count);
+        for (int i = 0; i < count; i++) {
+            result.append(c);
+        }
+        return result.toString();
     }
 }

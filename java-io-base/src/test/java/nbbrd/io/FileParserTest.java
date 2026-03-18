@@ -1,7 +1,6 @@
 package nbbrd.io;
 
 import _test.io.ResourceId;
-import _test.io.text.Properties2;
 import internal.io.text.InternalTextResource;
 import nbbrd.io.function.IOFunction;
 import nbbrd.io.text.TextResource;

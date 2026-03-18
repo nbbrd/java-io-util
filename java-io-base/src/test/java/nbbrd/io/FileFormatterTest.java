@@ -1,6 +1,5 @@
 package nbbrd.io;
 
-import _test.io.text.Properties2;
 import nbbrd.design.MightBePromoted;
 import nbbrd.io.function.IOBiConsumer;
 import nbbrd.io.function.IOFunction;

@@ -70,4 +70,14 @@ public final class TextResource {
     public static @NonNull Writer uncloseableWriter(@NonNull Writer delegate) {
         return new UncloseableWriter(delegate);
     }
+
+    public static @NonNull String readToString(@NonNull Reader resource) throws IOException {
+        StringBuilder result = new StringBuilder();
+        char[] buffer = new char[8 * 1024];
+        int n;
+        while ((n = resource.read(buffer, 0, buffer.length)) != -1) {
+            result.append(buffer, 0, n);
+        }
+        return result.toString();
+    }
 }

@@ -20,6 +20,7 @@ import _test.sample.Person;
 import internal.io.InternalResource;
 import internal.io.xml.BufferedInputStreamWithId;
 import lombok.NonNull;
+import nbbrd.io.text.TextResource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -30,6 +31,7 @@ import java.nio.file.Path;
 
 import static _test.sample.XmlFormatterAssertions.assertXmlFormatterCompliance;
 import static _test.sample.XmlParserAssertions.assertXmlParserCompliance;
+import static nbbrd.io.text.TextResource.readToString;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
 /**
@@ -101,7 +103,7 @@ public class XmlTest {
 
         @Override
         public @NonNull T parseReader(@NonNull Reader resource) throws IOException {
-            String xml = readtoString(resource);
+            String xml = readToString(resource);
             if (isJohnDoe(xml)) {
                 return johnDoe;
             }
@@ -124,7 +126,7 @@ public class XmlTest {
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource, @NonNull Charset encoding) throws IOException {
-            String xml = readtoString(new InputStreamReader(resource, encoding));
+            String xml = readToString(new InputStreamReader(resource, encoding));
             if (isJohnDoe(xml)) {
                 return johnDoe;
             }
@@ -143,16 +145,6 @@ public class XmlTest {
                 }
             }
             return false;
-        }
-
-        private static String readtoString(Reader resource) throws IOException {
-            StringBuilder result = new StringBuilder();
-            char[] buffer = new char[8 * 1024];
-            int n;
-            while ((n = resource.read(buffer, 0, buffer.length)) != -1) {
-                result.append(buffer, 0, n);
-            }
-            return result.toString();
         }
 
         private static String getFile(InputStream resource) {
