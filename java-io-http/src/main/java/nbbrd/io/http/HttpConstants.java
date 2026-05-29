@@ -25,6 +25,8 @@ public class HttpConstants {
 
     public static final String HTTP_CONTENT_ENCODING_HEADER = "Content-Encoding";
 
+    public static final String HTTP_CONTENT_LENGTH_HEADER = "Content-Length";
+
     // https://en.wikipedia.org/wiki/Downgrade_attack
     public static boolean isDowngradingProtocolOnRedirect(URL oldUrl, URL newUrl) {
         return isHttpsProtocol(oldUrl) && !isHttpsProtocol(newUrl);

@@ -69,6 +69,23 @@ public class PersistentResponseTest {
     }
 
     @Test
+    public void testGetContentLength() {
+        PersistentResponse response = PersistentResponse.of(MediaType.parse("text/plain"), "hello");
+        assertThat(response.getContentLength())
+                .isEqualTo(5);
+    }
+
+    @Test
+    public void testGetContentLengthWithCharset() {
+        PersistentResponse response = PersistentResponse.of(
+                MediaType.parse("text/plain").withCharset(StandardCharsets.UTF_8),
+                "\u20ac"
+        );
+        assertThat(response.getContentLength())
+                .isEqualTo(3);
+    }
+
+    @Test
     public void testCloseIsNoOp() {
         PersistentResponse response = PersistentResponse.of(MediaType.parse("text/plain"), "hello");
 

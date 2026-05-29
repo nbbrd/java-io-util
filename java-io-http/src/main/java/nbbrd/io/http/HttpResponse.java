@@ -12,6 +12,10 @@ public interface HttpResponse extends Closeable {
     @NonNull
     MediaType getContentType() throws IOException;
 
+    default long getContentLength() throws IOException {
+        return -1;
+    }
+
     @NonNull
     InputStream getBody() throws IOException;
 

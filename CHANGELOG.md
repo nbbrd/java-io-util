@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Changed
+
+- Enhance HttpClient to support content length tracking
+
 ## [0.0.36] - 2026-03-18
 
 ### Added

@@ -25,9 +25,18 @@ public class PersistentResponse implements HttpResponse {
     @NonNull
     String bodyAsString;
 
+    private byte[] getBodyAsStringBytes() {
+        return bodyAsString.getBytes(contentType.getCharset().orElse(UTF_8));
+    }
+
+    @Override
+    public long getContentLength() {
+        return getBodyAsStringBytes().length;
+    }
+
     @Override
     public @NonNull InputStream getBody() {
-        return new ByteArrayInputStream(bodyAsString.getBytes(contentType.getCharset().orElse(UTF_8)));
+        return new ByteArrayInputStream(getBodyAsStringBytes());
     }
 
     @Override

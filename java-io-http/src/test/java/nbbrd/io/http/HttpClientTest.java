@@ -41,6 +41,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -570,6 +572,144 @@ public abstract class HttpClientTest {
         }
 
         wire.verify(1, getRequestedFor(urlEqualTo("/abc/../first.xml")));
+    }
+
+    @Test
+    public void testGetContentLength() throws IOException {
+        String body = "hello world";
+
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "text/plain; charset=utf-8")
+                .withHeader("Content-Length", String.valueOf(body.length()))
+                .withBody(body)));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL(SAMPLE_URL))
+                .mediaType(GENERIC_DATA_21)
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            assertThat(response.getContentLength())
+                    .isEqualTo(body.length());
+        }
+    }
+
+    @Test
+    public void testGetContentLengthUnknown() throws IOException {
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL(SAMPLE_URL))
+                .mediaType(GENERIC_DATA_21)
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            // WireMock uses chunked transfer by default, so content length is unknown
+            assertThat(response.getContentLength())
+                    .isIn(-1L, (long) SAMPLE_XML.getBytes(UTF_8).length);
+        }
+    }
+
+    @Test
+    public void testOnComplete() throws IOException {
+        AtomicReference<HttpRequest> completedRequest = new AtomicReference<>();
+        AtomicLong completedBytesRead = new AtomicLong(-1);
+        AtomicLong completedElapsedMs = new AtomicLong(-1);
+
+        HttpEventListener listener = new HttpEventListener() {
+            @Override
+            public void onComplete(@lombok.NonNull HttpRequest request, long bytesRead, long elapsedMs) {
+                completedRequest.set(request);
+                completedBytesRead.set(bytesRead);
+                completedElapsedMs.set(elapsedMs);
+            }
+        };
+
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .listener(listener)
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL(SAMPLE_URL))
+                .mediaType(GENERIC_DATA_21)
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            try (InputStream body = response.getBody()) {
+                byte[] buf = new byte[8192];
+                while (body.read(buf) != -1) {
+                    // consume body
+                }
+            }
+        }
+
+        assertThat(completedRequest.get()).isNotNull();
+        assertThat(completedBytesRead.get()).isEqualTo(SAMPLE_XML.length());
+        assertThat(completedElapsedMs.get()).isGreaterThanOrEqualTo(0);
+    }
+
+    @Test
+    public void testOnCompleteWithoutBodyRead() throws IOException {
+        AtomicLong completedBytesRead = new AtomicLong(0);
+
+        HttpEventListener listener = new HttpEventListener() {
+            @Override
+            public void onComplete(@lombok.NonNull HttpRequest request, long bytesRead, long elapsedMs) {
+                completedBytesRead.set(bytesRead);
+            }
+        };
+
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .listener(listener)
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL(SAMPLE_URL))
+                .mediaType(GENERIC_DATA_21)
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            // close without reading body
+        }
+
+        assertThat(completedBytesRead.get())
+                .describedAs("bytesRead should be -1 when body was not read")
+                .isEqualTo(-1);
     }
 
     protected SSLSocketFactory wireSSLSocketFactory() {

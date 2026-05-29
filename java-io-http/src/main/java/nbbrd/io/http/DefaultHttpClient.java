@@ -22,10 +22,7 @@ import nbbrd.design.VisibleForTesting;
 import nbbrd.io.net.MediaType;
 
 import javax.net.ssl.HttpsURLConnection;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -77,7 +74,7 @@ public final class DefaultHttpClient implements HttpClient {
             case REDIRECTION:
                 return redirect(connection, request, redirects);
             case SUCCESSFUL:
-                return getResponse(connection);
+                return getResponse(connection, request);
             case CLIENT_ERROR:
                 return recoverClientError(connection, request, redirects, requestScheme);
             default:
@@ -173,8 +170,8 @@ public final class DefaultHttpClient implements HttpClient {
         throw getError(connection);
     }
 
-    private HttpResponse getResponse(HttpURLConnection connection) {
-        DefaultResponse result = new DefaultResponse(connection, context.getDecoders());
+    private HttpResponse getResponse(HttpURLConnection connection, HttpRequest request) {
+        DefaultResponse result = new DefaultResponse(connection, context.getDecoders(), context.getListener(), request);
         context.getListener().onSuccess(result::httpContentTypeOrNull);
         return result;
     }
@@ -316,8 +313,22 @@ public final class DefaultHttpClient implements HttpClient {
         @lombok.NonNull
         private final List<StreamDecoder> decoders;
 
+        @lombok.NonNull
+        private final HttpEventListener listener;
+
+        @lombok.NonNull
+        private final HttpRequest request;
+
+        private final long openTimeMs = System.currentTimeMillis();
+
+        private long bytesRead = -1;
+
         String httpContentTypeOrNull() {
             return conn.getHeaderField(HTTP_CONTENT_TYPE_HEADER);
+        }
+
+        private String httpContentLengthOrNull() {
+            return conn.getHeaderField(HTTP_CONTENT_LENGTH_HEADER);
         }
 
         @Override
@@ -334,19 +345,70 @@ public final class DefaultHttpClient implements HttpClient {
         }
 
         @Override
+        public long getContentLength() {
+            String value = httpContentLengthOrNull();
+            if (value == null) {
+                return -1;
+            }
+            try {
+                return Long.parseLong(value);
+            } catch (NumberFormatException ex) {
+                return -1;
+            }
+        }
+
+        @Override
         public @NonNull InputStream getBody() throws IOException {
             String encodingOrNull = conn.getHeaderField(HTTP_CONTENT_ENCODING_HEADER);
-            return decoders
+            InputStream stream = decoders
                     .stream()
                     .filter(decoder -> decoder.getName().equals(encodingOrNull))
                     .findFirst()
                     .orElse(StreamDecoder.noOp())
                     .decode(conn.getInputStream());
+            return new CountingInputStream(stream);
         }
 
         @Override
         public void close() throws IOException {
-            doClose(conn);
+            try {
+                listener.onComplete(request, bytesRead, System.currentTimeMillis() - openTimeMs);
+            } finally {
+                doClose(conn);
+            }
+        }
+
+        private final class CountingInputStream extends FilterInputStream {
+
+            private long count;
+
+            CountingInputStream(InputStream in) {
+                super(in);
+            }
+
+            @Override
+            public int read() throws IOException {
+                int result = super.read();
+                if (result != -1) {
+                    count++;
+                }
+                return result;
+            }
+
+            @Override
+            public int read(byte[] b, int off, int len) throws IOException {
+                int result = super.read(b, off, len);
+                if (result != -1) {
+                    count += result;
+                }
+                return result;
+            }
+
+            @Override
+            public void close() throws IOException {
+                bytesRead = count;
+                super.close();
+            }
         }
     }
 

@@ -69,6 +69,11 @@ public final class DumpingClient implements HttpClient {
         }
 
         @Override
+        public long getContentLength() throws IOException {
+            return delegate.getContentLength();
+        }
+
+        @Override
         public @NonNull InputStream getBody() throws IOException {
             InputStream inputStream = delegate.getBody();
             try {

@@ -9,15 +9,23 @@ import java.util.function.Supplier;
 
 public interface HttpEventListener {
 
-    void onOpen(@NonNull HttpRequest request, @NonNull Proxy proxy, @NonNull HttpAuthScheme scheme);
+    default void onOpen(@NonNull HttpRequest request, @NonNull Proxy proxy, @NonNull HttpAuthScheme scheme) {
+    }
 
-    void onSuccess(@NonNull Supplier<String> contentType);
+    default void onSuccess(@NonNull Supplier<String> contentType) {
+    }
 
-    void onRedirection(@NonNull URL oldUrl, @NonNull URL newUrl);
+    default void onRedirection(@NonNull URL oldUrl, @NonNull URL newUrl) {
+    }
 
-    void onUnauthorized(@NonNull URL url, @NonNull HttpAuthScheme oldScheme, @NonNull HttpAuthScheme newScheme);
+    default void onUnauthorized(@NonNull URL url, @NonNull HttpAuthScheme oldScheme, @NonNull HttpAuthScheme newScheme) {
+    }
 
-    void onEvent(@NonNull String message);
+    default void onEvent(@NonNull String message) {
+    }
+
+    default void onComplete(@NonNull HttpRequest request, long bytesRead, long elapsedMs) {
+    }
 
     @StaticFactoryMethod
     static @NonNull HttpEventListener noOp() {

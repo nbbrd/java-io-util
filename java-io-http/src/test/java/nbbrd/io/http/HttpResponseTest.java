@@ -13,6 +13,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class HttpResponseTest {
 
     @Test
+    public void testGetContentLengthDefault() throws IOException {
+        try (HttpResponse response = StubHttpResponse.of(MediaType.parse("text/plain"), new ByteArrayInputStream("hello".getBytes(StandardCharsets.UTF_8)))) {
+            assertThat(response.getContentLength())
+                    .isEqualTo(-1);
+        }
+    }
+
+    @Test
     public void testGetBodyAsStringWithExplicitCharset() throws IOException {
         String expected = "caf\u00e9";
         TrackingInputStream body = new TrackingInputStream(expected.getBytes(StandardCharsets.ISO_8859_1));

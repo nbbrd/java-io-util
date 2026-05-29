@@ -20,10 +20,7 @@ import lombok.NonNull;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.Proxy;
-import java.net.URL;
 import java.util.Locale;
-import java.util.function.Supplier;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.InflaterInputStream;
 
@@ -35,25 +32,6 @@ class HttpImpl {
 
     enum EventListeners implements HttpEventListener {
         NONE {
-            @Override
-            public void onOpen(@NonNull HttpRequest request, @NonNull Proxy proxy, @NonNull HttpAuthScheme scheme) {
-            }
-
-            @Override
-            public void onSuccess(@NonNull Supplier<String> contentType) {
-            }
-
-            @Override
-            public void onRedirection(@NonNull URL oldUrl, @NonNull URL newUrl) {
-            }
-
-            @Override
-            public void onUnauthorized(@NonNull URL url, @NonNull HttpAuthScheme oldScheme, @NonNull HttpAuthScheme newScheme) {
-            }
-
-            @Override
-            public void onEvent(@NonNull String message) {
-            }
         }
     }
 
