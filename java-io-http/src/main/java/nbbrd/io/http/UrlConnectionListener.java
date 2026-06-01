@@ -1,5 +1,6 @@
 package nbbrd.io.http;
 
+import internal.io.http.UrlHelper;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 
@@ -7,7 +8,7 @@ import java.net.Proxy;
 import java.net.URL;
 import java.util.function.Supplier;
 
-public interface HttpEventListener {
+public interface UrlConnectionListener {
 
     default void onOpen(@NonNull HttpRequest request, @NonNull Proxy proxy, @NonNull HttpAuthScheme scheme) {
     }
@@ -28,7 +29,7 @@ public interface HttpEventListener {
     }
 
     @StaticFactoryMethod
-    static @NonNull HttpEventListener noOp() {
-        return HttpImpl.EventListeners.NONE;
+    static @NonNull UrlConnectionListener noOp() {
+        return UrlHelper.NO_OP_EVENT_LISTENER;
     }
 }

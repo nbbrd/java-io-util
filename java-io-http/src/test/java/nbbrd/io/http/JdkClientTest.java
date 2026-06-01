@@ -19,11 +19,11 @@ package nbbrd.io.http;
 /**
  * @author Philippe Charles
  */
-public class JdkClientTest extends DefaultHttpClientTest {
+public class JdkClientTest extends UrlConnectionHttpClientTest {
 
     @Override
-    protected URLConnectionFactory getURLConnectionFactory() {
-        return URLConnectionFactory.getDefault();
+    protected UrlConnectionFactory getURLConnectionFactory() {
+        return UrlConnectionFactory.getDefault();
     }
 
     @Override

@@ -1,5 +1,6 @@
 package nbbrd.io.http;
 
+import internal.io.http.DisconnectingInputStream;
 import lombok.NonNull;
 import nbbrd.io.net.MediaType;
 import nbbrd.io.text.TextResource;
@@ -12,9 +13,16 @@ public interface HttpResponse extends Closeable {
     @NonNull
     MediaType getContentType() throws IOException;
 
-    default long getContentLength() throws IOException {
-        return -1;
-    }
+    long getContentLength() throws IOException;
+
+    /**
+     * Returns the response headers.
+     *
+     * @return a non-null HTTP headers object; empty by default
+     * @throws IOException if an I/O error occurs
+     */
+    @NonNull
+    HttpHeaders getHeaders() throws IOException;
 
     @NonNull
     InputStream getBody() throws IOException;
@@ -32,4 +40,6 @@ public interface HttpResponse extends Closeable {
     default @NonNull InputStream asDisconnectingInputStream() throws IOException {
         return DisconnectingInputStream.of(this);
     }
+
+    int NO_CONTENT_LENGTH = -1;
 }

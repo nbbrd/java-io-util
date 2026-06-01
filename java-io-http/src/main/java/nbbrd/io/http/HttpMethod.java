@@ -2,5 +2,5 @@ package nbbrd.io.http;
 
 public enum HttpMethod {
 
-    GET, POST;
+    GET, POST, PUT, DELETE, PATCH, HEAD;
 }

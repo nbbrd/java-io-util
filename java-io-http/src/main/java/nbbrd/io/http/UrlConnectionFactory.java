@@ -9,12 +9,12 @@ import java.net.URL;
 import java.net.URLConnection;
 
 @FunctionalInterface
-public interface URLConnectionFactory {
+public interface UrlConnectionFactory {
 
     @NonNull URLConnection openConnection(@NonNull URL url, @NonNull Proxy proxy) throws IOException;
 
     @StaticFactoryMethod
-    static @NonNull URLConnectionFactory getDefault() {
+    static @NonNull UrlConnectionFactory getDefault() {
         return URL::openConnection;
     }
 }

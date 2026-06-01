@@ -4,10 +4,10 @@ import lombok.NonNull;
 import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.http.HttpClient;
+import nbbrd.io.http.HttpHeaders;
 import nbbrd.io.http.HttpRequest;
 import nbbrd.io.http.HttpResponse;
 import nbbrd.io.net.MediaType;
-import nbbrd.io.text.Parser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import wiremock.com.google.common.io.ByteStreams;
@@ -17,6 +17,7 @@ import wiremock.org.apache.hc.core5.http.io.entity.EmptyInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Deque;
@@ -24,7 +25,7 @@ import java.util.LinkedList;
 
 import static org.assertj.core.api.Assertions.*;
 
-public class DumpingClientTest {
+public class DumpingHttpClientTest {
 
     @SuppressWarnings("ConstantConditions")
     @Test
@@ -32,7 +33,7 @@ public class DumpingClientTest {
         IOSupplier<InputStream> empty = () -> EmptyInputStream.INSTANCE;
 
         Deque<Path> stack = new LinkedList<>();
-        DumpingClient x = new DumpingClient(temp, MockedClient.ofBody(empty), stack::add);
+        DumpingHttpClient x = new DumpingHttpClient(temp, MockedClient.ofBody(empty), stack::add);
 
         assertThatNullPointerException()
                 .isThrownBy(() -> x.send(null));
@@ -45,7 +46,7 @@ public class DumpingClientTest {
         IOSupplier<InputStream> empty = () -> EmptyInputStream.INSTANCE;
 
         Deque<Path> stack = new LinkedList<>();
-        DumpingClient x = new DumpingClient(temp, MockedClient.ofBody(empty), stack::add);
+        DumpingHttpClient x = new DumpingHttpClient(temp, MockedClient.ofBody(empty), stack::add);
 
         try (HttpResponse r = x.send(request)) {
             assertThat(r.getContentType())
@@ -67,7 +68,7 @@ public class DumpingClientTest {
         IOSupplier<InputStream> nonEmpty = () -> new ReaderInputStream(new StringReader("hello"), StandardCharsets.UTF_8);
 
         Deque<Path> stack = new LinkedList<>();
-        DumpingClient x = new DumpingClient(temp, MockedClient.ofBody(nonEmpty), stack::add);
+        DumpingHttpClient x = new DumpingHttpClient(temp, MockedClient.ofBody(nonEmpty), stack::add);
 
         try (HttpResponse r = x.send(request)) {
             assertThat(r.getContentType())
@@ -91,7 +92,7 @@ public class DumpingClientTest {
         };
 
         Deque<Path> stack = new LinkedList<>();
-        DumpingClient x = new DumpingClient(temp, MockedClient.ofBody(failingOnGetBody), stack::add);
+        DumpingHttpClient x = new DumpingHttpClient(temp, MockedClient.ofBody(failingOnGetBody), stack::add);
 
         try (HttpResponse r = x.send(request)) {
             assertThat(r.getContentType())
@@ -118,7 +119,7 @@ public class DumpingClientTest {
         };
 
         Deque<Path> stack = new LinkedList<>();
-        DumpingClient x = new DumpingClient(temp, MockedClient.ofBody(failingOnRead), stack::add);
+        DumpingHttpClient x = new DumpingHttpClient(temp, MockedClient.ofBody(failingOnRead), stack::add);
 
         try (HttpResponse r = x.send(request)) {
             assertThat(r.getContentType())
@@ -137,9 +138,23 @@ public class DumpingClientTest {
         }
     }
 
+    @Test
+    public void testGetContentLengthDelegation(@TempDir Path temp) throws IOException {
+        Deque<Path> stack = new LinkedList<>();
+        DumpingHttpClient x = new DumpingHttpClient(
+                temp,
+                MockedClient.of(() -> MockedResponse.builder().contentLength(42).build()),
+                stack::add);
+
+        try (HttpResponse r = x.send(request)) {
+            assertThat(r.getContentLength())
+                    .isEqualTo(42);
+        }
+    }
+
     private final HttpRequest request = HttpRequest
             .builder()
-            .query(Parser.onURL().parseValue("http://localhost").orElseThrow(RuntimeException::new))
+            .query(URI.create("http://localhost"))
             .build();
 
     @lombok.AllArgsConstructor(staticName = "of")
@@ -151,6 +166,11 @@ public class DumpingClientTest {
 
         @NonNull
         private final IOSupplier<MockedResponse> response;
+
+        @Override
+        public @NonNull String getDescription() {
+            return "Mocked client";
+        }
 
         @Override
         public @NonNull HttpResponse send(@NonNull HttpRequest httpRequest) throws IOException {
@@ -169,6 +189,12 @@ public class DumpingClientTest {
         private final IOSupplier<MediaType> mediaType = IOSupplier.of(MediaType.ANY_TYPE);
 
         @lombok.Builder.Default
+        private final HttpHeaders headers = HttpHeaders.EMPTY;
+
+        @lombok.Builder.Default
+        private final long contentLength = -1;
+
+        @lombok.Builder.Default
         private final IOSupplier<InputStream> body = IOSupplier.of(EmptyInputStream.INSTANCE);
 
         @lombok.Builder.Default
@@ -177,6 +203,16 @@ public class DumpingClientTest {
         @Override
         public @NonNull MediaType getContentType() throws IOException {
             return mediaType.getWithIO();
+        }
+
+        @Override
+        public @org.jspecify.annotations.NonNull HttpHeaders getHeaders() {
+            return headers;
+        }
+
+        @Override
+        public long getContentLength() {
+            return contentLength;
         }
 
         @Override

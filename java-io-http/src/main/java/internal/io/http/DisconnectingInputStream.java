@@ -1,8 +1,9 @@
-package nbbrd.io.http;
+package internal.io.http;
 
 import nbbrd.design.DecoratorPattern;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.io.Resource;
+import nbbrd.io.http.HttpResponse;
 
 import java.io.Closeable;
 import java.io.FilterInputStream;
@@ -10,7 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 @DecoratorPattern(InputStream.class)
-final class DisconnectingInputStream extends FilterInputStream {
+public final class DisconnectingInputStream extends FilterInputStream {
 
     @StaticFactoryMethod
     public static DisconnectingInputStream of(HttpResponse response) throws IOException {

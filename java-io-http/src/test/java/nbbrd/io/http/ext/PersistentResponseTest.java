@@ -1,6 +1,7 @@
 package nbbrd.io.http.ext;
 
 import _test.io.http.StubHttpResponse;
+import nbbrd.io.http.HttpHeaders;
 import nbbrd.io.http.HttpResponse;
 import nbbrd.io.net.MediaType;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,7 @@ public class PersistentResponseTest {
 
     @Test
     public void testCopyOfReturnsSameInstance() throws IOException {
-        PersistentResponse response = PersistentResponse.of(MediaType.parse("text/plain"), "hello");
+        PersistentResponse response = PersistentResponse.of(MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
 
         assertThat(PersistentResponse.copyOf(response))
                 .isSameAs(response);
@@ -42,6 +43,7 @@ public class PersistentResponseTest {
         String expected = "caf\u00e9";
         PersistentResponse response = PersistentResponse.of(
                 MediaType.parse("text/plain").withCharset(StandardCharsets.ISO_8859_1),
+                HttpHeaders.EMPTY,
                 expected
         );
 
@@ -57,7 +59,7 @@ public class PersistentResponseTest {
     @Test
     public void testGetBodyDefaultsToUtf8() throws IOException {
         String expected = "\u20ac\u6f22\u5b57";
-        PersistentResponse response = PersistentResponse.of(MediaType.parse("text/plain"), expected);
+        PersistentResponse response = PersistentResponse.of(MediaType.parse("text/plain"), HttpHeaders.EMPTY, expected);
 
         byte[] bytes;
         try (InputStream body = response.getBody()) {
@@ -70,7 +72,7 @@ public class PersistentResponseTest {
 
     @Test
     public void testGetContentLength() {
-        PersistentResponse response = PersistentResponse.of(MediaType.parse("text/plain"), "hello");
+        PersistentResponse response = PersistentResponse.of(MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
         assertThat(response.getContentLength())
                 .isEqualTo(5);
     }
@@ -79,6 +81,7 @@ public class PersistentResponseTest {
     public void testGetContentLengthWithCharset() {
         PersistentResponse response = PersistentResponse.of(
                 MediaType.parse("text/plain").withCharset(StandardCharsets.UTF_8),
+                HttpHeaders.EMPTY,
                 "\u20ac"
         );
         assertThat(response.getContentLength())
@@ -87,7 +90,7 @@ public class PersistentResponseTest {
 
     @Test
     public void testCloseIsNoOp() {
-        PersistentResponse response = PersistentResponse.of(MediaType.parse("text/plain"), "hello");
+        PersistentResponse response = PersistentResponse.of(MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
 
         assertThatCode(response::close)
                 .doesNotThrowAnyException();

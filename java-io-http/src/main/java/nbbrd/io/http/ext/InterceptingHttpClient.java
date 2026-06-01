@@ -10,14 +10,20 @@ import nbbrd.io.http.HttpResponse;
 import java.io.IOException;
 
 @DecoratorPattern
+@lombok.Getter
 @lombok.AllArgsConstructor
-public final class InterceptingClient implements HttpClient {
+public final class InterceptingHttpClient implements HttpClient {
 
     @lombok.NonNull
     private final HttpClient delegate;
 
     @lombok.NonNull
-    private final InterceptingClient.Interceptor interceptor;
+    private final InterceptingHttpClient.Interceptor interceptor;
+
+    @Override
+    public @NonNull String getDescription() {
+        return "Intercepting " + delegate.getDescription();
+    }
 
     @Override
     public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {

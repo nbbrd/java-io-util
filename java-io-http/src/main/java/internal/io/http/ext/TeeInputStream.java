@@ -1,4 +1,4 @@
-package nbbrd.io.http.ext;
+package internal.io.http.ext;
 
 import nbbrd.design.DecoratorPattern;
 import nbbrd.io.Resource;
@@ -9,7 +9,7 @@ import java.io.OutputStream;
 
 @DecoratorPattern
 @lombok.AllArgsConstructor
-final class TeeInputStream extends InputStream {
+public final class TeeInputStream extends InputStream {
 
     @lombok.NonNull
     private final InputStream input;
