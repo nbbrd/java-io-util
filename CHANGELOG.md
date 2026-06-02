@@ -7,6 +7,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.0.38] - 2026-06-02
+
+### Changed
+
+- Enhance HttpClient to support content length tracking
+- Refactor http module to improve robustness and to allow more features
+- Add retry mechanism for transient network errors
+
 ## [0.0.36] - 2026-03-18
 
 ### Added
@@ -326,7 +334,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Initial release
 
-[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.36...HEAD
+[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.38...HEAD
+[0.0.38]: https://github.com/nbbrd/java-io-util/compare/v0.0.36...v0.0.38
 [0.0.36]: https://github.com/nbbrd/java-io-util/compare/v0.0.35...v0.0.36
 [0.0.35]: https://github.com/nbbrd/java-io-util/compare/v0.0.34...v0.0.35
 [0.0.34]: https://github.com/nbbrd/java-io-util/compare/v0.0.33...v0.0.34

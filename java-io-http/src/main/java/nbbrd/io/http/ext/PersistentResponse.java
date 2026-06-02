@@ -1,6 +1,8 @@
 package nbbrd.io.http.ext;
 
+import lombok.AccessLevel;
 import lombok.NonNull;
+import nbbrd.io.http.HttpHeaders;
 import nbbrd.io.http.HttpResponse;
 import nbbrd.io.net.MediaType;
 
@@ -16,18 +18,31 @@ public class PersistentResponse implements HttpResponse {
     public static @NonNull PersistentResponse copyOf(@NonNull HttpResponse response) throws IOException {
         return response instanceof PersistentResponse
                 ? (PersistentResponse) response
-                : of(response.getContentType(), response.getBodyAsString());
+                : of(response.getContentType(), response.getHeaders(), response.getBodyAsString());
     }
 
     @NonNull
     MediaType contentType;
 
     @NonNull
+    HttpHeaders headers;
+
+    @NonNull
     String bodyAsString;
+
+    @lombok.Getter(value = AccessLevel.PRIVATE, lazy = true)
+    @lombok.EqualsAndHashCode.Exclude
+    @lombok.ToString.Exclude
+    byte[] bodyAsStringBytes = bodyAsString.getBytes(contentType.getCharset().orElse(UTF_8));
+
+    @Override
+    public long getContentLength() {
+        return getBodyAsStringBytes().length;
+    }
 
     @Override
     public @NonNull InputStream getBody() {
-        return new ByteArrayInputStream(bodyAsString.getBytes(contentType.getCharset().orElse(UTF_8)));
+        return new ByteArrayInputStream(getBodyAsStringBytes());
     }
 
     @Override

@@ -1,30 +1,26 @@
 package nbbrd.io.http;
 
 import lombok.AccessLevel;
-import nbbrd.io.net.MediaType;
+import lombok.NonNull;
 
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 
 @lombok.Value
 @lombok.Builder(toBuilder = true)
 @lombok.AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class HttpRequest {
 
-    @lombok.NonNull
+    @NonNull
     @lombok.Builder.Default
     HttpMethod method = HttpMethod.GET;
 
-    @lombok.NonNull
-    URL query;
+    @NonNull
+    URI query;
 
-    @lombok.Singular
-    List<MediaType> mediaTypes;
-
-    @lombok.NonNull
+    @NonNull
     @lombok.Builder.Default
-    String langs = "";
+    HttpHeaders headers = HttpHeaders.EMPTY;
 
     @lombok.Builder.Default
     byte[] body = null;

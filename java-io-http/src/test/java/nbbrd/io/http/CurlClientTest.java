@@ -26,10 +26,10 @@ import java.util.stream.Collectors;
 /**
  * @author Philippe Charles
  */
-public class CurlClientTest extends DefaultHttpClientTest {
+public class CurlClientTest extends UrlConnectionHttpClientTest {
 
     @Override
-    protected URLConnectionFactory getURLConnectionFactory() {
+    protected UrlConnectionFactory getURLConnectionFactory() {
         return CurlHttpURLConnection::insecureForTestOnly;
     }
 

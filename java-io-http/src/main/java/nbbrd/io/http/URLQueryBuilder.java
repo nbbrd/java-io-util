@@ -23,6 +23,7 @@ import nbbrd.design.StaticFactoryMethod;
 import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -163,6 +164,11 @@ public final class URLQueryBuilder {
     @NonNull
     public URL build() throws MalformedURLException {
         return new URL(toString());
+    }
+
+    @NonNull
+    public URI buildURI() throws IllegalArgumentException {
+        return URI.create(toString());
     }
 
     private static String encode(String s) {

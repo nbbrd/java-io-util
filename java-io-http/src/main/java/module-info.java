@@ -25,4 +25,5 @@ module nbbrd.io.http {
 
     exports nbbrd.io.http;
     exports nbbrd.io.http.ext;
+    exports internal.io.http;
 }

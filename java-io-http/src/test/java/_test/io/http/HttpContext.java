@@ -1,6 +1,7 @@
-package nbbrd.io.http;
+package _test.io.http;
 
 import nbbrd.design.NonNegative;
+import nbbrd.io.http.*;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -27,6 +28,10 @@ public class HttpContext {
     @lombok.Builder.Default
     int maxRedirects = 20;
 
+    @NonNegative
+    @lombok.Builder.Default
+    int maxRetries = 0;
+
     @lombok.NonNull
     @lombok.Builder.Default
     Supplier<ProxySelector> proxySelector = ProxySelector::getDefault;
@@ -41,14 +46,14 @@ public class HttpContext {
 
     @lombok.NonNull
     @lombok.Builder.Default
-    Supplier<URLConnectionFactory> urlConnectionFactory = URLConnectionFactory::getDefault;
+    Supplier<UrlConnectionFactory> urlConnectionFactory = UrlConnectionFactory::getDefault;
 
     @lombok.NonNull
     @lombok.Builder.Default
-    HttpEventListener listener = HttpEventListener.noOp();
+    UrlConnectionListener listener = UrlConnectionListener.noOp();
 
     @lombok.Singular
-    List<StreamDecoder> decoders;
+    List<UrlConnectionEncoding> decoders;
 
     @lombok.NonNull
     @lombok.Builder.Default
@@ -59,14 +64,4 @@ public class HttpContext {
 
     @lombok.Builder.Default
     String userAgent = null;
-
-    public static Builder builder() {
-        return new Builder()
-                .decoder(StreamDecoder.gzip())
-                .decoder(StreamDecoder.deflate());
-    }
-
-    public static final class Builder {
-        // Fix javadoc compilation
-    }
 }

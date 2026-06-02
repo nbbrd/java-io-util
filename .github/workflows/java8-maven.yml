@@ -19,7 +19,7 @@ jobs:
 
     steps:
       - name: Checkout and Setup Maven
-        uses: s4u/setup-maven-action@v1.19.0
+        uses: s4u/setup-maven-action@v1.20.0
         with:
           checkout-submodules: true
           checkout-fetch-depth: 0
@@ -43,7 +43,7 @@ jobs:
 
     steps:
       - name: Merge PR
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@v4
         with:
           command: gh pr merge --auto --rebase "$PR_URL"
           max_attempts: 3
@@ -65,7 +65,7 @@ jobs:
 
     steps:
       - name: Checkout and Setup Maven
-        uses: s4u/setup-maven-action@v1.19.0
+        uses: s4u/setup-maven-action@v1.20.0
         with:
           checkout-submodules: true
           checkout-fetch-depth: 0
@@ -109,7 +109,7 @@ jobs:
 
     steps:
       - name: Checkout and Setup Maven
-        uses: s4u/setup-maven-action@v1.19.0
+        uses: s4u/setup-maven-action@v1.20.0
         with:
           checkout-submodules: true
           checkout-fetch-depth: 0

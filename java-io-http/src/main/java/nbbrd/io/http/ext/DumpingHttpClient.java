@@ -1,9 +1,11 @@
 package nbbrd.io.http.ext;
 
+import internal.io.http.ext.TeeInputStream;
 import lombok.NonNull;
 import nbbrd.design.DecoratorPattern;
 import nbbrd.io.Resource;
 import nbbrd.io.http.HttpClient;
+import nbbrd.io.http.HttpHeaders;
 import nbbrd.io.http.HttpRequest;
 import nbbrd.io.http.HttpResponse;
 import nbbrd.io.net.MediaType;
@@ -16,8 +18,9 @@ import java.nio.file.Path;
 import java.util.function.Consumer;
 
 @DecoratorPattern
+@lombok.Getter
 @lombok.AllArgsConstructor
-public final class DumpingClient implements HttpClient {
+public final class DumpingHttpClient implements HttpClient {
 
     @lombok.NonNull
     private final Path folder;
@@ -27,6 +30,11 @@ public final class DumpingClient implements HttpClient {
 
     @lombok.NonNull
     private final Consumer<? super Path> onDump;
+
+    @Override
+    public @NonNull String getDescription() {
+        return "Dumping " + delegate.getDescription();
+    }
 
     @Override
     public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
@@ -66,6 +74,16 @@ public final class DumpingClient implements HttpClient {
         @Override
         public @NonNull MediaType getContentType() throws IOException {
             return delegate.getContentType();
+        }
+
+        @Override
+        public long getContentLength() throws IOException {
+            return delegate.getContentLength();
+        }
+
+        @Override
+        public @NonNull HttpHeaders getHeaders() throws IOException {
+            return delegate.getHeaders();
         }
 
         @Override

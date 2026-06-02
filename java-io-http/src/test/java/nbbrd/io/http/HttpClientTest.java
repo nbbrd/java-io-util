@@ -16,6 +16,7 @@
  */
 package nbbrd.io.http;
 
+import _test.io.http.HttpContext;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.matching.AbsentPattern;
@@ -33,7 +34,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStoreException;
@@ -41,6 +42,8 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -49,8 +52,8 @@ import static java.util.Collections.singletonList;
 import static nbbrd.io.http.HttpAuthScheme.BASIC;
 import static nbbrd.io.http.HttpAuthScheme.NONE;
 import static nbbrd.io.http.HttpAuthenticator.newPassword;
-import static nbbrd.io.http.HttpConstants.*;
 import static nbbrd.io.http.HttpMethod.POST;
+import static nbbrd.io.http.HttpMethod.PUT;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -103,8 +106,7 @@ public abstract class HttpClientTest {
         HttpRequest request = HttpRequest
                 .builder()
                 .query(wireURL(SAMPLE_URL))
-                .mediaType(GENERIC_DATA_21)
-                .langs(ANY_LANG)
+                .headers(HttpHeaders.builder().mediaType(GENERIC_DATA_21).languages(ANY_LANG).build())
                 .build();
 
         try (HttpResponse response = x.send(request)) {
@@ -112,11 +114,11 @@ public abstract class HttpClientTest {
         }
 
         wire.verify(1, getRequestedFor(urlEqualTo(SAMPLE_URL))
-                        .withHeader(HTTP_ACCEPT_HEADER, equalTo(GENERIC_DATA_21.toString()))
-                        .withHeader(HTTP_ACCEPT_LANGUAGE_HEADER, equalTo("*"))
-                        .withHeader(HTTP_ACCEPT_ENCODING_HEADER, equalTo("gzip, deflate"))
-                        .withHeader(HTTP_LOCATION_HEADER, absent())
-                        .withHeader(HTTP_USER_AGENT_HEADER, equalTo("hello world"))
+                        .withHeader(HttpHeaders.HTTP_ACCEPT_HEADER, equalTo(GENERIC_DATA_21.toString()))
+                        .withHeader(HttpHeaders.HTTP_ACCEPT_LANGUAGE_HEADER, equalTo("*"))
+                        .withHeader(HttpHeaders.HTTP_ACCEPT_ENCODING_HEADER, equalTo("gzip, deflate"))
+                        .withHeader(HttpHeaders.HTTP_LOCATION_HEADER, absent())
+                        .withHeader(HttpHeaders.HTTP_USER_AGENT_HEADER, equalTo("hello world"))
                         .withHeader("Host", new AnythingPattern())
                         .withRequestBody(AbsentPattern.ABSENT)
 //                .withHeader("Connection", new AnythingPattern())
@@ -139,8 +141,7 @@ public abstract class HttpClientTest {
         HttpRequest request = HttpRequest
                 .builder()
                 .query(wireURL(SAMPLE_URL))
-                .mediaType(GENERIC_DATA_21)
-                .langs(ANY_LANG)
+                .headers(HttpHeaders.builder().mediaType(GENERIC_DATA_21).languages(ANY_LANG).build())
                 .method(POST)
                 .body("some body content".getBytes(UTF_8))
                 .build();
@@ -150,15 +151,73 @@ public abstract class HttpClientTest {
         }
 
         wire.verify(1, postRequestedFor(urlEqualTo(SAMPLE_URL))
-                        .withHeader(HTTP_ACCEPT_HEADER, equalTo(GENERIC_DATA_21.toString()))
-                        .withHeader(HTTP_ACCEPT_LANGUAGE_HEADER, equalTo("*"))
-                        .withHeader(HTTP_ACCEPT_ENCODING_HEADER, equalTo("gzip, deflate"))
-                        .withHeader(HTTP_LOCATION_HEADER, absent())
-                        .withHeader(HTTP_USER_AGENT_HEADER, equalTo("hello world"))
+                        .withHeader(HttpHeaders.HTTP_ACCEPT_HEADER, equalTo(GENERIC_DATA_21.toString()))
+                        .withHeader(HttpHeaders.HTTP_ACCEPT_LANGUAGE_HEADER, equalTo("*"))
+                        .withHeader(HttpHeaders.HTTP_ACCEPT_ENCODING_HEADER, equalTo("gzip, deflate"))
+                        .withHeader(HttpHeaders.HTTP_LOCATION_HEADER, absent())
+                        .withHeader(HttpHeaders.HTTP_USER_AGENT_HEADER, equalTo("hello world"))
                         .withHeader("Host", new AnythingPattern())
                         .withRequestBody(new EqualToPattern("some body content"))
 //                .withHeader("Connection", new AnythingPattern())
         );
+    }
+
+    @Test
+    public void testHttpOK_PUT() throws IOException {
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .userAgent("hello world")
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(put(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL(SAMPLE_URL))
+                .headers(GENERIC_DATA_21_HEADER)
+                .method(PUT)
+                .body("some body content".getBytes(UTF_8))
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            assertSameSampleContent(response);
+        }
+
+        wire.verify(1, putRequestedFor(urlEqualTo(SAMPLE_URL))
+                .withHeader(HttpHeaders.HTTP_USER_AGENT_HEADER, equalTo("hello world"))
+                .withRequestBody(new EqualToPattern("some body content"))
+        );
+    }
+
+    @Test
+    public void testGetHeaders() throws IOException {
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML).withHeader("X-Custom-Header", "custom-value")));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL(SAMPLE_URL))
+                .headers(GENERIC_DATA_21_HEADER)
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            HttpHeaders headers = response.getHeaders();
+            // header lookup is case-insensitive and excludes the status line
+            assertThat(headers.getMap().keySet()).doesNotContainNull();
+            assertThat(headers.allValues("x-custom-header")).containsExactly("custom-value");
+            assertThat(headers.getMap()).containsKey(HttpHeaders.HTTP_CONTENT_TYPE_HEADER);
+        }
     }
 
     @Test
@@ -173,14 +232,14 @@ public abstract class HttpClientTest {
         wire.resetAll();
         wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
 
-        List<MediaType> mediaTypes = asList(GENERIC_DATA_21, STRUCTURE_SPECIFIC_DATA_21);
+        HttpHeaders mediaTypes = HttpHeaders.builder().mediaTypes(asList(GENERIC_DATA_21, STRUCTURE_SPECIFIC_DATA_21)).build();
 
-        try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaTypes(mediaTypes).build())) {
+        try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(mediaTypes).build())) {
             assertSameSampleContent(response);
         }
 
         wire.verify(1, getRequestedFor(urlEqualTo(SAMPLE_URL))
-                .withHeader(HTTP_ACCEPT_HEADER, equalTo(DefaultHttpClient.toAcceptHeader(mediaTypes)))
+                .withHeader(HttpHeaders.HTTP_ACCEPT_HEADER, equalTo(HttpHeaders.toAcceptHeader(asList(GENERIC_DATA_21, STRUCTURE_SPECIFIC_DATA_21))))
         );
     }
 
@@ -204,7 +263,7 @@ public abstract class HttpClientTest {
                 ));
 
         assertThatIOException()
-                .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(APPLICATION_XML_UTF_8).build()))
+                .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(APPLICATION_XML_UTF_8_HEADER).build()))
                 .withMessage("500: " + customErrorMessage)
                 .isInstanceOfSatisfying(HttpResponseException.class, ex -> {
                     assertThat(ex.getResponseCode()).isEqualTo(HttpsURLConnection.HTTP_INTERNAL_ERROR);
@@ -223,7 +282,7 @@ public abstract class HttpClientTest {
         HttpClient x = getClient(context);
 
         assertThatIOException()
-                .isThrownBy(() -> x.send(HttpRequest.builder().query(new URL("ftp://localhost")).mediaType(APPLICATION_XML_UTF_8).build()))
+                .isThrownBy(() -> x.send(HttpRequest.builder().query(URI.create("ftp://localhost")).headers(APPLICATION_XML_UTF_8_HEADER).build()))
                 .withMessage("Unsupported protocol 'ftp'");
     }
 
@@ -235,7 +294,7 @@ public abstract class HttpClientTest {
         HttpClient x = getClient(context);
 
         assertThatIOException()
-                .isThrownBy(() -> x.send(HttpRequest.builder().query(new URL("http://localhoooooost")).mediaType(APPLICATION_XML_UTF_8).build()))
+                .isThrownBy(() -> x.send(HttpRequest.builder().query(URI.create("http://localhoooooost")).headers(APPLICATION_XML_UTF_8_HEADER).build()))
                 .isInstanceOf(UnknownHostException.class)
                 .withMessage("localhoooooost");
     }
@@ -254,11 +313,11 @@ public abstract class HttpClientTest {
         for (int redirection : getHttpRedirectionCodes()) {
             for (String location : asList(absoluteSecondURL, SECOND_URL)) {
                 wire.resetAll();
-                wire.stubFor(get(SAMPLE_URL).willReturn(aResponse().withStatus(redirection).withHeader(HTTP_LOCATION_HEADER, location)));
+                wire.stubFor(get(SAMPLE_URL).willReturn(aResponse().withStatus(redirection).withHeader(HttpHeaders.HTTP_LOCATION_HEADER, location)));
                 wire.stubFor(get(SECOND_URL).willReturn(okXml(SAMPLE_XML)));
 
                 assertThatCode(() -> {
-                    try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build())) {
+                    try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
                         assertSameSampleContent(response);
                     }
                 })
@@ -283,11 +342,11 @@ public abstract class HttpClientTest {
         for (int redirection : getHttpRedirectionCodes()) {
             for (String location : asList(absoluteSecondURL, SECOND_URL)) {
                 wire.resetAll();
-                wire.stubFor(get(SAMPLE_URL).willReturn(aResponse().withStatus(redirection).withHeader(HTTP_LOCATION_HEADER, location)));
+                wire.stubFor(get(SAMPLE_URL).willReturn(aResponse().withStatus(redirection).withHeader(HttpHeaders.HTTP_LOCATION_HEADER, location)));
                 wire.stubFor(get(SECOND_URL).willReturn(okXml(SAMPLE_XML)));
 
                 assertThatIOException()
-                        .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build()))
+                        .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
                         .describedAs("Max redirect: code %s from '%s' to '%s'", redirection, wireURL(SAMPLE_URL), location)
                         .withMessage("Max redirection reached");
             }
@@ -308,7 +367,7 @@ public abstract class HttpClientTest {
             wire.stubFor(get(SAMPLE_URL).willReturn(aResponse().withStatus(redirection)));
 
             assertThatIOException()
-                    .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build()))
+                    .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
                     .describedAs("Invalid redirect: code %s from '%s'", redirection, wireURL(SAMPLE_URL))
                     .withMessage("Missing redirection url");
         }
@@ -327,11 +386,11 @@ public abstract class HttpClientTest {
 
         for (int redirection : getHttpRedirectionCodes()) {
             wire.resetAll();
-            wire.stubFor(get(SAMPLE_URL).willReturn(aResponse().withStatus(redirection).withHeader(HTTP_LOCATION_HEADER, location)));
+            wire.stubFor(get(SAMPLE_URL).willReturn(aResponse().withStatus(redirection).withHeader(HttpHeaders.HTTP_LOCATION_HEADER, location)));
             wire.stubFor(get(SECOND_URL).willReturn(okXml(SAMPLE_XML)));
 
             assertThatIOException()
-                    .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build()))
+                    .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
                     .describedAs("Downgrading protocol on redirect: code %s from '%s' to '%s'", redirection, wireURL(SAMPLE_URL), location)
                     .withMessageContaining("Downgrading protocol on redirect");
         }
@@ -348,7 +407,7 @@ public abstract class HttpClientTest {
         wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
 
         assertThatIOException()
-                .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build()))
+                .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
                 .isInstanceOf(SSLException.class);
     }
 
@@ -371,7 +430,7 @@ public abstract class HttpClientTest {
         wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML).withFixedDelay(readTimeout * 2)));
 
         assertThatIOException()
-                .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build()))
+                .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
                 .withMessageContaining("Read timed out");
     }
 
@@ -388,11 +447,11 @@ public abstract class HttpClientTest {
         HttpClient x = getClient(context);
 
         wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
+        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
         wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
-        wire.stubFor(get(SAMPLE_URL).withHeader(HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
+        wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
 
-        try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build())) {
+        try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
             assertSameSampleContent(response);
         }
 
@@ -412,11 +471,11 @@ public abstract class HttpClientTest {
         HttpClient x = getClient(context);
 
         wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
+        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
         wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
-        wire.stubFor(get(SAMPLE_URL).withHeader(HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
+        wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
 
-        HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build();
+        HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build();
         assertThatIOException()
                 .isThrownBy(() -> x.send(request))
                 .withMessage("Missing " + (authScheme.equals(NONE) ? BASIC : authScheme) + " authentication for " + request.getQuery());
@@ -439,11 +498,11 @@ public abstract class HttpClientTest {
         HttpClient x = getClient(context);
 
         wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
+        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
         wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
-        wire.stubFor(get(SAMPLE_URL).withHeader(HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
+        wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
 
-        HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build();
+        HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build();
         assertThatIOException()
                 .isThrownBy(() -> x.send(request))
                 .isInstanceOf(FileNotFoundException.class)
@@ -465,13 +524,13 @@ public abstract class HttpClientTest {
         HttpClient x = getClient(context);
 
         wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
+        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
         wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
-        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "boom").willReturn(unauthorized().withHeader(HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
-        wire.stubFor(get(SAMPLE_URL).withHeader(HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
+        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "boom").willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
+        wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
 
         assertThatIOException()
-                .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build()))
+                .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
                 .withMessage("401: Unauthorized")
                 .isInstanceOfSatisfying(HttpResponseException.class, ex -> {
                     assertThat(ex.getResponseCode()).isEqualTo(HttpsURLConnection.HTTP_UNAUTHORIZED);
@@ -494,14 +553,14 @@ public abstract class HttpClientTest {
         HttpClient x = getClient(context);
 
         wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
+        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
         wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
-        wire.stubFor(get(SAMPLE_URL).withHeader(HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
+        wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
 
         String location = wireHttpUrl(SAMPLE_URL);
 
         assertThatIOException()
-                .isThrownBy(() -> x.send(HttpRequest.builder().query(new URL(location)).mediaType(GENERIC_DATA_21).build()))
+                .isThrownBy(() -> x.send(HttpRequest.builder().query(URI.create(location)).headers(GENERIC_DATA_21_HEADER).build()))
                 .withMessageContaining("Insecure protocol");
 
         wire.verify(!authScheme.equals(NONE) ? 0 : 1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
@@ -522,9 +581,9 @@ public abstract class HttpClientTest {
         wire.resetAll();
         wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized()));
         wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
-        wire.stubFor(get(SAMPLE_URL).withHeader(HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
+        wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
 
-        HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).mediaType(GENERIC_DATA_21).build();
+        HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build();
         switch (authScheme) {
             case NONE:
                 assertThatIOException()
@@ -561,8 +620,7 @@ public abstract class HttpClientTest {
         HttpRequest request = HttpRequest
                 .builder()
                 .query(wireURL("/abc/../first.xml"))
-                .mediaType(GENERIC_DATA_21)
-                .langs(ANY_LANG)
+                .headers(GENERIC_DATA_21_HEADER)
                 .build();
 
         try (HttpResponse response = x.send(request)) {
@@ -570,6 +628,240 @@ public abstract class HttpClientTest {
         }
 
         wire.verify(1, getRequestedFor(urlEqualTo("/abc/../first.xml")));
+    }
+
+    @Test
+    public void testGetContentLength() throws IOException {
+        String body = "hello world";
+
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(aResponse()
+                .withStatus(200)
+                .withHeader("Content-Type", "text/plain; charset=utf-8")
+                .withHeader("Content-Length", String.valueOf(body.length()))
+                .withBody(body)));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL(SAMPLE_URL))
+                .headers(GENERIC_DATA_21_HEADER)
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            assertThat(response.getContentLength())
+                    .isEqualTo(body.length());
+        }
+    }
+
+    @Test
+    public void testGetContentLengthUnknown() throws IOException {
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL(SAMPLE_URL))
+                .headers(GENERIC_DATA_21_HEADER)
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            // WireMock uses chunked transfer by default, so content length is unknown
+            assertThat(response.getContentLength())
+                    .isIn(-1L, (long) SAMPLE_XML.getBytes(UTF_8).length);
+        }
+    }
+
+    @Test
+    public void testOnComplete() throws IOException {
+        AtomicReference<HttpRequest> completedRequest = new AtomicReference<>();
+        AtomicLong completedBytesRead = new AtomicLong(-1);
+        AtomicLong completedElapsedMs = new AtomicLong(-1);
+
+        UrlConnectionListener listener = new UrlConnectionListener() {
+            @Override
+            public void onComplete(@lombok.NonNull HttpRequest request, long bytesRead, long elapsedMs) {
+                completedRequest.set(request);
+                completedBytesRead.set(bytesRead);
+                completedElapsedMs.set(elapsedMs);
+            }
+        };
+
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .listener(listener)
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL(SAMPLE_URL))
+                .headers(GENERIC_DATA_21_HEADER)
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            try (InputStream body = response.getBody()) {
+                byte[] buf = new byte[8192];
+                while (body.read(buf) != -1) {
+                    // consume body
+                }
+            }
+        }
+
+        assertThat(completedRequest.get()).isNotNull();
+        assertThat(completedBytesRead.get()).isEqualTo(SAMPLE_XML.getBytes(UTF_8).length);
+        assertThat(completedElapsedMs.get()).isGreaterThanOrEqualTo(0);
+    }
+
+    @Test
+    public void testOnCompleteWithoutBodyRead() throws IOException {
+        AtomicLong completedBytesRead = new AtomicLong(0);
+
+        UrlConnectionListener listener = new UrlConnectionListener() {
+            @Override
+            public void onComplete(@lombok.NonNull HttpRequest request, long bytesRead, long elapsedMs) {
+                completedBytesRead.set(bytesRead);
+            }
+        };
+
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .listener(listener)
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL(SAMPLE_URL))
+                .headers(GENERIC_DATA_21_HEADER)
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            // close without reading body
+        }
+
+        assertThat(completedBytesRead.get())
+                .describedAs("bytesRead should be -1 when body was not read")
+                .isEqualTo(-1);
+    }
+
+    @Test
+    public void testOnCompleteAfterRedirect() throws IOException {
+        AtomicReference<HttpRequest> completedRequest = new AtomicReference<>();
+        AtomicLong completedBytesRead = new AtomicLong(-1);
+
+        UrlConnectionListener listener = new UrlConnectionListener() {
+            @Override
+            public void onComplete(@lombok.NonNull HttpRequest request, long bytesRead, long elapsedMs) {
+                completedRequest.set(request);
+                completedBytesRead.set(bytesRead);
+            }
+        };
+
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .listener(listener)
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(aResponse().withStatus(302).withHeader(HttpHeaders.HTTP_LOCATION_HEADER, SECOND_URL)));
+        wire.stubFor(get(SECOND_URL).willReturn(okXml(SAMPLE_XML)));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL(SAMPLE_URL))
+                .headers(GENERIC_DATA_21_HEADER)
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            try (InputStream body = response.getBody()) {
+                drain(body);
+            }
+        }
+
+        assertThat(completedRequest.get())
+                .describedAs("onComplete must fire once for the final response after a redirect")
+                .isNotNull()
+                .extracting(HttpRequest::getQuery)
+                .isEqualTo(wireURL(SECOND_URL));
+        assertThat(completedBytesRead.get()).isEqualTo(SAMPLE_XML.getBytes(UTF_8).length);
+    }
+
+    @Test
+    public void testGetBodyCalledMultipleTimes() throws IOException {
+        AtomicLong completedBytesRead = new AtomicLong(-1);
+
+        UrlConnectionListener listener = new UrlConnectionListener() {
+            @Override
+            public void onComplete(@lombok.NonNull HttpRequest request, long bytesRead, long elapsedMs) {
+                completedBytesRead.set(bytesRead);
+            }
+        };
+
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .listener(listener)
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL(SAMPLE_URL))
+                .headers(GENERIC_DATA_21_HEADER)
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            InputStream first = response.getBody();
+            InputStream second = response.getBody();
+            // Single-use semantics: repeated getBody() returns the same stream
+            // so the first stream's count cannot be lost.
+            assertThat(second).isSameAs(first);
+            try (InputStream body = second) {
+                drain(body);
+            }
+        }
+
+        assertThat(completedBytesRead.get())
+                .describedAs("count from the first body stream must not be lost on a second getBody()")
+                .isEqualTo(SAMPLE_XML.getBytes(UTF_8).length);
+    }
+
+    private static void drain(InputStream stream) throws IOException {
+        byte[] buf = new byte[8192];
+        while (stream.read(buf) != -1) {
+            // consume body
+        }
     }
 
     protected SSLSocketFactory wireSSLSocketFactory() {
@@ -592,14 +884,14 @@ public abstract class HttpClientTest {
         return (hostname, session) -> hostname.equals("localhost");
     }
 
-    protected URL wireURL(String path) throws MalformedURLException {
+    protected URI wireURL(String path) {
         if (!path.startsWith("/")) {
             path = "/" + path;
         }
-        return new URL(String.format(Locale.ROOT, "%s%s", wire.baseUrl(), path));
+        return URI.create(String.format(Locale.ROOT, "%s%s", wire.baseUrl(), path));
     }
 
-    private String wireHttpUrl(String url) throws MalformedURLException {
+    private String wireHttpUrl(String url) {
         return wireURL(url)
                 .toString()
                 .replace("https", "http")
@@ -636,4 +928,8 @@ public abstract class HttpClientTest {
 
     public static final MediaType APPLICATION_XML_UTF_8
             = MediaType.builder().type("application").subtype("xml").build().withCharset(StandardCharsets.UTF_8);
+
+    public static final HttpHeaders GENERIC_DATA_21_HEADER = HttpHeaders.builder().mediaType(GENERIC_DATA_21).build();
+
+    public static final HttpHeaders APPLICATION_XML_UTF_8_HEADER = HttpHeaders.builder().mediaType(APPLICATION_XML_UTF_8).build();
 }
