@@ -265,4 +265,8 @@ public final class UrlConnectionHttpClient implements HttpClient {
             throw new IOException("Invalid URL: '" + uri + "'", ex);
         }
     }
+
+    public static class Builder {
+        // Fix Javadoc error
+    }
 }
