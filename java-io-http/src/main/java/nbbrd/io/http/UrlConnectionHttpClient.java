@@ -33,13 +33,25 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
+ * HTTP client implementation backed by {@link HttpURLConnection}.
+ * <p>
+ * Supports automatic redirect following, retry on transient network errors,
+ * content encoding (gzip, deflate), proxy selection, SSL configuration,
+ * and HTTP authentication (Basic, Bearer).
+ * </p>
+ *
  * @author Philippe Charles
  */
 @lombok.Getter
 @lombok.Builder(toBuilder = true)
 public final class UrlConnectionHttpClient implements HttpClient {
 
-    public static Builder builder() {
+    /**
+     * Creates a new builder pre-configured with gzip and deflate content encoding decoders.
+     *
+     * @return a new builder with default encoding support
+     */
+    public static @NonNull Builder builder() {
         return new Builder()
                 .decoder(UrlConnectionEncoding.gzip())
                 .decoder(UrlConnectionEncoding.deflate());
@@ -47,52 +59,92 @@ public final class UrlConnectionHttpClient implements HttpClient {
 
     private static final int NO_TIMEOUT = 0;
 
+    /**
+     * Read timeout in milliseconds. A value of {@code 0} means no timeout.
+     */
     @NonNegative
     @lombok.Builder.Default
     int readTimeout = NO_TIMEOUT;
 
+    /**
+     * Connection timeout in milliseconds. A value of {@code 0} means no timeout.
+     */
     @NonNegative
     @lombok.Builder.Default
     int connectTimeout = NO_TIMEOUT;
 
+    /**
+     * Maximum number of HTTP redirects to follow before throwing an {@link IOException}.
+     */
     @NonNegative
     @lombok.Builder.Default
     int maxRedirects = 20;
 
+    /**
+     * Maximum number of retries on transient network errors (e.g. {@link SocketTimeoutException},
+     * {@link SocketException}). A value of {@code 0} means no retries.
+     */
     @NonNegative
     @lombok.Builder.Default
     int maxRetries = 0;
 
+    /**
+     * Proxy selector used to determine the proxy for each request.
+     */
     @lombok.NonNull
     @lombok.Builder.Default
     ProxySelector proxySelector = ProxySelector.getDefault();
 
+    /**
+     * SSL socket factory used for HTTPS connections.
+     */
     @lombok.NonNull
     @lombok.Builder.Default
     SSLSocketFactory sslSocketFactory = HttpsURLConnection.getDefaultSSLSocketFactory();
 
+    /**
+     * Hostname verifier used for HTTPS connections.
+     */
     @lombok.NonNull
     @lombok.Builder.Default
     HostnameVerifier hostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
 
+    /**
+     * Factory used to open {@link URLConnection} instances.
+     */
     @lombok.NonNull
     @lombok.Builder.Default
     UrlConnectionFactory urlConnectionFactory = UrlConnectionFactory.getDefault();
 
+    /**
+     * Listener notified of connection lifecycle events such as open, redirect, and success.
+     */
     @lombok.NonNull
     @lombok.Builder.Default
     UrlConnectionListener listener = UrlConnectionListener.noOp();
 
+    /**
+     * Content encoding decoders applied to response bodies (e.g. gzip, deflate).
+     */
     @lombok.Singular
     List<UrlConnectionEncoding> decoders;
 
+    /**
+     * Authenticator used to provide credentials for HTTP authentication challenges.
+     */
     @lombok.NonNull
     @lombok.Builder.Default
     HttpAuthenticator authenticator = HttpAuthenticator.noOp();
 
+    /**
+     * Authentication scheme to use for requests.
+     */
     @lombok.Builder.Default
     HttpAuthScheme authScheme = HttpAuthScheme.NONE;
 
+    /**
+     * User-Agent header value sent with each request, or {@code null} to omit it.
+     */
     @lombok.Builder.Default
     String userAgent = null;
 
@@ -101,6 +153,20 @@ public final class UrlConnectionHttpClient implements HttpClient {
         return "URL connection client";
     }
 
+    /**
+     * Sends an HTTP request and returns the response.
+     * <p>
+     * This method handles redirects (up to {@code maxRedirects}), retries on transient
+     * network errors (up to {@code maxRetries}), and HTTP authentication challenges.
+     * Non-successful responses that are not redirects or recoverable client errors
+     * result in an {@link HttpResponseException}.
+     * </p>
+     *
+     * @param request the HTTP request to send
+     * @return the HTTP response from the server
+     * @throws HttpResponseException if the server returns a non-successful response
+     * @throws IOException           if a network or I/O error occurs
+     */
     @Override
     public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
         for (int attempt = 0; ; attempt++) {
@@ -250,6 +316,13 @@ public final class UrlConnectionHttpClient implements HttpClient {
         }
     }
 
+    /**
+     * Converts a {@link URL} to a {@link URI}.
+     *
+     * @param url the URL to convert
+     * @return the corresponding URI
+     * @throws IOException if the URL has invalid URI syntax
+     */
     public static @NonNull URI toURI(@NonNull URL url) throws IOException {
         try {
             return url.toURI();
@@ -258,6 +331,13 @@ public final class UrlConnectionHttpClient implements HttpClient {
         }
     }
 
+    /**
+     * Converts a {@link URI} to a {@link URL}.
+     *
+     * @param uri the URI to convert
+     * @return the corresponding URL
+     * @throws IOException if the URI cannot be converted to a valid URL
+     */
     public static @NonNull URL toURL(@NonNull URI uri) throws IOException {
         try {
             return uri.toURL();

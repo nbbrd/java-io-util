@@ -2,12 +2,14 @@ package nbbrd.io.http;
 
 import internal.io.http.DisconnectingInputStream;
 import lombok.NonNull;
+import nbbrd.design.NotThreadSafe;
 import nbbrd.io.net.MediaType;
 import nbbrd.io.text.TextResource;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
+@NotThreadSafe
 public interface HttpResponse extends Closeable {
 
     @NonNull

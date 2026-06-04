@@ -2,12 +2,14 @@ package nbbrd.io.http;
 
 import internal.io.http.UrlHelper;
 import lombok.NonNull;
+import nbbrd.design.NotThreadSafe;
 import nbbrd.design.StaticFactoryMethod;
 
 import java.net.Proxy;
 import java.net.URL;
 import java.util.function.Supplier;
 
+@NotThreadSafe
 public interface UrlConnectionListener {
 
     default void onOpen(@NonNull HttpRequest request, @NonNull Proxy proxy, @NonNull HttpAuthScheme scheme) {
