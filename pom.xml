@@ -84,9 +84,9 @@
                 <version>3.27.7</version>
             </dependency>
             <dependency>
-                <groupId>com.github.tomakehurst</groupId>
-                <artifactId>wiremock-jre8-standalone</artifactId>
-                <version>3.0.1</version>
+                <groupId>org.wiremock</groupId>
+                <artifactId>wiremock-standalone</artifactId>
+                <version>3.13.2</version>
             </dependency>
             <dependency>
                 <!-- slf4j required by wiremock-jre8-standalone -->
@@ -488,7 +488,9 @@
                                         </checkMavenCentral>
                                         <!-- extra-enforcer-rules -->
                                         <banCircularDependencies/>
-                                        <banDuplicateClasses/>
+                                        <banDuplicateClasses>
+                                            <ignoredScopes>test</ignoredScopes>
+                                        </banDuplicateClasses>
                                         <enforceBytecodeVersion>
                                             <maxJdkVersion>8</maxJdkVersion>
                                             <ignoredScopes>
