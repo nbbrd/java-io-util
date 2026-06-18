@@ -33,14 +33,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Add support for Bearer authentication scheme in HttpClient
 
-### Fixed
-
-- Fix authentication errors in HttpClient
-
 ### Changed
 
 - Migrate OSSRH to Central Portal
 - Remove preemptiveAuth option in HttpContext
+
+### Fixed
+
+- Fix authentication errors in HttpClient
 
 ## [0.0.34] - 2025-05-08
 
@@ -85,13 +85,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.0.29] - 2024-06-21
 
-### Fixed
-
-- Fix MalformedInputException in ProcessReader [#329](https://github.com/nbbrd/java-io-util/issues/329)
-
 ### Added
 
 - Add PowerShellWrapper
+
+### Fixed
+
+- Fix MalformedInputException in ProcessReader [#329](https://github.com/nbbrd/java-io-util/issues/329)
 
 ## [0.0.28] - 2024-03-21
 
