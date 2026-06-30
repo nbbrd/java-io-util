@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.*;
 
 class LazyHttpClientTest {
@@ -25,7 +26,13 @@ class LazyHttpClientTest {
     public void createsDelegateOnFirstSendAndReusesIt() throws IOException {
         AtomicInteger supplierCalls = new AtomicInteger();
         AtomicInteger delegateCalls = new AtomicInteger();
-        HttpResponse expected = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
+        HttpResponse expected = PersistentResponse.builder()
+                .statusCode(HttpResponse.NO_STATUS_CODE)
+                .reasonPhrase("")
+                .contentType(MediaType.parse("text/plain"))
+                .headers(HttpHeaders.EMPTY)
+                .body("hello".getBytes(UTF_8))
+                .build();
         HttpClient delegate = new HttpClient() {
             @Override
             public @NonNull String getDescription() {
@@ -99,7 +106,13 @@ class LazyHttpClientTest {
 
             @Override
             public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
-                return PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
+                return PersistentResponse.builder()
+                        .statusCode(HttpResponse.NO_STATUS_CODE)
+                        .reasonPhrase("")
+                        .contentType(MediaType.parse("text/plain"))
+                        .headers(HttpHeaders.EMPTY)
+                        .body("hello".getBytes(UTF_8))
+                        .build();
             }
         });
 

@@ -3,6 +3,7 @@ package internal.io;
 import _test.io.Util;
 import lombok.NonNull;
 import nbbrd.io.FileParser;
+import nbbrd.io.Resource;
 import nbbrd.io.text.TextParser;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -45,7 +46,7 @@ public class LockingFileParserTest {
                     } catch (InterruptedException e) {
                         throw new RuntimeException(e);
                     }
-                    return new String(InternalResource.readAllBytes(stream), UTF_8);
+                    return new String(Resource.readAllBytes(stream), UTF_8);
                 })
         );
 

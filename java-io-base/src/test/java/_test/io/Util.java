@@ -1,6 +1,5 @@
 package _test.io;
 
-import internal.io.InternalResource;
 import nbbrd.io.Resource;
 import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IORunnable;
@@ -98,7 +97,7 @@ public final class Util {
 
     public static byte[] decode(byte[] bytes, IOUnaryOperator<InputStream> encoder) throws IOException {
         try (InputStream input = encoder.applyWithIO(new ByteArrayInputStream(bytes))) {
-            return InternalResource.readAllBytes(input);
+            return Resource.readAllBytes(input);
         }
     }
 

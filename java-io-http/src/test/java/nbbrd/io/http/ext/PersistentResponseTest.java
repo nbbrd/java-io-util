@@ -1,16 +1,17 @@
 package nbbrd.io.http.ext;
 
 import _test.io.http.StubHttpResponse;
+import nbbrd.io.Resource;
 import nbbrd.io.http.HttpHeaders;
 import nbbrd.io.http.HttpResponse;
 import nbbrd.io.net.MediaType;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
@@ -18,7 +19,13 @@ public class PersistentResponseTest {
 
     @Test
     public void testCopyOfReturnsSameInstance() throws IOException {
-        PersistentResponse response = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
+        PersistentResponse response = PersistentResponse.builder()
+                .statusCode(HttpResponse.NO_STATUS_CODE)
+                .reasonPhrase("")
+                .contentType(MediaType.parse("text/plain"))
+                .headers(HttpHeaders.EMPTY)
+                .body("hello".getBytes(UTF_8))
+                .build();
 
         assertThat(PersistentResponse.copyOf(response))
                 .isSameAs(response);
@@ -41,17 +48,18 @@ public class PersistentResponseTest {
     @Test
     public void testGetBodyUsesContentTypeCharset() throws IOException {
         String expected = "caf\u00e9";
-        PersistentResponse response = PersistentResponse.of(
-                HttpResponse.NO_STATUS_CODE,
-                "",
-                MediaType.parse("text/plain").withCharset(StandardCharsets.ISO_8859_1),
-                HttpHeaders.EMPTY,
-                expected
-        );
+        MediaType contentType = MediaType.parse("text/plain").withCharset(StandardCharsets.ISO_8859_1);
+        PersistentResponse response = PersistentResponse.builder()
+                .statusCode(HttpResponse.NO_STATUS_CODE)
+                .reasonPhrase("")
+                .contentType(contentType)
+                .headers(HttpHeaders.EMPTY)
+                .body(expected.getBytes(contentType.getCharset().orElse(UTF_8)))
+                .build();
 
         byte[] bytes;
         try (InputStream body = response.getBody()) {
-            bytes = readAll(body);
+            bytes = Resource.readAllBytes(body);
         }
 
         assertThat(bytes)
@@ -61,40 +69,59 @@ public class PersistentResponseTest {
     @Test
     public void testGetBodyDefaultsToUtf8() throws IOException {
         String expected = "\u20ac\u6f22\u5b57";
-        PersistentResponse response = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, expected);
+        PersistentResponse response = PersistentResponse.builder()
+                .statusCode(HttpResponse.NO_STATUS_CODE)
+                .reasonPhrase("")
+                .contentType(MediaType.parse("text/plain"))
+                .headers(HttpHeaders.EMPTY)
+                .body(expected.getBytes(UTF_8))
+                .build();
 
         byte[] bytes;
         try (InputStream body = response.getBody()) {
-            bytes = readAll(body);
+            bytes = Resource.readAllBytes(body);
         }
 
         assertThat(bytes)
-                .isEqualTo(expected.getBytes(StandardCharsets.UTF_8));
+                .isEqualTo(expected.getBytes(UTF_8));
     }
 
     @Test
     public void testGetContentLength() {
-        PersistentResponse response = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
+        PersistentResponse response = PersistentResponse.builder()
+                .statusCode(HttpResponse.NO_STATUS_CODE)
+                .reasonPhrase("")
+                .contentType(MediaType.parse("text/plain"))
+                .headers(HttpHeaders.EMPTY)
+                .body("hello".getBytes(UTF_8))
+                .build();
         assertThat(response.getContentLength())
                 .isEqualTo(5);
     }
 
     @Test
     public void testGetContentLengthWithCharset() {
-        PersistentResponse response = PersistentResponse.of(
-                HttpResponse.NO_STATUS_CODE,
-                "",
-                MediaType.parse("text/plain").withCharset(StandardCharsets.UTF_8),
-                HttpHeaders.EMPTY,
-                "\u20ac"
-        );
+        MediaType contentType = MediaType.parse("text/plain").withCharset(UTF_8);
+        PersistentResponse response = PersistentResponse.builder()
+                .statusCode(HttpResponse.NO_STATUS_CODE)
+                .reasonPhrase("")
+                .contentType(contentType)
+                .headers(HttpHeaders.EMPTY)
+                .body("\u20ac".getBytes(contentType.getCharset().orElse(UTF_8)))
+                .build();
         assertThat(response.getContentLength())
                 .isEqualTo(3);
     }
 
     @Test
-    public void testCloseIsNoOp() {
-        PersistentResponse response = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
+    public void testCloseIsNoOp() throws IOException {
+        PersistentResponse response = PersistentResponse.builder()
+                .statusCode(HttpResponse.NO_STATUS_CODE)
+                .reasonPhrase("")
+                .contentType(MediaType.parse("text/plain"))
+                .headers(HttpHeaders.EMPTY)
+                .body("hello".getBytes(UTF_8))
+                .build();
 
         assertThatCode(response::close)
                 .doesNotThrowAnyException();
@@ -103,15 +130,5 @@ public class PersistentResponseTest {
 
         assertThat(response.getBodyAsString())
                 .isEqualTo("hello");
-    }
-
-    private static byte[] readAll(InputStream input) throws IOException {
-        ByteArrayOutputStream result = new ByteArrayOutputStream();
-        byte[] buffer = new byte[64];
-        int count;
-        while ((count = input.read(buffer)) != -1) {
-            result.write(buffer, 0, count);
-        }
-        return result.toByteArray();
     }
 }

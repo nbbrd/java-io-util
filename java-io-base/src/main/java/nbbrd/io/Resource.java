@@ -16,6 +16,7 @@
  */
 package nbbrd.io;
 
+import internal.io.InternalResource;
 import internal.io.UncloseableInputStream;
 import internal.io.UncloseableOutputStream;
 import lombok.NonNull;
@@ -192,5 +193,11 @@ public final class Resource {
     @StaticFactoryMethod(OutputStream.class)
     public static @NonNull OutputStream uncloseableOutputStream(@NonNull OutputStream delegate) {
         return new UncloseableOutputStream(delegate);
+    }
+
+    public static @NonNull byte[] readAllBytes(@NonNull InputStream stream) throws IOException {
+        ByteArrayOutputStream result = new ByteArrayOutputStream();
+        InternalResource.transferTo(stream, result);
+        return result.toByteArray();
     }
 }

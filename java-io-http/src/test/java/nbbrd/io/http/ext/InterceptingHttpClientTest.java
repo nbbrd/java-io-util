@@ -2,7 +2,6 @@ package nbbrd.io.http.ext;
 
 import lombok.NonNull;
 import nbbrd.io.function.IORunnable;
-import nbbrd.io.function.IOSupplier;
 import nbbrd.io.http.HttpClient;
 import nbbrd.io.http.HttpHeaders;
 import nbbrd.io.http.HttpRequest;
@@ -16,6 +15,7 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.*;
 
 class InterceptingHttpClientTest {
@@ -27,7 +27,13 @@ class InterceptingHttpClientTest {
 
     @Test
     public void interceptorReceivesOriginalResponse() throws IOException {
-        HttpResponse original = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
+        HttpResponse original = PersistentResponse.builder()
+                .statusCode(HttpResponse.NO_STATUS_CODE)
+                .reasonPhrase("")
+                .contentType(MediaType.parse("text/plain"))
+                .headers(HttpHeaders.EMPTY)
+                .body("hello".getBytes(UTF_8))
+                .build();
         AtomicInteger interceptCalls = new AtomicInteger();
 
         InterceptingHttpClient x = new InterceptingHttpClient(
@@ -47,8 +53,20 @@ class InterceptingHttpClientTest {
 
     @Test
     public void interceptorCanReplaceResponse() throws IOException {
-        HttpResponse original = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "original");
-        HttpResponse replacement = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "replaced");
+        HttpResponse original = PersistentResponse.builder()
+                .statusCode(HttpResponse.NO_STATUS_CODE)
+                .reasonPhrase("")
+                .contentType(MediaType.parse("text/plain"))
+                .headers(HttpHeaders.EMPTY)
+                .body("original".getBytes(UTF_8))
+                .build();
+        HttpResponse replacement = PersistentResponse.builder()
+                .statusCode(HttpResponse.NO_STATUS_CODE)
+                .reasonPhrase("")
+                .contentType(MediaType.parse("text/plain"))
+                .headers(HttpHeaders.EMPTY)
+                .body("replaced".getBytes(UTF_8))
+                .build();
 
         InterceptingHttpClient x = new InterceptingHttpClient(
                 new StubClient(original),
@@ -62,7 +80,13 @@ class InterceptingHttpClientTest {
 
     @Test
     public void interceptorReceivesClientAndRequest() throws IOException {
-        HttpResponse response = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
+        HttpResponse response = PersistentResponse.builder()
+                .statusCode(HttpResponse.NO_STATUS_CODE)
+                .reasonPhrase("")
+                .contentType(MediaType.parse("text/plain"))
+                .headers(HttpHeaders.EMPTY)
+                .body("hello".getBytes(UTF_8))
+                .build();
         StubClient delegate = new StubClient(response);
 
         InterceptingHttpClient x = new InterceptingHttpClient(
@@ -170,8 +194,20 @@ class InterceptingHttpClientTest {
     @Test
     public void interceptorCanRetryWithClient() throws IOException {
         AtomicInteger sendCalls = new AtomicInteger();
-        HttpResponse first = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "first");
-        HttpResponse second = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "second");
+        HttpResponse first = PersistentResponse.builder()
+                .statusCode(HttpResponse.NO_STATUS_CODE)
+                .reasonPhrase("")
+                .contentType(MediaType.parse("text/plain"))
+                .headers(HttpHeaders.EMPTY)
+                .body("first".getBytes(UTF_8))
+                .build();
+        HttpResponse second = PersistentResponse.builder()
+                .statusCode(HttpResponse.NO_STATUS_CODE)
+                .reasonPhrase("")
+                .contentType(MediaType.parse("text/plain"))
+                .headers(HttpHeaders.EMPTY)
+                .body("second".getBytes(UTF_8))
+                .build();
 
         HttpClient delegate = new HttpClient() {
             @Override
