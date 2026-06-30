@@ -27,7 +27,7 @@ class InterceptingHttpClientTest {
 
     @Test
     public void interceptorReceivesOriginalResponse() throws IOException {
-        HttpResponse original = PersistentResponse.of(MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
+        HttpResponse original = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
         AtomicInteger interceptCalls = new AtomicInteger();
 
         InterceptingHttpClient x = new InterceptingHttpClient(
@@ -47,8 +47,8 @@ class InterceptingHttpClientTest {
 
     @Test
     public void interceptorCanReplaceResponse() throws IOException {
-        HttpResponse original = PersistentResponse.of(MediaType.parse("text/plain"), HttpHeaders.EMPTY, "original");
-        HttpResponse replacement = PersistentResponse.of(MediaType.parse("text/plain"), HttpHeaders.EMPTY, "replaced");
+        HttpResponse original = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "original");
+        HttpResponse replacement = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "replaced");
 
         InterceptingHttpClient x = new InterceptingHttpClient(
                 new StubClient(original),
@@ -62,7 +62,7 @@ class InterceptingHttpClientTest {
 
     @Test
     public void interceptorReceivesClientAndRequest() throws IOException {
-        HttpResponse response = PersistentResponse.of(MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
+        HttpResponse response = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
         StubClient delegate = new StubClient(response);
 
         InterceptingHttpClient x = new InterceptingHttpClient(
@@ -170,8 +170,8 @@ class InterceptingHttpClientTest {
     @Test
     public void interceptorCanRetryWithClient() throws IOException {
         AtomicInteger sendCalls = new AtomicInteger();
-        HttpResponse first = PersistentResponse.of(MediaType.parse("text/plain"), HttpHeaders.EMPTY, "first");
-        HttpResponse second = PersistentResponse.of(MediaType.parse("text/plain"), HttpHeaders.EMPTY, "second");
+        HttpResponse first = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "first");
+        HttpResponse second = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "second");
 
         HttpClient delegate = new HttpClient() {
             @Override

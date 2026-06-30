@@ -84,6 +84,16 @@ public class ByteCountingClient implements HttpClient {
             return delegate.getHeaders();
         }
 
+        @Override
+        public int getStatusCode() throws IOException {
+            return delegate.getStatusCode();
+        }
+
+        @Override
+        public @NonNull String getReasonPhrase() throws IOException {
+            return delegate.getReasonPhrase();
+        }
+
         /**
          * Returns the response body as an input stream with byte counting.
          *

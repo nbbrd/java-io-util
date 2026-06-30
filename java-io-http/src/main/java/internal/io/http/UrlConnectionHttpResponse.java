@@ -75,6 +75,17 @@ public final class UrlConnectionHttpResponse implements HttpResponse {
     }
 
     @Override
+    public int getStatusCode() throws IOException {
+        return conn.getResponseCode();
+    }
+
+    @Override
+    public @NonNull String getReasonPhrase() throws IOException {
+        String message = conn.getResponseMessage();
+        return message != null ? message : "";
+    }
+
+    @Override
     public @NonNull InputStream getBody() throws IOException {
         // Single-use semantics: the underlying connection stream can only be read once,
         // so repeated getBody() calls return the same stream instead of losing the count.

@@ -25,7 +25,7 @@ class LazyHttpClientTest {
     public void createsDelegateOnFirstSendAndReusesIt() throws IOException {
         AtomicInteger supplierCalls = new AtomicInteger();
         AtomicInteger delegateCalls = new AtomicInteger();
-        HttpResponse expected = PersistentResponse.of(MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
+        HttpResponse expected = PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
         HttpClient delegate = new HttpClient() {
             @Override
             public @NonNull String getDescription() {
@@ -99,7 +99,7 @@ class LazyHttpClientTest {
 
             @Override
             public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
-                return PersistentResponse.of(MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
+                return PersistentResponse.of(HttpResponse.NO_STATUS_CODE, "", MediaType.parse("text/plain"), HttpHeaders.EMPTY, "hello");
             }
         });
 

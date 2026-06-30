@@ -87,6 +87,16 @@ public final class DumpingHttpClient implements HttpClient {
         }
 
         @Override
+        public int getStatusCode() throws IOException {
+            return delegate.getStatusCode();
+        }
+
+        @Override
+        public @NonNull String getReasonPhrase() throws IOException {
+            return delegate.getReasonPhrase();
+        }
+
+        @Override
         public @NonNull InputStream getBody() throws IOException {
             InputStream inputStream = delegate.getBody();
             try {

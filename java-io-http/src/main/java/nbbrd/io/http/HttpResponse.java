@@ -26,6 +26,26 @@ public interface HttpResponse extends Closeable {
     @NonNull
     HttpHeaders getHeaders() throws IOException;
 
+    /**
+     * Returns the HTTP status code.
+     *
+     * @return the status code, or {@link #NO_STATUS_CODE} if unknown
+     * @throws IOException if an I/O error occurs
+     */
+    default int getStatusCode() throws IOException {
+        return NO_STATUS_CODE;
+    }
+
+    /**
+     * Returns the HTTP reason phrase.
+     *
+     * @return a non-null reason phrase; empty if unknown
+     * @throws IOException if an I/O error occurs
+     */
+    default @NonNull String getReasonPhrase() throws IOException {
+        return "";
+    }
+
     @NonNull
     InputStream getBody() throws IOException;
 
@@ -44,4 +64,6 @@ public interface HttpResponse extends Closeable {
     }
 
     int NO_CONTENT_LENGTH = -1;
+
+    int NO_STATUS_CODE = -1;
 }

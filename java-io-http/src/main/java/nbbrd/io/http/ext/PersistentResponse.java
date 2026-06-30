@@ -18,8 +18,13 @@ public class PersistentResponse implements HttpResponse {
     public static @NonNull PersistentResponse copyOf(@NonNull HttpResponse response) throws IOException {
         return response instanceof PersistentResponse
                 ? (PersistentResponse) response
-                : of(response.getContentType(), response.getHeaders(), response.getBodyAsString());
+                : of(response.getStatusCode(), response.getReasonPhrase(), response.getContentType(), response.getHeaders(), response.getBodyAsString());
     }
+
+    int statusCode;
+
+    @NonNull
+    String reasonPhrase;
 
     @NonNull
     MediaType contentType;

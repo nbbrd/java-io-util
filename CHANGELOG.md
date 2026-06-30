@@ -10,6 +10,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Added
 
 - Add ByteCountingClient to HTTP module
+- Add support of HTTP status code in HttpResponse
 
 ## [0.0.38] - 2026-06-02
 
