@@ -374,6 +374,33 @@ public abstract class HttpClientTest {
     }
 
     @Test
+    public void testNonRedirect3xx() throws MalformedURLException {
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .build();
+        HttpClient x = getClient(context);
+
+        // 3xx codes that are NOT redirects (no Location to follow) must be returned as responses,
+        // not turned into a "Missing redirection url" error. 304 is required by conditional revalidation.
+        for (int nonRedirect : asList(300, 304)) {
+            wire.resetAll();
+            wire.stubFor(get(SAMPLE_URL).willReturn(aResponse().withStatus(nonRedirect)));
+
+            assertThatCode(() -> {
+                try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
+                    assertThat(response.getStatusCode())
+                            .describedAs("Non-redirect 3xx must be returned: code %s", nonRedirect)
+                            .isEqualTo(nonRedirect);
+                }
+            })
+                    .describedAs("Non-redirect 3xx must not throw: code %s", nonRedirect)
+                    .doesNotThrowAnyException();
+        }
+    }
+
+    @Test
     public void testDowngradingRedirect() throws MalformedURLException {
         HttpContext context = HttpContext
                 .builder()

@@ -140,6 +140,50 @@ public abstract class UrlConnectionHttpClientTest extends HttpClientTest {
         assertThat(attempts).hasValue(1);
     }
 
+    @Test
+    public void testReturnedErrorCodes() throws IOException {
+        HttpContext context = HttpContext
+                .builder()
+                .proxySelector(ProxySelector::getDefault)
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .build();
+
+        // Default behavior: 404 is thrown as HttpResponseException.
+        HttpClient defaultClient = getClient(context);
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(notFound()));
+        assertThatIOException()
+                .isThrownBy(() -> defaultClient.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
+                .isInstanceOf(HttpResponseException.class);
+
+        // Opt-in: 404 (and 410) are returned as regular responses.
+        UrlConnectionHttpClient optInClient = getClient(context, this::getURLConnectionFactory)
+                .toBuilder()
+                .returnedErrorCode(404)
+                .returnedErrorCode(410)
+                .build();
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(notFound()));
+        try (HttpResponse response = optInClient.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
+            assertThat(response.getStatusCode()).isEqualTo(404);
+        }
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(status(410)));
+        try (HttpResponse response = optInClient.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
+            assertThat(response.getStatusCode()).isEqualTo(410);
+        }
+
+        // Non-opted-in error codes still throw.
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(status(500)));
+        assertThatIOException()
+                .isThrownBy(() -> optInClient.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
+                .isInstanceOf(HttpResponseException.class);
+    }
+
     private static <T> Supplier<T> counting(Supplier<T> delegate, AtomicInteger counter) {
         return () -> {
             counter.incrementAndGet();

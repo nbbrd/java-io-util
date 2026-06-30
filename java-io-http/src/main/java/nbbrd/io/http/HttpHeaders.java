@@ -51,13 +51,11 @@ public class HttpHeaders {
     }
 
     public @NonNull Optional<String> firstValue(@NonNull String name) {
-        Objects.requireNonNull(name);
         List<String> values = allValues(name);
         return values.isEmpty() ? Optional.empty() : Optional.of(values.get(0));
     }
 
     public @NonNull List<String> allValues(@NonNull String name) {
-        Objects.requireNonNull(name);
         List<String> values = map.get(name);
         return values != null ? values : Collections.emptyList();
     }

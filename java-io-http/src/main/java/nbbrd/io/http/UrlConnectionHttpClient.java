@@ -29,7 +29,11 @@ import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -58,6 +62,19 @@ public final class UrlConnectionHttpClient implements HttpClient {
     }
 
     private static final int NO_TIMEOUT = 0;
+
+    // RFC 7231/7538: 3xx codes that carry a Location header to follow.
+    // Other 3xx (300 without a choice, 304 Not Modified, 305 Use Proxy, 306 unused) are NOT
+    // redirects and are returned as responses so callers (e.g. a caching decorator that needs
+    // 304 for conditional revalidation) can handle them.
+    private static final Set<Integer> FOLLOWED_REDIRECT_CODES =
+            Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+                    HttpURLConnection.HTTP_MOVED_PERM,  // 301
+                    HttpURLConnection.HTTP_MOVED_TEMP,  // 302
+                    HttpURLConnection.HTTP_SEE_OTHER,   // 303
+                    307,                                // Temporary Redirect (no JDK constant)
+                    308                                 // Permanent Redirect (no JDK constant)
+            )));
 
     /**
      * Read timeout in milliseconds. A value of {@code 0} means no timeout.
@@ -143,6 +160,24 @@ public final class UrlConnectionHttpClient implements HttpClient {
     HttpAuthScheme authScheme = HttpAuthScheme.NONE;
 
     /**
+     * HTTP error status codes (4xx/5xx) that should be returned as a regular
+     * {@link HttpResponse} instead of being thrown as {@link HttpResponseException}.
+     * <p>
+     * This is opt-in and empty by default: the client's default contract is to throw
+     * on 4xx/5xx. Enabling specific codes lets callers inspect error responses (headers,
+     * body) — required, for instance, by RFC 9111 negative-response caching in
+     * {@link nbbrd.io.http.ext.CachingHttpClient} (e.g. {@code 404}, {@code 405},
+     * {@code 410}, {@code 414}, {@code 451}, {@code 501}).
+     * </p>
+     * <p>
+     * For {@code 401 Unauthorized}, the built-in authentication-scheme recovery still
+     * runs first; only unrecoverable 401 responses are returned when opted-in.
+     * </p>
+     */
+    @lombok.Singular
+    Set<Integer> returnedErrorCodes;
+
+    /**
      * User-Agent header value sent with each request, or {@code null} to omit it.
      */
     @lombok.Builder.Default
@@ -202,15 +237,19 @@ public final class UrlConnectionHttpClient implements HttpClient {
 
         HttpURLConnection connection = openConnection(request, queryUrl, requestScheme, proxy);
 
-        switch (HttpResponseType.ofResponseCode(connection.getResponseCode())) {
+        int responseCode = connection.getResponseCode();
+        switch (HttpResponseType.ofResponseCode(responseCode)) {
             case REDIRECTION:
-                return redirect(connection, request, redirects);
+                // Only genuine redirects are followed; other 3xx (e.g. 304 Not Modified) are returned as-is.
+                return FOLLOWED_REDIRECT_CODES.contains(responseCode)
+                        ? redirect(connection, request, redirects)
+                        : getResponse(connection, request);
             case SUCCESSFUL:
                 return getResponse(connection, request);
             case CLIENT_ERROR:
                 return recoverClientError(connection, request, redirects, requestScheme);
             default:
-                throw getError(connection);
+                return errorOrResponse(connection, request);
         }
     }
 
@@ -299,6 +338,15 @@ public final class UrlConnectionHttpClient implements HttpClient {
             authenticator.invalidate(connection.getURL());
         }
 
+        return errorOrResponse(connection, request);
+    }
+
+    private HttpResponse errorOrResponse(HttpURLConnection connection, HttpRequest request) throws IOException {
+        // Opt-in: selected 4xx/5xx codes are returned as responses instead of thrown,
+        // so callers can inspect headers/body (e.g. RFC 9111 negative-response caching).
+        if (returnedErrorCodes.contains(connection.getResponseCode())) {
+            return getResponse(connection, request);
+        }
         throw getError(connection);
     }
 
