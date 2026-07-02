@@ -1,6 +1,6 @@
 package nbbrd.io.http;
 
-import _test.io.http.StubHttpResponse;
+import _test.io.http.MockedHttpResponse;
 import lombok.NonNull;
 import nbbrd.io.net.MediaType;
 import org.junit.jupiter.api.Test;
@@ -11,21 +11,18 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class HttpResponseTest {
 
     @Test
-    public void testGetContentLengthDefault() throws IOException {
-        try (HttpResponse response = StubHttpResponse.of(MediaType.parse("text/plain"), new ByteArrayInputStream("hello".getBytes(StandardCharsets.UTF_8)))) {
-            assertThat(response.getContentLength())
-                    .isEqualTo(-1);
-        }
-    }
-
-    @Test
     public void testGetHeadersDefault() throws IOException {
-        try (HttpResponse response = StubHttpResponse.of(MediaType.parse("text/plain"), new ByteArrayInputStream("hello".getBytes(StandardCharsets.UTF_8)))) {
+        try (HttpResponse response = MockedHttpResponse
+                .builder()
+                .contentTypeOf("text/plain")
+                .bodyOf("hello", UTF_8)
+                .build()) {
             assertThat(response.getHeaders())
                     .extracting(HttpHeaders::getMap)
                     .isEqualTo(java.util.Collections.emptyMap());
@@ -37,7 +34,11 @@ public class HttpResponseTest {
         String expected = "caf\u00e9";
         TrackingInputStream body = new TrackingInputStream(expected.getBytes(StandardCharsets.ISO_8859_1));
 
-        try (HttpResponse response = StubHttpResponse.of(MediaType.parse("text/plain").withCharset(StandardCharsets.ISO_8859_1), body)) {
+        try (HttpResponse response = MockedHttpResponse
+                .builder()
+                .contentType(MediaType.parse("text/plain").withCharset(StandardCharsets.ISO_8859_1))
+                .body(() -> body)
+                .build()) {
             assertThat(response.getBodyAsString())
                     .isEqualTo(expected);
         }
@@ -50,7 +51,11 @@ public class HttpResponseTest {
     public void testGetBodyAsStringUsesUtf8ByDefault() throws IOException {
         String expected = "\u20ac\u6f22\u5b57";
 
-        try (HttpResponse response = StubHttpResponse.of(MediaType.parse("text/plain"), new ByteArrayInputStream(expected.getBytes(StandardCharsets.UTF_8)))) {
+        try (HttpResponse response = MockedHttpResponse
+                .builder()
+                .contentTypeOf("text/plain")
+                .bodyOf(expected, UTF_8)
+                .build()) {
             assertThat(response.getBodyAsString())
                     .isEqualTo(expected);
         }
@@ -58,9 +63,13 @@ public class HttpResponseTest {
 
     @Test
     public void testGetBodyAsStringClosesBody() throws IOException {
-        TrackingInputStream body = new TrackingInputStream("hello".getBytes(StandardCharsets.UTF_8));
+        TrackingInputStream body = new TrackingInputStream("hello".getBytes(UTF_8));
 
-        try (HttpResponse response = StubHttpResponse.of(MediaType.parse("text/plain"), body)) {
+        try (HttpResponse response = MockedHttpResponse
+                .builder()
+                .contentTypeOf("text/plain")
+                .body(() -> body)
+                .build()) {
             response.getBodyAsString();
         }
 
@@ -104,7 +113,7 @@ public class HttpResponseTest {
 
     private static final class TrackableResponse implements HttpResponse {
 
-        private final TrackingInputStream body = new TrackingInputStream("hello".getBytes(StandardCharsets.UTF_8));
+        private final TrackingInputStream body = new TrackingInputStream("hello".getBytes(UTF_8));
         private boolean closed;
 
         @Override
@@ -120,6 +129,16 @@ public class HttpResponseTest {
         @Override
         public @NonNull HttpHeaders getHeaders() {
             return HttpHeaders.EMPTY;
+        }
+
+        @Override
+        public int getStatusCode() {
+            return NO_STATUS_CODE;
+        }
+
+        @Override
+        public @lombok.NonNull String getReasonPhrase() {
+            return "";
         }
 
         @Override

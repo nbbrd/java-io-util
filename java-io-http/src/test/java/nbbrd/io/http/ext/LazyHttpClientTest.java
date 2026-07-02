@@ -1,6 +1,7 @@
 package nbbrd.io.http.ext;
 
-import lombok.NonNull;
+import _test.io.http.MockedHttpClient;
+import _test.io.http.MockedHttpResponse;
 import nbbrd.io.http.HttpClient;
 import nbbrd.io.http.HttpHeaders;
 import nbbrd.io.http.HttpRequest;
@@ -26,25 +27,16 @@ class LazyHttpClientTest {
     public void createsDelegateOnFirstSendAndReusesIt() throws IOException {
         AtomicInteger supplierCalls = new AtomicInteger();
         AtomicInteger delegateCalls = new AtomicInteger();
-        HttpResponse expected = PersistentResponse.builder()
+        HttpResponse expected = MockedHttpResponse.builder()
                 .statusCode(HttpResponse.NO_STATUS_CODE)
-                .reasonPhrase("")
-                .contentType(MediaType.parse("text/plain"))
-                .headers(HttpHeaders.EMPTY)
-                .body("hello".getBytes(UTF_8))
+                .contentTypeOf("text/plain")
+                .bodyOf("hello", UTF_8)
                 .build();
-        HttpClient delegate = new HttpClient() {
-            @Override
-            public @NonNull String getDescription() {
-                return "";
-            }
+        HttpClient delegate = new MockedHttpClient(request -> {
+            delegateCalls.incrementAndGet();
+            return expected;
 
-            @Override
-            public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
-                delegateCalls.incrementAndGet();
-                return expected;
-            }
-        };
+        });
 
         LazyHttpClient x = new LazyHttpClient(() -> {
             supplierCalls.incrementAndGet();
@@ -67,17 +59,7 @@ class LazyHttpClientTest {
     @Test
     public void propagatesIOExceptionFromDelegate() {
         IOException failure = new IOException("boom");
-        LazyHttpClient x = new LazyHttpClient(() -> new HttpClient() {
-            @Override
-            public @NonNull String getDescription() {
-                return "";
-            }
-
-            @Override
-            public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
-                throw failure;
-            }
-        });
+        LazyHttpClient x = new LazyHttpClient(() -> MockedHttpClient.ofException(failure));
 
         assertThatIOException()
                 .isThrownBy(() -> x.send(request))
@@ -98,23 +80,14 @@ class LazyHttpClientTest {
     @SuppressWarnings("DataFlowIssue")
     @Test
     public void rejectsNullRequest() {
-        LazyHttpClient x = new LazyHttpClient(() -> new HttpClient() {
-            @Override
-            public @NonNull String getDescription() {
-                return "";
-            }
-
-            @Override
-            public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
-                return PersistentResponse.builder()
+        LazyHttpClient x = new LazyHttpClient(() -> new MockedHttpClient(
+                request -> MockedHttpResponse
+                        .builder()
                         .statusCode(HttpResponse.NO_STATUS_CODE)
-                        .reasonPhrase("")
-                        .contentType(MediaType.parse("text/plain"))
-                        .headers(HttpHeaders.EMPTY)
-                        .body("hello".getBytes(UTF_8))
-                        .build();
-            }
-        });
+                        .contentTypeOf("text/plain")
+                        .bodyOf("hello", UTF_8)
+                        .build()
+        ));
 
         assertThatNullPointerException()
                 .isThrownBy(() -> x.send(null));

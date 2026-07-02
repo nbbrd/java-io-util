@@ -1,4 +1,4 @@
-package nbbrd.io.http;
+package nbbrd.io.http.ext;
 
 import org.junit.jupiter.api.Test;
 

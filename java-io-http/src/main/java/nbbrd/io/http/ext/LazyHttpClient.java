@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 //@DecoratorPattern
 @lombok.Getter
 @lombok.AllArgsConstructor
-public final class LazyHttpClient implements HttpClient {
+public final class LazyHttpClient implements HttpClientDecorator {
 
     @lombok.NonNull
     private final Supplier<HttpClient> delegateSupplier;

@@ -14,10 +14,10 @@ import java.io.InputStream;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongConsumer;
 
-@DecoratorPattern
+@DecoratorPattern(HttpClient.class)
 @lombok.Getter
 @lombok.AllArgsConstructor
-public class ByteCountingClient implements HttpClient {
+public class ByteCountingClient implements HttpClientDecorator {
 
     /**
      * The underlying HTTP client to delegate requests to.

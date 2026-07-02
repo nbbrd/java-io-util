@@ -9,10 +9,10 @@ import nbbrd.io.http.HttpResponse;
 
 import java.io.IOException;
 
-@DecoratorPattern
+@DecoratorPattern(HttpClient.class)
 @lombok.Getter
 @lombok.AllArgsConstructor
-public final class InterceptingHttpClient implements HttpClient {
+public final class InterceptingHttpClient implements HttpClientDecorator {
 
     @lombok.NonNull
     private final HttpClient delegate;

@@ -1,4 +1,4 @@
-package nbbrd.io.http;
+package nbbrd.io.http.ext;
 
 import lombok.NonNull;
 import org.jspecify.annotations.Nullable;

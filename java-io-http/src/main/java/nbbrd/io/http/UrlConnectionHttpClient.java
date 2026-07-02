@@ -22,6 +22,7 @@ import internal.io.http.UrlConnectionHttpResponse;
 import internal.io.http.UrlHelper;
 import lombok.NonNull;
 import nbbrd.design.NonNegative;
+import nbbrd.io.http.ext.HttpResponseException;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -29,11 +30,7 @@ import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.*;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -160,24 +157,6 @@ public final class UrlConnectionHttpClient implements HttpClient {
     HttpAuthScheme authScheme = HttpAuthScheme.NONE;
 
     /**
-     * HTTP error status codes (4xx/5xx) that should be returned as a regular
-     * {@link HttpResponse} instead of being thrown as {@link HttpResponseException}.
-     * <p>
-     * This is opt-in and empty by default: the client's default contract is to throw
-     * on 4xx/5xx. Enabling specific codes lets callers inspect error responses (headers,
-     * body) — required, for instance, by RFC 9111 negative-response caching in
-     * {@link nbbrd.io.http.ext.CachingHttpClient} (e.g. {@code 404}, {@code 405},
-     * {@code 410}, {@code 414}, {@code 451}, {@code 501}).
-     * </p>
-     * <p>
-     * For {@code 401 Unauthorized}, the built-in authentication-scheme recovery still
-     * runs first; only unrecoverable 401 responses are returned when opted-in.
-     * </p>
-     */
-    @lombok.Singular
-    Set<Integer> returnedErrorCodes;
-
-    /**
      * User-Agent header value sent with each request, or {@code null} to omit it.
      */
     @lombok.Builder.Default
@@ -193,14 +172,14 @@ public final class UrlConnectionHttpClient implements HttpClient {
      * <p>
      * This method handles redirects (up to {@code maxRedirects}), retries on transient
      * network errors (up to {@code maxRetries}), and HTTP authentication challenges.
-     * Non-successful responses that are not redirects or recoverable client errors
-     * result in an {@link HttpResponseException}.
+     * Non-successful responses (4xx/5xx) are returned as regular {@link HttpResponse}
+     * instances; wrap this client with {@link nbbrd.io.http.ext.ThrowingHttpClient} if
+     * you want error status codes converted into {@link HttpResponseException}.
      * </p>
      *
      * @param request the HTTP request to send
-     * @return the HTTP response from the server
-     * @throws HttpResponseException if the server returns a non-successful response
-     * @throws IOException           if a network or I/O error occurs
+     * @return the HTTP response from the server (including 4xx/5xx responses)
+     * @throws IOException if a network or I/O error occurs
      */
     @Override
     public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
@@ -217,7 +196,7 @@ public final class UrlConnectionHttpClient implements HttpClient {
 
     private static boolean isRetryable(IOException ex) {
         // Transient network errors (connection reset/refused, read/connect timeout);
-        // HTTP error responses (HttpResponseException) and DNS failures are not retried.
+        // DNS failures are not retried.
         return ex instanceof SocketTimeoutException || ex instanceof SocketException;
     }
 
@@ -244,12 +223,11 @@ public final class UrlConnectionHttpClient implements HttpClient {
                 return FOLLOWED_REDIRECT_CODES.contains(responseCode)
                         ? redirect(connection, request, redirects)
                         : getResponse(connection, request);
-            case SUCCESSFUL:
-                return getResponse(connection, request);
             case CLIENT_ERROR:
                 return recoverClientError(connection, request, redirects, requestScheme);
             default:
-                return errorOrResponse(connection, request);
+                // SUCCESSFUL, SERVER_ERROR, INFORMATIONAL, UNKNOWN: return the response as-is.
+                return getResponse(connection, request);
         }
     }
 
@@ -338,16 +316,8 @@ public final class UrlConnectionHttpClient implements HttpClient {
             authenticator.invalidate(connection.getURL());
         }
 
-        return errorOrResponse(connection, request);
-    }
-
-    private HttpResponse errorOrResponse(HttpURLConnection connection, HttpRequest request) throws IOException {
-        // Opt-in: selected 4xx/5xx codes are returned as responses instead of thrown,
-        // so callers can inspect headers/body (e.g. RFC 9111 negative-response caching).
-        if (returnedErrorCodes.contains(connection.getResponseCode())) {
-            return getResponse(connection, request);
-        }
-        throw getError(connection);
+        // Unrecoverable 4xx responses are returned as-is; wrap with ThrowingHttpClient to convert them into exceptions.
+        return getResponse(connection, request);
     }
 
     private HttpResponse getResponse(HttpURLConnection connection, HttpRequest request) {
@@ -356,13 +326,6 @@ public final class UrlConnectionHttpClient implements HttpClient {
         return result;
     }
 
-    private IOException getError(HttpURLConnection connection) throws IOException {
-        try {
-            return new HttpResponseException(connection.getResponseCode(), connection.getResponseMessage(), connection.getHeaderFields());
-        } finally {
-            UrlConnectionHttpResponse.doClose(connection);
-        }
-    }
 
     /**
      * Converts a {@link URL} to a {@link URI}.

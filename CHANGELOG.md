@@ -13,6 +13,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Add support of HTTP status code in HttpResponse
 - Add caching HTTP client decorator
 
+### Changed
+
+- Refactor HTTP response exception handling as a decorator
+
 ## [0.0.38] - 2026-06-02
 
 ### Changed

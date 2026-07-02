@@ -1,6 +1,7 @@
 package _test.io.http;
 
 import lombok.NonNull;
+import nbbrd.io.function.IOFunction;
 import nbbrd.io.http.HttpClient;
 import nbbrd.io.http.HttpRequest;
 import nbbrd.io.http.HttpResponse;
@@ -9,7 +10,6 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.function.Function;
 
 /**
  * Programmable, instrumented {@link HttpClient} for tests.
@@ -17,10 +17,19 @@ import java.util.function.Function;
  * <p>Records every request, tracks the maximum number of concurrent {@link #send} calls
  * and applies an optional artificial delay to simulate slow networks.</p>
  */
-public final class FakeHttpClient implements HttpClient {
+public final class MockedHttpClient implements HttpClient {
 
-    private final Function<HttpRequest, HttpResponse> handler;
+    public static MockedHttpClient ofException(IOException exception) {
+        return new MockedHttpClient(ignore -> {
+            throw exception;
+        });
+    }
 
+    public static MockedHttpClient ofResponse(HttpResponse response) {
+        return new MockedHttpClient(ignore -> response);
+    }
+
+    private final IOFunction<HttpRequest, HttpResponse> handler;
     private final List<HttpRequest> requests = new CopyOnWriteArrayList<>();
     private final AtomicInteger callCount = new AtomicInteger();
     private final AtomicInteger concurrentCalls = new AtomicInteger();
@@ -28,11 +37,11 @@ public final class FakeHttpClient implements HttpClient {
 
     private volatile long delayMillis = 0;
 
-    public FakeHttpClient(Function<HttpRequest, HttpResponse> handler) {
+    public MockedHttpClient(IOFunction<HttpRequest, HttpResponse> handler) {
         this.handler = handler;
     }
 
-    public FakeHttpClient withDelay(long delayMillis) {
+    public MockedHttpClient withDelay(long delayMillis) {
         this.delayMillis = delayMillis;
         return this;
     }
@@ -57,7 +66,7 @@ public final class FakeHttpClient implements HttpClient {
                     throw new IOException("Interrupted", ex);
                 }
             }
-            return handler.apply(request);
+            return handler.applyWithIO(request);
         } finally {
             concurrentCalls.decrementAndGet();
         }

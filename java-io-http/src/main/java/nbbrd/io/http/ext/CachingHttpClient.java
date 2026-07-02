@@ -33,11 +33,12 @@ import java.util.concurrent.ForkJoinPool;
  * and a concurrent background revalidation for the same resource), and access to the
  * underlying {@link nbbrd.design.NotThreadSafe} {@link HttpClient} is serialized.</p>
  */
-public final class CachingHttpClient implements HttpClient {
+public final class CachingHttpClient implements HttpClientDecorator {
 
     // RFC 9111 6.1: status codes that are heuristically cacheable by default.
     // Includes negative responses (404, 405, 410, 414, 451, 501); the underlying HttpClient
-    // must be configured to return these instead of throwing (see UrlConnectionHttpClient#returnedErrorCodes).
+    // must return these instead of throwing (UrlConnectionHttpClient does so by default; see
+    // ThrowingHttpClient if you want error status codes converted into exceptions).
     private static final Set<Integer> CACHEABLE_STATUS_CODES =
             Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
                     200, 203, 204, 206,
@@ -46,20 +47,20 @@ public final class CachingHttpClient implements HttpClient {
                     501)));
 
     /**
-     * RFC 9111 §6.1 status codes that are heuristically cacheable <strong>and</strong>
-     * would otherwise be thrown as {@link nbbrd.io.http.HttpResponseException} by the
-     * default {@link HttpClient} contract (i.e. 4xx/5xx).
+     * RFC 9111 §6.1 status codes that are heuristically cacheable <strong>and</strong> are
+     * error responses (4xx/5xx) — {@code 404}, {@code 405}, {@code 410}, {@code 414},
+     * {@code 451}, {@code 501}.
      * <p>
-     * Pass this set to {@link nbbrd.io.http.UrlConnectionHttpClient.Builder#returnedErrorCodes(java.util.Collection)}
-     * to make the underlying client return these responses instead of throwing, so this
-     * cache can actually store and serve them.
-     * </p>
-     * <p>Example:
+     * Useful when composing with {@link ThrowingHttpClient} to opt these codes out of the
+     * "errors are exceptions" contract, so this cache can store and serve them:
      * <pre>{@code
-     * HttpClient delegate = UrlConnectionHttpClient.builder()
-     *         .returnedErrorCodes(CachingHttpClient.NEGATIVE_CACHEABLE_STATUS_CODES)
+     * HttpClient base = UrlConnectionHttpClient.builder().build();
+     * HttpClient cached = CachingHttpClient.builder().client(base).build();
+     * HttpClient throwing = ThrowingHttpClient.builder()
+     *         .client(cached)
+     *         .shouldThrow(code -> code >= 400
+     *                 && !CachingHttpClient.NEGATIVE_CACHEABLE_STATUS_CODES.contains(code))
      *         .build();
-     * HttpClient cached = CachingHttpClient.builder().client(delegate).build();
      * }</pre>
      */
     public static final Set<Integer> NEGATIVE_CACHEABLE_STATUS_CODES =

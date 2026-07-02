@@ -22,6 +22,7 @@ import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.matching.AbsentPattern;
 import com.github.tomakehurst.wiremock.matching.AnythingPattern;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
+import nbbrd.io.http.ext.HttpResponseException;
 import nbbrd.io.net.MediaType;
 import org.assertj.core.api.Assumptions;
 import org.junit.jupiter.api.Test;

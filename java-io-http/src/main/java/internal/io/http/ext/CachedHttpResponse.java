@@ -50,6 +50,11 @@ public final class CachedHttpResponse implements HttpResponse {
     }
 
     @Override
+    public @NonNull String getReasonPhrase() {
+        return cached.getReasonPhrase();
+    }
+
+    @Override
     public @NonNull InputStream getBody() {
         return cached.getBodyAsStream();
     }

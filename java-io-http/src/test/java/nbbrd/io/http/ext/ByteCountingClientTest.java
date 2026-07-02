@@ -1,9 +1,7 @@
 package nbbrd.io.http.ext;
 
-import lombok.NonNull;
-import nbbrd.io.function.IORunnable;
-import nbbrd.io.function.IOSupplier;
-import nbbrd.io.http.HttpClient;
+import _test.io.http.MockedHttpResponse;
+import _test.io.http.MockedHttpClient;
 import nbbrd.io.http.HttpHeaders;
 import nbbrd.io.http.HttpRequest;
 import nbbrd.io.http.HttpResponse;
@@ -17,9 +15,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static nbbrd.io.net.MediaType.ANY_TYPE;
 import static org.assertj.core.api.Assertions.*;
 
 class ByteCountingClientTest {
@@ -33,7 +33,7 @@ class ByteCountingClientTest {
     public void reportsZeroBytesWhenBodyIsEmpty() throws IOException {
         AtomicLong reported = new AtomicLong(-1);
         ByteCountingClient x = new ByteCountingClient(
-                MockedClient.ofBody(() -> EmptyInputStream.INSTANCE),
+                MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(() -> EmptyInputStream.INSTANCE).build()),
                 reported::set
         );
 
@@ -50,7 +50,7 @@ class ByteCountingClientTest {
     public void reportsByteCountAfterReadingBody() throws IOException {
         AtomicLong reported = new AtomicLong(-1);
         ByteCountingClient x = new ByteCountingClient(
-                MockedClient.ofBody(() -> new ByteArrayInputStream("hello".getBytes(UTF_8))),
+                MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(() -> new ByteArrayInputStream("hello".getBytes(StandardCharsets.UTF_8))).build()),
                 reported::set
         );
 
@@ -73,7 +73,7 @@ class ByteCountingClientTest {
     public void reportsByteCountWhenReadingSingleBytes() throws IOException {
         AtomicLong reported = new AtomicLong(-1);
         ByteCountingClient x = new ByteCountingClient(
-                MockedClient.ofBody(() -> new ReaderInputStream(new StringReader("ab"), UTF_8)),
+                MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(() -> new ReaderInputStream(new StringReader("ab"), StandardCharsets.UTF_8)).build()),
                 reported::set
         );
 
@@ -92,7 +92,7 @@ class ByteCountingClientTest {
     public void reportsByteCountFromDisconnectingInputStream() throws IOException {
         AtomicLong reported = new AtomicLong(-1);
         ByteCountingClient x = new ByteCountingClient(
-                MockedClient.ofBody(() -> new ReaderInputStream(new StringReader("hello"), UTF_8)),
+                MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(() -> new ReaderInputStream(new StringReader("hello"), StandardCharsets.UTF_8)).build()),
                 reported::set
         );
 
@@ -115,7 +115,7 @@ class ByteCountingClientTest {
     public void delegatesContentType() throws IOException {
         MediaType expected = MediaType.parse("application/json");
         ByteCountingClient x = new ByteCountingClient(
-                MockedClient.of(() -> MockedResponse.builder().mediaType(IOSupplier.of(expected)).build()),
+                MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(expected).build()),
                 bytes -> {
                 }
         );
@@ -128,7 +128,7 @@ class ByteCountingClientTest {
     @Test
     public void delegatesContentLength() throws IOException {
         ByteCountingClient x = new ByteCountingClient(
-                MockedClient.of(() -> MockedResponse.builder().contentLength(42).build()),
+                MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentLength(42).build()),
                 bytes -> {
                 }
         );
@@ -142,7 +142,7 @@ class ByteCountingClientTest {
     public void delegatesHeaders() throws IOException {
         HttpHeaders expected = HttpHeaders.builder().put("X-Custom", "value").build();
         ByteCountingClient x = new ByteCountingClient(
-                MockedClient.of(() -> MockedResponse.builder().headers(expected).build()),
+                MockedHttpClient.ofResponse(MockedHttpResponse.builder().headers(expected).build()),
                 bytes -> {
                 }
         );
@@ -155,29 +155,19 @@ class ByteCountingClientTest {
     @Test
     public void descriptionIncludesDelegateName() {
         ByteCountingClient x = new ByteCountingClient(
-                MockedClient.ofBody(() -> EmptyInputStream.INSTANCE),
+                MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(() -> EmptyInputStream.INSTANCE).build()),
                 bytes -> {
                 }
         );
 
-        assertThat(x.getDescription()).contains("Mocked client");
+        assertThat(x.getDescription()).contains("Byte counting Fake client");
     }
 
     @Test
     public void propagatesIOExceptionFromSend() {
         IOException failure = new IOException("boom");
         ByteCountingClient x = new ByteCountingClient(
-                new HttpClient() {
-                    @Override
-                    public @NonNull String getDescription() {
-                        return "";
-                    }
-
-                    @Override
-                    public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
-                        throw failure;
-                    }
-                },
+                MockedHttpClient.ofException(failure),
                 bytes -> {
                 }
         );
@@ -191,7 +181,7 @@ class ByteCountingClientTest {
     @Test
     public void rejectsNullRequest() {
         ByteCountingClient x = new ByteCountingClient(
-                MockedClient.ofBody(() -> EmptyInputStream.INSTANCE),
+                MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(() -> EmptyInputStream.INSTANCE).build()),
                 bytes -> {
                 }
         );
@@ -201,10 +191,10 @@ class ByteCountingClientTest {
     }
 
     @Test
-    public void closeDelegateEvenWhenListenerFails() throws IOException {
+    public void closeDelegateEvenWhenListenerFails() {
         AtomicLong closeCalls = new AtomicLong();
         ByteCountingClient x = new ByteCountingClient(
-                MockedClient.of(() -> MockedResponse.builder()
+                MockedHttpClient.ofResponse(MockedHttpResponse.builder()
                         .body(() -> new ByteArrayInputStream("a".getBytes(UTF_8)))
                         .onClose(closeCalls::incrementAndGet)
                         .build()),
@@ -224,75 +214,6 @@ class ByteCountingClientTest {
         }).isInstanceOf(RuntimeException.class);
 
         assertThat(closeCalls).hasValue(1);
-    }
-
-    @lombok.AllArgsConstructor(staticName = "of")
-    private static final class MockedClient implements HttpClient {
-
-        public static MockedClient ofBody(IOSupplier<InputStream> body) {
-            return of(() -> MockedResponse.ofBody(body));
-        }
-
-        @NonNull
-        private final IOSupplier<MockedResponse> response;
-
-        @Override
-        public @NonNull String getDescription() {
-            return "Mocked client";
-        }
-
-        @Override
-        public @NonNull HttpResponse send(@NonNull HttpRequest httpRequest) throws IOException {
-            return response.getWithIO();
-        }
-    }
-
-    @lombok.Builder
-    private static final class MockedResponse implements HttpResponse {
-
-        public static MockedResponse ofBody(IOSupplier<InputStream> body) {
-            return builder().body(body).build();
-        }
-
-        @lombok.Builder.Default
-        private final IOSupplier<MediaType> mediaType = IOSupplier.of(MediaType.ANY_TYPE);
-
-        @lombok.Builder.Default
-        private final HttpHeaders headers = HttpHeaders.EMPTY;
-
-        @lombok.Builder.Default
-        private final long contentLength = -1;
-
-        @lombok.Builder.Default
-        private final IOSupplier<InputStream> body = IOSupplier.of(EmptyInputStream.INSTANCE);
-
-        @lombok.Builder.Default
-        private final IORunnable onClose = IORunnable.noOp();
-
-        @Override
-        public @NonNull MediaType getContentType() throws IOException {
-            return mediaType.getWithIO();
-        }
-
-        @Override
-        public @NonNull HttpHeaders getHeaders() {
-            return headers;
-        }
-
-        @Override
-        public long getContentLength() {
-            return contentLength;
-        }
-
-        @Override
-        public @NonNull InputStream getBody() throws IOException {
-            return body.getWithIO();
-        }
-
-        @Override
-        public void close() throws IOException {
-            onClose.runWithIO();
-        }
     }
 }
 

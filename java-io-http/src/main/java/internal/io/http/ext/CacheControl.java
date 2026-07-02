@@ -86,4 +86,8 @@ public class CacheControl {
             return null;
         }
     }
+
+    public static class Builder {
+        // Fix Javadoc error
+    }
 }

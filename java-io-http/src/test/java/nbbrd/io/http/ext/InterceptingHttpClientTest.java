@@ -1,17 +1,13 @@
 package nbbrd.io.http.ext;
 
-import lombok.NonNull;
-import nbbrd.io.function.IORunnable;
+import _test.io.http.MockedHttpClient;
+import _test.io.http.MockedHttpResponse;
 import nbbrd.io.http.HttpClient;
-import nbbrd.io.http.HttpHeaders;
 import nbbrd.io.http.HttpRequest;
 import nbbrd.io.http.HttpResponse;
-import nbbrd.io.net.MediaType;
 import org.junit.jupiter.api.Test;
-import wiremock.org.apache.hc.core5.http.io.entity.EmptyInputStream;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -27,17 +23,15 @@ class InterceptingHttpClientTest {
 
     @Test
     public void interceptorReceivesOriginalResponse() throws IOException {
-        HttpResponse original = PersistentResponse.builder()
+        HttpResponse original = MockedHttpResponse.builder()
                 .statusCode(HttpResponse.NO_STATUS_CODE)
-                .reasonPhrase("")
-                .contentType(MediaType.parse("text/plain"))
-                .headers(HttpHeaders.EMPTY)
-                .body("hello".getBytes(UTF_8))
+                .contentTypeOf("text/plain")
+                .bodyOf("hello", UTF_8)
                 .build();
         AtomicInteger interceptCalls = new AtomicInteger();
 
         InterceptingHttpClient x = new InterceptingHttpClient(
-                new StubClient(original),
+                MockedHttpClient.ofResponse(original),
                 (client, req, response) -> {
                     interceptCalls.incrementAndGet();
                     assertThat(response).isSameAs(original);
@@ -53,23 +47,19 @@ class InterceptingHttpClientTest {
 
     @Test
     public void interceptorCanReplaceResponse() throws IOException {
-        HttpResponse original = PersistentResponse.builder()
+        HttpResponse original = MockedHttpResponse.builder()
                 .statusCode(HttpResponse.NO_STATUS_CODE)
-                .reasonPhrase("")
-                .contentType(MediaType.parse("text/plain"))
-                .headers(HttpHeaders.EMPTY)
-                .body("original".getBytes(UTF_8))
+                .contentTypeOf("text/plain")
+                .bodyOf("original", UTF_8)
                 .build();
-        HttpResponse replacement = PersistentResponse.builder()
+        HttpResponse replacement = MockedHttpResponse.builder()
                 .statusCode(HttpResponse.NO_STATUS_CODE)
-                .reasonPhrase("")
-                .contentType(MediaType.parse("text/plain"))
-                .headers(HttpHeaders.EMPTY)
-                .body("replaced".getBytes(UTF_8))
+                .contentTypeOf("text/plain")
+                .bodyOf("replaced", UTF_8)
                 .build();
 
         InterceptingHttpClient x = new InterceptingHttpClient(
-                new StubClient(original),
+                MockedHttpClient.ofResponse(original),
                 (client, req, response) -> replacement
         );
 
@@ -80,14 +70,12 @@ class InterceptingHttpClientTest {
 
     @Test
     public void interceptorReceivesClientAndRequest() throws IOException {
-        HttpResponse response = PersistentResponse.builder()
+        HttpResponse response = MockedHttpResponse.builder()
                 .statusCode(HttpResponse.NO_STATUS_CODE)
-                .reasonPhrase("")
-                .contentType(MediaType.parse("text/plain"))
-                .headers(HttpHeaders.EMPTY)
-                .body("hello".getBytes(UTF_8))
+                .contentTypeOf("text/plain")
+                .bodyOf("hello", UTF_8)
                 .build();
-        StubClient delegate = new StubClient(response);
+        HttpClient delegate = MockedHttpClient.ofResponse(response);
 
         InterceptingHttpClient x = new InterceptingHttpClient(
                 delegate,
@@ -106,13 +94,13 @@ class InterceptingHttpClientTest {
     @Test
     public void closesResponseWhenInterceptorThrowsIOException() throws IOException {
         AtomicInteger closeCalls = new AtomicInteger();
-        MockedResponse original = MockedResponse.builder()
+        MockedHttpResponse original = MockedHttpResponse.builder()
                 .onClose(closeCalls::incrementAndGet)
                 .build();
 
         IOException failure = new IOException("interceptor failed");
         InterceptingHttpClient x = new InterceptingHttpClient(
-                new StubClient(original),
+                MockedHttpClient.ofResponse(original),
                 (client, req, response) -> {
                     throw failure;
                 }
@@ -128,13 +116,13 @@ class InterceptingHttpClientTest {
     @Test
     public void closesResponseWhenInterceptorThrowsRuntimeException() {
         AtomicInteger closeCalls = new AtomicInteger();
-        MockedResponse original = MockedResponse.builder()
+        MockedHttpResponse original = MockedHttpResponse.builder()
                 .onClose(closeCalls::incrementAndGet)
                 .build();
 
         RuntimeException failure = new RuntimeException("interceptor failed");
         InterceptingHttpClient x = new InterceptingHttpClient(
-                new StubClient(original),
+                MockedHttpClient.ofResponse(original),
                 (client, req, response) -> {
                     throw failure;
                 }
@@ -150,17 +138,7 @@ class InterceptingHttpClientTest {
     public void propagatesIOExceptionFromDelegate() {
         IOException failure = new IOException("delegate failed");
         InterceptingHttpClient x = new InterceptingHttpClient(
-                new HttpClient() {
-                    @Override
-                    public @NonNull String getDescription() {
-                        return "";
-                    }
-
-                    @Override
-                    public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
-                        throw failure;
-                    }
-                },
+                MockedHttpClient.ofException(failure),
                 (client, req, response) -> response
         );
 
@@ -172,18 +150,18 @@ class InterceptingHttpClientTest {
     @Test
     public void descriptionIncludesDelegateName() {
         InterceptingHttpClient x = new InterceptingHttpClient(
-                new StubClient(null),
+                MockedHttpClient.ofResponse(null),
                 (client, req, response) -> response
         );
 
-        assertThat(x.getDescription()).contains("Stub");
+        assertThat(x.getDescription()).contains("Intercepting Fake client");
     }
 
     @SuppressWarnings("ConstantConditions")
     @Test
     public void rejectsNullRequest() {
         InterceptingHttpClient x = new InterceptingHttpClient(
-                new StubClient(null),
+                MockedHttpClient.ofResponse(null),
                 (client, req, response) -> response
         );
 
@@ -194,32 +172,18 @@ class InterceptingHttpClientTest {
     @Test
     public void interceptorCanRetryWithClient() throws IOException {
         AtomicInteger sendCalls = new AtomicInteger();
-        HttpResponse first = PersistentResponse.builder()
+        HttpResponse first = MockedHttpResponse.builder()
                 .statusCode(HttpResponse.NO_STATUS_CODE)
-                .reasonPhrase("")
-                .contentType(MediaType.parse("text/plain"))
-                .headers(HttpHeaders.EMPTY)
-                .body("first".getBytes(UTF_8))
+                .contentTypeOf("text/plain")
+                .bodyOf("first", UTF_8)
                 .build();
-        HttpResponse second = PersistentResponse.builder()
+        HttpResponse second = MockedHttpResponse.builder()
                 .statusCode(HttpResponse.NO_STATUS_CODE)
-                .reasonPhrase("")
-                .contentType(MediaType.parse("text/plain"))
-                .headers(HttpHeaders.EMPTY)
-                .body("second".getBytes(UTF_8))
+                .contentTypeOf("text/plain")
+                .bodyOf("second", UTF_8)
                 .build();
 
-        HttpClient delegate = new HttpClient() {
-            @Override
-            public @NonNull String getDescription() {
-                return "Stub";
-            }
-
-            @Override
-            public @NonNull HttpResponse send(@NonNull HttpRequest request) {
-                return sendCalls.incrementAndGet() == 1 ? first : second;
-            }
-        };
+        HttpClient delegate = new MockedHttpClient(request -> sendCalls.incrementAndGet() == 1 ? first : second);
 
         InterceptingHttpClient x = new InterceptingHttpClient(
                 delegate,
@@ -233,57 +197,6 @@ class InterceptingHttpClientTest {
             assertThat(r).isSameAs(second);
         }
         assertThat(sendCalls).hasValue(2);
-    }
-
-    private static final class StubClient implements HttpClient {
-
-        private final HttpResponse response;
-
-        StubClient(HttpResponse response) {
-            this.response = response;
-        }
-
-        @Override
-        public @NonNull String getDescription() {
-            return "Stub";
-        }
-
-        @Override
-        public @NonNull HttpResponse send(@NonNull HttpRequest request) {
-            return response;
-        }
-    }
-
-    @lombok.Builder
-    private static final class MockedResponse implements HttpResponse {
-
-        @lombok.Builder.Default
-        private final IORunnable onClose = IORunnable.noOp();
-
-        @Override
-        public @NonNull MediaType getContentType() {
-            return MediaType.ANY_TYPE;
-        }
-
-        @Override
-        public @NonNull HttpHeaders getHeaders() {
-            return HttpHeaders.EMPTY;
-        }
-
-        @Override
-        public long getContentLength() {
-            return -1;
-        }
-
-        @Override
-        public @NonNull InputStream getBody() {
-            return EmptyInputStream.INSTANCE;
-        }
-
-        @Override
-        public void close() throws IOException {
-            onClose.runWithIO();
-        }
     }
 }
 

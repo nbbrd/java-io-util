@@ -17,10 +17,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.function.Consumer;
 
-@DecoratorPattern
+@DecoratorPattern(HttpClient.class)
 @lombok.Getter
 @lombok.AllArgsConstructor
-public final class DumpingHttpClient implements HttpClient {
+public final class DumpingHttpClient implements HttpClientDecorator {
 
     @lombok.NonNull
     private final Path folder;

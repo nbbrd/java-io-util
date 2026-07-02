@@ -1,6 +1,7 @@
 package nbbrd.io.http;
 
 import _test.io.http.HttpContext;
+import nbbrd.io.http.ext.ThrowingHttpClient;
 import nbbrd.io.net.MediaType;
 import org.junit.jupiter.api.Test;
 
@@ -24,10 +25,14 @@ public abstract class UrlConnectionHttpClientTest extends HttpClientTest {
 
     @Override
     protected HttpClient getClient(HttpContext context) {
-        return getClient(context, this::getURLConnectionFactory);
+        // Wrap with ThrowingHttpClient so inherited tests keep asserting the "errors are exceptions" contract.
+        // UrlConnectionHttpClient itself no longer throws on 4xx/5xx — it returns responses for all status codes.
+        return ThrowingHttpClient.builder()
+                .client(getRawClient(context, this::getURLConnectionFactory))
+                .build();
     }
 
-    protected UrlConnectionHttpClient getClient(HttpContext context, Supplier<UrlConnectionFactory> urlConnectionFactory) {
+    protected UrlConnectionHttpClient getRawClient(HttpContext context, Supplier<UrlConnectionFactory> urlConnectionFactory) {
         return UrlConnectionHttpClient
                 .builder()
                 .readTimeout(context.getReadTimeout())
@@ -43,6 +48,12 @@ public abstract class UrlConnectionHttpClientTest extends HttpClientTest {
                 .authenticator(context.getAuthenticator())
                 .authScheme(context.getAuthScheme())
                 .userAgent(context.getUserAgent())
+                .build();
+    }
+
+    protected HttpClient getClient(HttpContext context, Supplier<UrlConnectionFactory> urlConnectionFactory) {
+        return ThrowingHttpClient.builder()
+                .client(getRawClient(context, urlConnectionFactory))
                 .build();
     }
 
@@ -149,45 +160,21 @@ public abstract class UrlConnectionHttpClientTest extends HttpClientTest {
                 .hostnameVerifier(this::wireHostnameVerifier)
                 .build();
 
-        // Default behavior: 404 is thrown as HttpResponseException.
-        HttpClient defaultClient = getClient(context);
-        wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(notFound()));
-        assertThatIOException()
-                .isThrownBy(() -> defaultClient.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
-                .isInstanceOf(HttpResponseException.class);
-
-        // Opt-in: 404 (and 410) are returned as regular responses.
-        UrlConnectionHttpClient optInClient = getClient(context, this::getURLConnectionFactory)
-                .toBuilder()
-                .returnedErrorCode(404)
-                .returnedErrorCode(410)
-                .build();
+        // Raw UrlConnectionHttpClient returns 4xx/5xx as regular responses (no throwing).
+        UrlConnectionHttpClient raw = getRawClient(context, this::getURLConnectionFactory);
 
         wire.resetAll();
         wire.stubFor(get(SAMPLE_URL).willReturn(notFound()));
-        try (HttpResponse response = optInClient.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
+        try (HttpResponse response = raw.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
             assertThat(response.getStatusCode()).isEqualTo(404);
         }
 
         wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(status(410)));
-        try (HttpResponse response = optInClient.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
-            assertThat(response.getStatusCode()).isEqualTo(410);
+        wire.stubFor(get(SAMPLE_URL).willReturn(status(500)));
+        try (HttpResponse response = raw.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
+            assertThat(response.getStatusCode()).isEqualTo(500);
         }
 
-        // Non-opted-in error codes still throw.
-        wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(status(500)));
-        assertThatIOException()
-                .isThrownBy(() -> optInClient.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
-                .isInstanceOf(HttpResponseException.class);
-    }
-
-    private static <T> Supplier<T> counting(Supplier<T> delegate, AtomicInteger counter) {
-        return () -> {
-            counter.incrementAndGet();
-            return delegate.get();
-        };
+        // The default throwing contract is provided by ThrowingHttpClient (see ThrowingHttpClientTest).
     }
 }

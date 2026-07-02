@@ -1,7 +1,7 @@
 package nbbrd.io.http.ext;
 
-import _test.io.http.FakeHttpClient;
-import _test.io.http.FakeHttpResponse;
+import _test.io.http.MockedHttpResponse;
+import _test.io.http.MockedHttpClient;
 import _test.io.http.MutableClock;
 import _test.io.http.RecordingCacheEventListener;
 import nbbrd.design.Demo;
@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
@@ -87,7 +88,11 @@ public class CachingHttpClientTest {
     public void testNPE() {
         CachingHttpClient client = CachingHttpClient
                 .builder()
-                .client(new FakeHttpClient(request -> FakeHttpResponse.of(200, HttpHeaders.EMPTY, "")))
+                .client(new MockedHttpClient(request -> MockedHttpResponse
+                        .builder()
+                        .statusCode(200)
+                        .bodyOf("", UTF_8)
+                        .build()))
                 .build();
 
         assertThatNullPointerException().isThrownBy(() -> client.send(null));
@@ -97,7 +102,11 @@ public class CachingHttpClientTest {
     public void testGetDescription() {
         CachingHttpClient client = CachingHttpClient
                 .builder()
-                .client(new FakeHttpClient(request -> FakeHttpResponse.of(200, HttpHeaders.EMPTY, "")))
+                .client(new MockedHttpClient(request -> MockedHttpResponse
+                        .builder()
+                        .statusCode(200)
+                        .bodyOf("", UTF_8)
+                        .build()))
                 .build();
 
         assertThat(client.getDescription()).isEqualTo("Caching of Fake client");
@@ -106,11 +115,16 @@ public class CachingHttpClientTest {
     @Test
     public void testCacheMissThenHit() throws IOException {
         MutableClock clock = new MutableClock(T0);
-        FakeHttpClient origin = new FakeHttpClient(request ->
-                FakeHttpResponse.of(200, headers(
-                        "Content-Type", "text/plain",
-                        "Date", httpDate(clock.instant()),
-                        "Cache-Control", "max-age=60"), "hello"));
+        MockedHttpClient origin = new MockedHttpClient(request ->
+                MockedHttpResponse
+                        .builder()
+                        .statusCode(200)
+                        .headers(headers(
+                                "Content-Type", "text/plain",
+                                "Date", httpDate(clock.instant()),
+                                "Cache-Control", "max-age=60"))
+                        .bodyOf("hello", UTF_8)
+                        .build());
         RecordingCacheEventListener listener = new RecordingCacheEventListener();
 
         CachingHttpClient client = CachingHttpClient
@@ -131,10 +145,15 @@ public class CachingHttpClientTest {
 
     @Test
     public void testNoStoreIsNotCached() throws IOException {
-        FakeHttpClient origin = new FakeHttpClient(request ->
-                FakeHttpResponse.of(200, headers(
-                        "Content-Type", "text/plain",
-                        "Cache-Control", "no-store"), "hello"));
+        MockedHttpClient origin = new MockedHttpClient(request ->
+                MockedHttpResponse
+                        .builder()
+                        .statusCode(200)
+                        .headers(headers(
+                                "Content-Type", "text/plain",
+                                "Cache-Control", "no-store"))
+                        .bodyOf("hello", UTF_8)
+                        .build());
 
         CachingHttpClient client = CachingHttpClient.builder().client(origin).build();
 
@@ -149,11 +168,16 @@ public class CachingHttpClientTest {
         MutableClock clock = new MutableClock(T0);
 
         // private + max-age -> cached and fresh
-        FakeHttpClient privateOrigin = new FakeHttpClient(request ->
-                FakeHttpResponse.of(200, headers(
-                        "Content-Type", "text/plain",
-                        "Date", httpDate(clock.instant()),
-                        "Cache-Control", "private, max-age=60"), "private-body"));
+        MockedHttpClient privateOrigin = new MockedHttpClient(request ->
+                MockedHttpResponse
+                        .builder()
+                        .statusCode(200)
+                        .headers(headers(
+                                "Content-Type", "text/plain",
+                                "Date", httpDate(clock.instant()),
+                                "Cache-Control", "private, max-age=60"))
+                        .bodyOf("private-body", UTF_8)
+                        .build());
         CachingHttpClient privateClient = CachingHttpClient.builder().client(privateOrigin).clock(clock).build();
         bodyOf(privateClient.send(get()));
         bodyOf(privateClient.send(get()));
@@ -162,11 +186,16 @@ public class CachingHttpClientTest {
                 .isEqualTo(1);
 
         // only s-maxage -> ignored -> no freshness info -> must revalidate every time
-        FakeHttpClient sharedOrigin = new FakeHttpClient(request ->
-                FakeHttpResponse.of(200, headers(
-                        "Content-Type", "text/plain",
-                        "Date", httpDate(clock.instant()),
-                        "Cache-Control", "s-maxage=60"), "shared-body"));
+        MockedHttpClient sharedOrigin = new MockedHttpClient(request ->
+                MockedHttpResponse
+                        .builder()
+                        .statusCode(200)
+                        .headers(headers(
+                                "Content-Type", "text/plain",
+                                "Date", httpDate(clock.instant()),
+                                "Cache-Control", "s-maxage=60"))
+                        .bodyOf("shared-body", UTF_8)
+                        .build());
         CachingHttpClient sharedClient = CachingHttpClient.builder().client(sharedOrigin).clock(clock).build();
         bodyOf(sharedClient.send(get()));
         bodyOf(sharedClient.send(get()));
@@ -178,15 +207,25 @@ public class CachingHttpClientTest {
     @Test
     public void testRevalidationWith304() throws IOException {
         MutableClock clock = new MutableClock(T0);
-        FakeHttpClient origin = new FakeHttpClient(request -> {
+        MockedHttpClient origin = new MockedHttpClient(request -> {
             if (request.getHeaders().firstValue("If-None-Match").isPresent()) {
-                return FakeHttpResponse.of(304, headers("Date", httpDate(clock.instant())), "");
+                return MockedHttpResponse
+                        .builder()
+                        .statusCode(304)
+                        .headers(headers("Date", httpDate(clock.instant())))
+                        .bodyOf("", UTF_8)
+                        .build();
             }
-            return FakeHttpResponse.of(200, headers(
-                    "Content-Type", "text/plain",
-                    "Date", httpDate(clock.instant()),
-                    "ETag", "\"v1\"",
-                    "Cache-Control", "max-age=10"), "original");
+            return MockedHttpResponse
+                    .builder()
+                    .statusCode(200)
+                    .headers(headers(
+                            "Content-Type", "text/plain",
+                            "Date", httpDate(clock.instant()),
+                            "ETag", "\"v1\"",
+                            "Cache-Control", "max-age=10"))
+                    .bodyOf("original", UTF_8)
+                    .build();
         });
         RecordingCacheEventListener listener = new RecordingCacheEventListener();
 
@@ -210,12 +249,17 @@ public class CachingHttpClientTest {
     public void testRevalidationWith200Replaces() throws IOException {
         MutableClock clock = new MutableClock(T0);
         AtomicReference<String> body = new AtomicReference<>("original");
-        FakeHttpClient origin = new FakeHttpClient(request ->
-                FakeHttpResponse.of(200, headers(
-                        "Content-Type", "text/plain",
-                        "Date", httpDate(clock.instant()),
-                        "ETag", "\"v1\"",
-                        "Cache-Control", "max-age=10"), body.get()));
+        MockedHttpClient origin = new MockedHttpClient(request ->
+                MockedHttpResponse
+                        .builder()
+                        .statusCode(200)
+                        .headers(headers(
+                                "Content-Type", "text/plain",
+                                "Date", httpDate(clock.instant()),
+                                "ETag", "\"v1\"",
+                                "Cache-Control", "max-age=10"))
+                        .bodyOf(body.get(), UTF_8)
+                        .build());
 
         CachingHttpClient client = CachingHttpClient.builder().client(origin).clock(clock).build();
 
@@ -234,11 +278,16 @@ public class CachingHttpClientTest {
     @Test
     public void testUnsafeMethodInvalidatesCache() throws IOException {
         MutableClock clock = new MutableClock(T0);
-        FakeHttpClient origin = new FakeHttpClient(request ->
-                FakeHttpResponse.of(200, headers(
-                        "Content-Type", "text/plain",
-                        "Date", httpDate(clock.instant()),
-                        "Cache-Control", "max-age=300"), "hello"));
+        MockedHttpClient origin = new MockedHttpClient(request ->
+                MockedHttpResponse
+                        .builder()
+                        .statusCode(200)
+                        .headers(headers(
+                                "Content-Type", "text/plain",
+                                "Date", httpDate(clock.instant()),
+                                "Cache-Control", "max-age=300"))
+                        .bodyOf("hello", UTF_8)
+                        .build());
         RecordingCacheEventListener listener = new RecordingCacheEventListener();
 
         CachingHttpClient client = CachingHttpClient.builder().client(origin).clock(clock).listener(listener).build();
@@ -254,15 +303,25 @@ public class CachingHttpClientTest {
     @Test
     public void testStaleWhileRevalidateAsync() throws Exception {
         MutableClock clock = new MutableClock(T0);
-        FakeHttpClient origin = new FakeHttpClient(request -> {
+        MockedHttpClient origin = new MockedHttpClient(request -> {
             if (request.getHeaders().firstValue("If-None-Match").isPresent()) {
-                return FakeHttpResponse.of(304, headers("Date", httpDate(clock.instant())), "");
+                return MockedHttpResponse
+                        .builder()
+                        .statusCode(304)
+                        .headers(headers("Date", httpDate(clock.instant())))
+                        .bodyOf("", UTF_8)
+                        .build();
             }
-            return FakeHttpResponse.of(200, headers(
-                    "Content-Type", "text/plain",
-                    "Date", httpDate(clock.instant()),
-                    "ETag", "\"v1\"",
-                    "Cache-Control", "max-age=1, stale-while-revalidate=100"), "hello");
+            return MockedHttpResponse
+                    .builder()
+                    .statusCode(200)
+                    .headers(headers(
+                            "Content-Type", "text/plain",
+                            "Date", httpDate(clock.instant()),
+                            "ETag", "\"v1\"",
+                            "Cache-Control", "max-age=1, stale-while-revalidate=100"))
+                    .bodyOf("hello", UTF_8)
+                    .build();
         });
         RecordingCacheEventListener listener = new RecordingCacheEventListener();
         ExecutorService executor = Executors.newSingleThreadExecutor();
@@ -296,10 +355,15 @@ public class CachingHttpClientTest {
 
     @Test
     public void testThunderingHerd() throws Exception {
-        FakeHttpClient origin = new FakeHttpClient(request ->
-                FakeHttpResponse.of(200, headers(
-                        "Content-Type", "text/plain",
-                        "Cache-Control", "max-age=300"), "hello"))
+        MockedHttpClient origin = new MockedHttpClient(request ->
+                MockedHttpResponse
+                        .builder()
+                        .statusCode(200)
+                        .headers(headers(
+                                "Content-Type", "text/plain",
+                                "Cache-Control", "max-age=300"))
+                        .bodyOf("hello", UTF_8)
+                        .build())
                 .withDelay(200);
 
         CachingHttpClient client = CachingHttpClient.builder().client(origin).build();
