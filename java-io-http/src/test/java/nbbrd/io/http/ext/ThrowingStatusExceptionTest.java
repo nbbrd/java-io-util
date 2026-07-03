@@ -1,44 +1,44 @@
 package nbbrd.io.http.ext;
 
+import nbbrd.io.http.HttpHeaders;
 import org.junit.jupiter.api.Test;
 
 import static java.util.Collections.singletonList;
-import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
-public class HttpResponseExceptionTest {
+public class ThrowingStatusExceptionTest {
 
     @Test
     public void test() {
-        assertThat(new HttpResponseException(100, null))
+        assertThat(new ThrowingStatusException(100, null))
                 .hasMessageContaining("100")
                 .hasMessageContaining("null")
                 .satisfies(o -> {
                     assertThat(o.getResponseCode()).isEqualTo(100);
                     assertThat(o.getResponseMessage()).isNull();
-                    assertThat(o.getHeaderFields()).isEmpty();
+                    assertThat(o.getHeaderFields().getMap()).isEmpty();
                 });
 
-        assertThat(new HttpResponseException(100, "hello world"))
+        assertThat(new ThrowingStatusException(100, "hello world"))
                 .hasMessageContaining("100")
                 .hasMessageContaining("hello world")
                 .satisfies(o -> {
                     assertThat(o.getResponseCode()).isEqualTo(100);
                     assertThat(o.getResponseMessage()).isEqualTo("hello world");
-                    assertThat(o.getHeaderFields()).isEmpty();
+                    assertThat(o.getHeaderFields().getMap()).isEmpty();
                 });
 
         assertThatNullPointerException()
-                .isThrownBy(() -> new HttpResponseException(100, "", null));
+                .isThrownBy(() -> new ThrowingStatusException(100, "", null));
 
-        assertThat(new HttpResponseException(100, "hello world", singletonMap("key", singletonList("value"))))
+        assertThat(new ThrowingStatusException(100, "hello world", HttpHeaders.builder().put("key", "value").build()))
                 .hasMessageContaining("100")
                 .hasMessageContaining("hello world")
                 .satisfies(o -> {
                     assertThat(o.getResponseCode()).isEqualTo(100);
                     assertThat(o.getResponseMessage()).isEqualTo("hello world");
-                    assertThat(o.getHeaderFields()).containsEntry("key", singletonList("value")).hasSize(1);
+                    assertThat(o.getHeaderFields().getMap()).containsEntry("key", singletonList("value")).hasSize(1);
                 });
     }
 }

@@ -14,7 +14,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.*;
 
-class InterceptingHttpClientTest {
+class InterceptingDecoratorTest {
 
     private final HttpRequest request = HttpRequest
             .builder()
@@ -30,7 +30,7 @@ class InterceptingHttpClientTest {
                 .build();
         AtomicInteger interceptCalls = new AtomicInteger();
 
-        InterceptingHttpClient x = new InterceptingHttpClient(
+        InterceptingDecorator x = new InterceptingDecorator(
                 MockedHttpClient.ofResponse(original),
                 (client, req, response) -> {
                     interceptCalls.incrementAndGet();
@@ -58,7 +58,7 @@ class InterceptingHttpClientTest {
                 .bodyOf("replaced", UTF_8)
                 .build();
 
-        InterceptingHttpClient x = new InterceptingHttpClient(
+        InterceptingDecorator x = new InterceptingDecorator(
                 MockedHttpClient.ofResponse(original),
                 (client, req, response) -> replacement
         );
@@ -77,7 +77,7 @@ class InterceptingHttpClientTest {
                 .build();
         HttpClient delegate = MockedHttpClient.ofResponse(response);
 
-        InterceptingHttpClient x = new InterceptingHttpClient(
+        InterceptingDecorator x = new InterceptingDecorator(
                 delegate,
                 (client, req, resp) -> {
                     assertThat(client).isSameAs(delegate);
@@ -99,7 +99,7 @@ class InterceptingHttpClientTest {
                 .build();
 
         IOException failure = new IOException("interceptor failed");
-        InterceptingHttpClient x = new InterceptingHttpClient(
+        InterceptingDecorator x = new InterceptingDecorator(
                 MockedHttpClient.ofResponse(original),
                 (client, req, response) -> {
                     throw failure;
@@ -121,7 +121,7 @@ class InterceptingHttpClientTest {
                 .build();
 
         RuntimeException failure = new RuntimeException("interceptor failed");
-        InterceptingHttpClient x = new InterceptingHttpClient(
+        InterceptingDecorator x = new InterceptingDecorator(
                 MockedHttpClient.ofResponse(original),
                 (client, req, response) -> {
                     throw failure;
@@ -137,7 +137,7 @@ class InterceptingHttpClientTest {
     @Test
     public void propagatesIOExceptionFromDelegate() {
         IOException failure = new IOException("delegate failed");
-        InterceptingHttpClient x = new InterceptingHttpClient(
+        InterceptingDecorator x = new InterceptingDecorator(
                 MockedHttpClient.ofException(failure),
                 (client, req, response) -> response
         );
@@ -149,7 +149,7 @@ class InterceptingHttpClientTest {
 
     @Test
     public void descriptionIncludesDelegateName() {
-        InterceptingHttpClient x = new InterceptingHttpClient(
+        InterceptingDecorator x = new InterceptingDecorator(
                 MockedHttpClient.ofResponse(null),
                 (client, req, response) -> response
         );
@@ -160,7 +160,7 @@ class InterceptingHttpClientTest {
     @SuppressWarnings("ConstantConditions")
     @Test
     public void rejectsNullRequest() {
-        InterceptingHttpClient x = new InterceptingHttpClient(
+        InterceptingDecorator x = new InterceptingDecorator(
                 MockedHttpClient.ofResponse(null),
                 (client, req, response) -> response
         );
@@ -185,7 +185,7 @@ class InterceptingHttpClientTest {
 
         HttpClient delegate = new MockedHttpClient(request -> sendCalls.incrementAndGet() == 1 ? first : second);
 
-        InterceptingHttpClient x = new InterceptingHttpClient(
+        InterceptingDecorator x = new InterceptingDecorator(
                 delegate,
                 (client, req, response) -> {
                     response.close();

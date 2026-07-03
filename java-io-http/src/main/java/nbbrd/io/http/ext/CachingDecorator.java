@@ -33,7 +33,7 @@ import java.util.concurrent.ForkJoinPool;
  * and a concurrent background revalidation for the same resource), and access to the
  * underlying {@link nbbrd.design.NotThreadSafe} {@link HttpClient} is serialized.</p>
  */
-public final class CachingHttpClient implements HttpClientDecorator {
+public final class CachingDecorator implements HttpClientDecorator {
 
     // RFC 9111 6.1: status codes that are heuristically cacheable by default.
     // Includes negative responses (404, 405, 410, 414, 451, 501); the underlying HttpClient
@@ -51,16 +51,15 @@ public final class CachingHttpClient implements HttpClientDecorator {
      * error responses (4xx/5xx) — {@code 404}, {@code 405}, {@code 410}, {@code 414},
      * {@code 451}, {@code 501}.
      * <p>
-     * Useful when composing with {@link ThrowingHttpClient} to opt these codes out of the
+     * Useful when composing with {@link ThrowingStatusDecorator} to opt these codes out of the
      * "errors are exceptions" contract, so this cache can store and serve them:
      * <pre>{@code
      * HttpClient base = UrlConnectionHttpClient.builder().build();
      * HttpClient cached = CachingHttpClient.builder().client(base).build();
-     * HttpClient throwing = ThrowingHttpClient.builder()
-     *         .client(cached)
-     *         .shouldThrow(code -> code >= 400
-     *                 && !CachingHttpClient.NEGATIVE_CACHEABLE_STATUS_CODES.contains(code))
-     *         .build();
+     * HttpClient throwing = new ThrowingStatusDecorator(
+     *          cached,
+     *          code -> code >= 400 && !CachingHttpClient.NEGATIVE_CACHEABLE_STATUS_CODES.contains(code)
+     *        );
      * }</pre>
      */
     public static final Set<Integer> NEGATIVE_CACHEABLE_STATUS_CODES =
@@ -72,7 +71,8 @@ public final class CachingHttpClient implements HttpClientDecorator {
 
     private static final int HTTP_NOT_MODIFIED = 304;
 
-    private final HttpClient client;
+    @lombok.Getter
+    private final HttpClient decorated;
     private final CacheStore store;
     private final CacheKeyGenerator keyGenerator;
     private final CacheEventListener listener;
@@ -86,8 +86,8 @@ public final class CachingHttpClient implements HttpClientDecorator {
     private final Object clientLock = new Object();
 
     @lombok.Builder
-    private CachingHttpClient(
-            @NonNull HttpClient client,
+    private CachingDecorator(
+            @NonNull HttpClient decorated,
             @Nullable CacheStore store,
             @Nullable CacheKeyGenerator keyGenerator,
             @Nullable CacheEventListener listener,
@@ -95,7 +95,7 @@ public final class CachingHttpClient implements HttpClientDecorator {
             @Nullable Executor executor,
             @Nullable Duration maxHeuristicLifetime,
             @Nullable CacheLock cacheLock) {
-        this.client = client;
+        this.decorated = decorated;
         this.store = store != null ? store : CacheStore.ofInMemory();
         this.keyGenerator = keyGenerator != null ? keyGenerator : CacheKeyGenerator.basic();
         this.listener = listener != null ? listener : CacheEventListener.noOp();
@@ -107,7 +107,7 @@ public final class CachingHttpClient implements HttpClientDecorator {
 
     @Override
     public @NonNull String getDescription() {
-        return "Caching of " + client.getDescription();
+        return "Caching of " + decorated.getDescription();
     }
 
     @Override
@@ -238,7 +238,7 @@ public final class CachingHttpClient implements HttpClientDecorator {
 
     private HttpResponse sendDelegate(HttpRequest request) throws IOException {
         synchronized (clientLock) {
-            return client.send(request);
+            return decorated.send(request);
         }
     }
 

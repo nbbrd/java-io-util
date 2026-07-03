@@ -22,7 +22,8 @@ import internal.io.http.UrlConnectionHttpResponse;
 import internal.io.http.UrlHelper;
 import lombok.NonNull;
 import nbbrd.design.NonNegative;
-import nbbrd.io.http.ext.HttpResponseException;
+import nbbrd.io.http.ext.ThrowingStatusException;
+import nbbrd.io.http.ext.ThrowingStatusDecorator;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -173,8 +174,8 @@ public final class UrlConnectionHttpClient implements HttpClient {
      * This method handles redirects (up to {@code maxRedirects}), retries on transient
      * network errors (up to {@code maxRetries}), and HTTP authentication challenges.
      * Non-successful responses (4xx/5xx) are returned as regular {@link HttpResponse}
-     * instances; wrap this client with {@link nbbrd.io.http.ext.ThrowingHttpClient} if
-     * you want error status codes converted into {@link HttpResponseException}.
+     * instances; wrap this client with {@link ThrowingStatusDecorator} if
+     * you want error status codes converted into {@link ThrowingStatusException}.
      * </p>
      *
      * @param request the HTTP request to send

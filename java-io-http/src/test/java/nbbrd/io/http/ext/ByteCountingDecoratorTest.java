@@ -22,7 +22,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static nbbrd.io.net.MediaType.ANY_TYPE;
 import static org.assertj.core.api.Assertions.*;
 
-class ByteCountingClientTest {
+class ByteCountingDecoratorTest {
 
     private final HttpRequest request = HttpRequest
             .builder()
@@ -32,7 +32,7 @@ class ByteCountingClientTest {
     @Test
     public void reportsZeroBytesWhenBodyIsEmpty() throws IOException {
         AtomicLong reported = new AtomicLong(-1);
-        ByteCountingClient x = new ByteCountingClient(
+        ByteCountingDecorator x = new ByteCountingDecorator(
                 MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(() -> EmptyInputStream.INSTANCE).build()),
                 reported::set
         );
@@ -49,7 +49,7 @@ class ByteCountingClientTest {
     @Test
     public void reportsByteCountAfterReadingBody() throws IOException {
         AtomicLong reported = new AtomicLong(-1);
-        ByteCountingClient x = new ByteCountingClient(
+        ByteCountingDecorator x = new ByteCountingDecorator(
                 MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(() -> new ByteArrayInputStream("hello".getBytes(StandardCharsets.UTF_8))).build()),
                 reported::set
         );
@@ -72,7 +72,7 @@ class ByteCountingClientTest {
     @Test
     public void reportsByteCountWhenReadingSingleBytes() throws IOException {
         AtomicLong reported = new AtomicLong(-1);
-        ByteCountingClient x = new ByteCountingClient(
+        ByteCountingDecorator x = new ByteCountingDecorator(
                 MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(() -> new ReaderInputStream(new StringReader("ab"), StandardCharsets.UTF_8)).build()),
                 reported::set
         );
@@ -91,7 +91,7 @@ class ByteCountingClientTest {
     @Test
     public void reportsByteCountFromDisconnectingInputStream() throws IOException {
         AtomicLong reported = new AtomicLong(-1);
-        ByteCountingClient x = new ByteCountingClient(
+        ByteCountingDecorator x = new ByteCountingDecorator(
                 MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(() -> new ReaderInputStream(new StringReader("hello"), StandardCharsets.UTF_8)).build()),
                 reported::set
         );
@@ -114,7 +114,7 @@ class ByteCountingClientTest {
     @Test
     public void delegatesContentType() throws IOException {
         MediaType expected = MediaType.parse("application/json");
-        ByteCountingClient x = new ByteCountingClient(
+        ByteCountingDecorator x = new ByteCountingDecorator(
                 MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(expected).build()),
                 bytes -> {
                 }
@@ -127,7 +127,7 @@ class ByteCountingClientTest {
 
     @Test
     public void delegatesContentLength() throws IOException {
-        ByteCountingClient x = new ByteCountingClient(
+        ByteCountingDecorator x = new ByteCountingDecorator(
                 MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentLength(42).build()),
                 bytes -> {
                 }
@@ -141,7 +141,7 @@ class ByteCountingClientTest {
     @Test
     public void delegatesHeaders() throws IOException {
         HttpHeaders expected = HttpHeaders.builder().put("X-Custom", "value").build();
-        ByteCountingClient x = new ByteCountingClient(
+        ByteCountingDecorator x = new ByteCountingDecorator(
                 MockedHttpClient.ofResponse(MockedHttpResponse.builder().headers(expected).build()),
                 bytes -> {
                 }
@@ -154,7 +154,7 @@ class ByteCountingClientTest {
 
     @Test
     public void descriptionIncludesDelegateName() {
-        ByteCountingClient x = new ByteCountingClient(
+        ByteCountingDecorator x = new ByteCountingDecorator(
                 MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(() -> EmptyInputStream.INSTANCE).build()),
                 bytes -> {
                 }
@@ -166,7 +166,7 @@ class ByteCountingClientTest {
     @Test
     public void propagatesIOExceptionFromSend() {
         IOException failure = new IOException("boom");
-        ByteCountingClient x = new ByteCountingClient(
+        ByteCountingDecorator x = new ByteCountingDecorator(
                 MockedHttpClient.ofException(failure),
                 bytes -> {
                 }
@@ -180,7 +180,7 @@ class ByteCountingClientTest {
     @SuppressWarnings("ConstantConditions")
     @Test
     public void rejectsNullRequest() {
-        ByteCountingClient x = new ByteCountingClient(
+        ByteCountingDecorator x = new ByteCountingDecorator(
                 MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(() -> EmptyInputStream.INSTANCE).build()),
                 bytes -> {
                 }
@@ -193,7 +193,7 @@ class ByteCountingClientTest {
     @Test
     public void closeDelegateEvenWhenListenerFails() {
         AtomicLong closeCalls = new AtomicLong();
-        ByteCountingClient x = new ByteCountingClient(
+        ByteCountingDecorator x = new ByteCountingDecorator(
                 MockedHttpClient.ofResponse(MockedHttpResponse.builder()
                         .body(() -> new ByteArrayInputStream("a".getBytes(UTF_8)))
                         .onClose(closeCalls::incrementAndGet)

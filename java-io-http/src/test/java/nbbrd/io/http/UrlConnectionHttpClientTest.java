@@ -1,7 +1,7 @@
 package nbbrd.io.http;
 
 import _test.io.http.HttpContext;
-import nbbrd.io.http.ext.ThrowingHttpClient;
+import nbbrd.io.http.ext.ThrowingStatusDecorator;
 import nbbrd.io.net.MediaType;
 import org.junit.jupiter.api.Test;
 
@@ -27,9 +27,10 @@ public abstract class UrlConnectionHttpClientTest extends HttpClientTest {
     protected HttpClient getClient(HttpContext context) {
         // Wrap with ThrowingHttpClient so inherited tests keep asserting the "errors are exceptions" contract.
         // UrlConnectionHttpClient itself no longer throws on 4xx/5xx — it returns responses for all status codes.
-        return ThrowingHttpClient.builder()
-                .client(getRawClient(context, this::getURLConnectionFactory))
-                .build();
+        return new ThrowingStatusDecorator(
+                getRawClient(context, this::getURLConnectionFactory),
+                ThrowingStatusDecorator.DEFAULT_SHOULD_THROW
+        );
     }
 
     protected UrlConnectionHttpClient getRawClient(HttpContext context, Supplier<UrlConnectionFactory> urlConnectionFactory) {
@@ -52,9 +53,10 @@ public abstract class UrlConnectionHttpClientTest extends HttpClientTest {
     }
 
     protected HttpClient getClient(HttpContext context, Supplier<UrlConnectionFactory> urlConnectionFactory) {
-        return ThrowingHttpClient.builder()
-                .client(getRawClient(context, urlConnectionFactory))
-                .build();
+        return new ThrowingStatusDecorator(
+                getRawClient(context, urlConnectionFactory),
+                ThrowingStatusDecorator.DEFAULT_SHOULD_THROW
+        );
     }
 
     @Test

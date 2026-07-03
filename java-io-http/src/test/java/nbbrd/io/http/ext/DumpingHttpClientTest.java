@@ -1,7 +1,7 @@
 package nbbrd.io.http.ext;
 
-import _test.io.http.MockedHttpResponse;
 import _test.io.http.MockedHttpClient;
+import _test.io.http.MockedHttpResponse;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.http.HttpRequest;
 import nbbrd.io.http.HttpResponse;
@@ -27,7 +27,7 @@ public class DumpingHttpClientTest {
     @Test
     public void testFactories(@TempDir Path temp) {
         Deque<Path> stack = new LinkedList<>();
-        DumpingHttpClient x = new DumpingHttpClient(temp, MockedHttpClient.ofResponse(MockedHttpResponse.builder().body(() -> EmptyInputStream.INSTANCE).build()), stack::add);
+        DumpingDecorator x = new DumpingDecorator(MockedHttpClient.ofResponse(MockedHttpResponse.builder().body(() -> EmptyInputStream.INSTANCE).build()), temp, stack::add);
 
         assertThatNullPointerException()
                 .isThrownBy(() -> x.send(null));
@@ -38,7 +38,7 @@ public class DumpingHttpClientTest {
     @Test
     public void testEmptyClient(@TempDir Path temp) throws IOException {
         Deque<Path> stack = new LinkedList<>();
-        DumpingHttpClient x = new DumpingHttpClient(temp, MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(() -> EmptyInputStream.INSTANCE).build()), stack::add);
+        DumpingDecorator x = new DumpingDecorator(MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(() -> EmptyInputStream.INSTANCE).build()), temp, stack::add);
 
         try (HttpResponse r = x.send(request)) {
             assertThat(r.getContentType())
@@ -58,7 +58,7 @@ public class DumpingHttpClientTest {
     @Test
     public void testNonEmptyClient(@TempDir Path temp) throws IOException {
         Deque<Path> stack = new LinkedList<>();
-        DumpingHttpClient x = new DumpingHttpClient(temp, MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).bodyOf("hello", UTF_8).build()), stack::add);
+        DumpingDecorator x = new DumpingDecorator(MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).bodyOf("hello", UTF_8).build()), temp, stack::add);
 
         try (HttpResponse r = x.send(request)) {
             assertThat(r.getContentType())
@@ -82,7 +82,7 @@ public class DumpingHttpClientTest {
         };
 
         Deque<Path> stack = new LinkedList<>();
-        DumpingHttpClient x = new DumpingHttpClient(temp, MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(failingOnGetBody).build()), stack::add);
+        DumpingDecorator x = new DumpingDecorator(MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(failingOnGetBody).build()), temp, stack::add);
 
         try (HttpResponse r = x.send(request)) {
             assertThat(r.getContentType())
@@ -109,7 +109,7 @@ public class DumpingHttpClientTest {
         };
 
         Deque<Path> stack = new LinkedList<>();
-        DumpingHttpClient x = new DumpingHttpClient(temp, MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(failingOnRead).build()), stack::add);
+        DumpingDecorator x = new DumpingDecorator(MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentType(ANY_TYPE).body(failingOnRead).build()), temp, stack::add);
 
         try (HttpResponse r = x.send(request)) {
             assertThat(r.getContentType())
@@ -131,9 +131,9 @@ public class DumpingHttpClientTest {
     @Test
     public void testGetContentLengthDelegation(@TempDir Path temp) throws IOException {
         Deque<Path> stack = new LinkedList<>();
-        DumpingHttpClient x = new DumpingHttpClient(
-                temp,
+        DumpingDecorator x = new DumpingDecorator(
                 MockedHttpClient.ofResponse(MockedHttpResponse.builder().contentLength(42).build()),
+                temp,
                 stack::add);
 
         try (HttpResponse r = x.send(request)) {

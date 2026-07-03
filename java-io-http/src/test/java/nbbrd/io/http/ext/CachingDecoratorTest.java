@@ -25,14 +25,14 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNullPointerException;
 
-public class CachingHttpClientTest {
+public class CachingDecoratorTest {
 
     @Demo
     public static void main(String[] args) throws IOException {
 
-        HttpClient client = CachingHttpClient
+        HttpClient client = CachingDecorator
                 .builder()
-                .client(UrlConnectionHttpClient
+                .decorated(UrlConnectionHttpClient
                         .builder()
                         .listener(UrlConnectionListener.basic(x -> System.out.println("    \uD83C\uDF10 " + x)))
                         .urlConnectionFactory(CurlHttpURLConnection::of)
@@ -86,9 +86,9 @@ public class CachingHttpClientTest {
     @SuppressWarnings("DataFlowIssue")
     @Test
     public void testNPE() {
-        CachingHttpClient client = CachingHttpClient
+        CachingDecorator client = CachingDecorator
                 .builder()
-                .client(new MockedHttpClient(request -> MockedHttpResponse
+                .decorated(new MockedHttpClient(request -> MockedHttpResponse
                         .builder()
                         .statusCode(200)
                         .bodyOf("", UTF_8)
@@ -100,9 +100,9 @@ public class CachingHttpClientTest {
 
     @Test
     public void testGetDescription() {
-        CachingHttpClient client = CachingHttpClient
+        CachingDecorator client = CachingDecorator
                 .builder()
-                .client(new MockedHttpClient(request -> MockedHttpResponse
+                .decorated(new MockedHttpClient(request -> MockedHttpResponse
                         .builder()
                         .statusCode(200)
                         .bodyOf("", UTF_8)
@@ -127,9 +127,9 @@ public class CachingHttpClientTest {
                         .build());
         RecordingCacheEventListener listener = new RecordingCacheEventListener();
 
-        CachingHttpClient client = CachingHttpClient
+        CachingDecorator client = CachingDecorator
                 .builder()
-                .client(origin)
+                .decorated(origin)
                 .clock(clock)
                 .listener(listener)
                 .build();
@@ -155,7 +155,7 @@ public class CachingHttpClientTest {
                         .bodyOf("hello", UTF_8)
                         .build());
 
-        CachingHttpClient client = CachingHttpClient.builder().client(origin).build();
+        CachingDecorator client = CachingDecorator.builder().decorated(origin).build();
 
         bodyOf(client.send(get()));
         bodyOf(client.send(get()));
@@ -178,7 +178,7 @@ public class CachingHttpClientTest {
                                 "Cache-Control", "private, max-age=60"))
                         .bodyOf("private-body", UTF_8)
                         .build());
-        CachingHttpClient privateClient = CachingHttpClient.builder().client(privateOrigin).clock(clock).build();
+        CachingDecorator privateClient = CachingDecorator.builder().decorated(privateOrigin).clock(clock).build();
         bodyOf(privateClient.send(get()));
         bodyOf(privateClient.send(get()));
         assertThat(privateOrigin.getCallCount())
@@ -196,7 +196,7 @@ public class CachingHttpClientTest {
                                 "Cache-Control", "s-maxage=60"))
                         .bodyOf("shared-body", UTF_8)
                         .build());
-        CachingHttpClient sharedClient = CachingHttpClient.builder().client(sharedOrigin).clock(clock).build();
+        CachingDecorator sharedClient = CachingDecorator.builder().decorated(sharedOrigin).clock(clock).build();
         bodyOf(sharedClient.send(get()));
         bodyOf(sharedClient.send(get()));
         assertThat(sharedOrigin.getCallCount())
@@ -229,7 +229,7 @@ public class CachingHttpClientTest {
         });
         RecordingCacheEventListener listener = new RecordingCacheEventListener();
 
-        CachingHttpClient client = CachingHttpClient.builder().client(origin).clock(clock).listener(listener).build();
+        CachingDecorator client = CachingDecorator.builder().decorated(origin).clock(clock).listener(listener).build();
 
         assertThat(bodyOf(client.send(get()))).isEqualTo("original");
 
@@ -261,7 +261,7 @@ public class CachingHttpClientTest {
                         .bodyOf(body.get(), UTF_8)
                         .build());
 
-        CachingHttpClient client = CachingHttpClient.builder().client(origin).clock(clock).build();
+        CachingDecorator client = CachingDecorator.builder().decorated(origin).clock(clock).build();
 
         assertThat(bodyOf(client.send(get()))).isEqualTo("original");
 
@@ -290,7 +290,7 @@ public class CachingHttpClientTest {
                         .build());
         RecordingCacheEventListener listener = new RecordingCacheEventListener();
 
-        CachingHttpClient client = CachingHttpClient.builder().client(origin).clock(clock).listener(listener).build();
+        CachingDecorator client = CachingDecorator.builder().decorated(origin).clock(clock).listener(listener).build();
 
         bodyOf(client.send(get())); // cached
         bodyOf(client.send(HttpRequest.builder().query(URL).method(HttpMethod.POST).bodyOf("x").build())); // invalidates
@@ -327,9 +327,9 @@ public class CachingHttpClientTest {
         ExecutorService executor = Executors.newSingleThreadExecutor();
 
         try {
-            CachingHttpClient client = CachingHttpClient
+            CachingDecorator client = CachingDecorator
                     .builder()
-                    .client(origin)
+                    .decorated(origin)
                     .clock(clock)
                     .listener(listener)
                     .executor(executor)
@@ -366,7 +366,7 @@ public class CachingHttpClientTest {
                         .build())
                 .withDelay(200);
 
-        CachingHttpClient client = CachingHttpClient.builder().client(origin).build();
+        CachingDecorator client = CachingDecorator.builder().decorated(origin).build();
 
         int threads = 8;
         ExecutorService pool = Executors.newFixedThreadPool(threads);

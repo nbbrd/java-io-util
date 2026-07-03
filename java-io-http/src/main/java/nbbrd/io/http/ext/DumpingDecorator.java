@@ -4,10 +4,7 @@ import internal.io.http.ext.TeeInputStream;
 import lombok.NonNull;
 import nbbrd.design.DecoratorPattern;
 import nbbrd.io.Resource;
-import nbbrd.io.http.HttpClient;
-import nbbrd.io.http.HttpHeaders;
-import nbbrd.io.http.HttpRequest;
-import nbbrd.io.http.HttpResponse;
+import nbbrd.io.http.*;
 import nbbrd.io.net.MediaType;
 
 import java.io.IOException;
@@ -18,29 +15,29 @@ import java.nio.file.Path;
 import java.util.function.Consumer;
 
 @DecoratorPattern(HttpClient.class)
-@lombok.Getter
 @lombok.AllArgsConstructor
-public final class DumpingHttpClient implements HttpClientDecorator {
+public final class DumpingDecorator implements HttpClientDecorator {
+
+    @lombok.Getter
+    @lombok.NonNull
+    private final HttpClient decorated;
 
     @lombok.NonNull
     private final Path folder;
-
-    @lombok.NonNull
-    private final HttpClient delegate;
 
     @lombok.NonNull
     private final Consumer<? super Path> onDump;
 
     @Override
     public @NonNull String getDescription() {
-        return "Dumping " + delegate.getDescription();
+        return "Dumping " + decorated.getDescription();
     }
 
     @Override
     public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
         String prefix = "http_" + getUniqueTimeStamp();
         try {
-            return new DumpingResponse(folder, delegate.send(request), onDump, prefix);
+            return new DumpingResponse(folder, decorated.send(request), onDump, prefix);
         } finally {
             dumpRequestBody(request, prefix);
         }

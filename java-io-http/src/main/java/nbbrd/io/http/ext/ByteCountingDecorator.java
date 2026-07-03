@@ -3,10 +3,7 @@ package nbbrd.io.http.ext;
 import lombok.NonNull;
 import nbbrd.design.DecoratorPattern;
 import nbbrd.design.MightBePromoted;
-import nbbrd.io.http.HttpClient;
-import nbbrd.io.http.HttpHeaders;
-import nbbrd.io.http.HttpRequest;
-import nbbrd.io.http.HttpResponse;
+import nbbrd.io.http.*;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -15,15 +12,15 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.LongConsumer;
 
 @DecoratorPattern(HttpClient.class)
-@lombok.Getter
 @lombok.AllArgsConstructor
-public class ByteCountingClient implements HttpClientDecorator {
+public final class ByteCountingDecorator implements HttpClientDecorator {
 
     /**
      * The underlying HTTP client to delegate requests to.
      */
+    @lombok.Getter
     @NonNull
-    private final HttpClient delegate;
+    private final HttpClient decorated;
 
     /**
      * Listener that receives byte count messages.
@@ -33,12 +30,12 @@ public class ByteCountingClient implements HttpClientDecorator {
 
     @Override
     public @NonNull String getDescription() {
-        return "Byte counting " + delegate.getDescription();
+        return "Byte counting " + decorated.getDescription();
     }
 
     @Override
     public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
-        return new ByteCountingResponse(delegate.send(request), listener);
+        return new ByteCountingResponse(decorated.send(request), listener);
     }
 
     /**

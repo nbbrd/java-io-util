@@ -22,7 +22,7 @@ import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.matching.AbsentPattern;
 import com.github.tomakehurst.wiremock.matching.AnythingPattern;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
-import nbbrd.io.http.ext.HttpResponseException;
+import nbbrd.io.http.ext.ThrowingStatusException;
 import nbbrd.io.net.MediaType;
 import org.assertj.core.api.Assumptions;
 import org.junit.jupiter.api.Test;
@@ -266,10 +266,10 @@ public abstract class HttpClientTest {
         assertThatIOException()
                 .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(APPLICATION_XML_UTF_8_HEADER).build()))
                 .withMessage("500: " + customErrorMessage)
-                .isInstanceOfSatisfying(HttpResponseException.class, ex -> {
+                .isInstanceOfSatisfying(ThrowingStatusException.class, ex -> {
                     assertThat(ex.getResponseCode()).isEqualTo(HttpsURLConnection.HTTP_INTERNAL_ERROR);
                     assertThat(ex.getResponseMessage()).isEqualTo(customErrorMessage);
-                    assertThat(ex.getHeaderFields()).containsEntry("key", singletonList("value"));
+                    assertThat(ex.getHeaderFields().getMap()).containsEntry("key", singletonList("value"));
                 });
 
         wire.verify(1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
@@ -560,7 +560,7 @@ public abstract class HttpClientTest {
         assertThatIOException()
                 .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
                 .withMessage("401: Unauthorized")
-                .isInstanceOfSatisfying(HttpResponseException.class, ex -> {
+                .isInstanceOfSatisfying(ThrowingStatusException.class, ex -> {
                     assertThat(ex.getResponseCode()).isEqualTo(HttpsURLConnection.HTTP_UNAUTHORIZED);
                     assertThat(ex.getResponseMessage()).isEqualTo("Unauthorized");
                 });
@@ -617,7 +617,7 @@ public abstract class HttpClientTest {
                 assertThatIOException()
                         .isThrownBy(() -> x.send(request))
                         .withMessage("401: Unauthorized")
-                        .isInstanceOfSatisfying(HttpResponseException.class, ex -> {
+                        .isInstanceOfSatisfying(ThrowingStatusException.class, ex -> {
                             assertThat(ex.getResponseCode()).isEqualTo(HttpsURLConnection.HTTP_UNAUTHORIZED);
                             assertThat(ex.getResponseMessage()).isEqualTo("Unauthorized");
                         });
