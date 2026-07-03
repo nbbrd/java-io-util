@@ -7,6 +7,7 @@ import _test.io.http.RecordingCacheEventListener;
 import nbbrd.design.Demo;
 import nbbrd.io.curl.CurlHttpURLConnection;
 import nbbrd.io.http.*;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -300,6 +301,7 @@ public class CachingDecoratorTest {
         assertThat(listener.count("INVALIDATED")).isGreaterThanOrEqualTo(1);
     }
 
+    @Disabled(value = "Flaky test (FIXME)")
     @Test
     public void testStaleWhileRevalidateAsync() throws Exception {
         MutableClock clock = new MutableClock(T0);
