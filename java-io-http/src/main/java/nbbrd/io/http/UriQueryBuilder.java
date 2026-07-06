@@ -22,9 +22,7 @@ import nbbrd.design.StaticFactoryMethod;
 
 import java.io.UncheckedIOException;
 import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
@@ -33,15 +31,15 @@ import java.util.*;
  * @author Philippe Charles
  */
 @lombok.RequiredArgsConstructor(access = AccessLevel.PRIVATE)
-public final class URLQueryBuilder {
+public final class UriQueryBuilder {
 
     @StaticFactoryMethod
-    public static @NonNull URLQueryBuilder of(@NonNull URL endPoint) {
-        return new URLQueryBuilder(endPoint);
+    public static @NonNull UriQueryBuilder of(@NonNull URI endPoint) {
+        return new UriQueryBuilder(endPoint);
     }
 
     @lombok.NonNull
-    private final URL endPoint;
+    private final URI endPoint;
 
     private boolean trailingSlash = false;
 
@@ -49,46 +47,46 @@ public final class URLQueryBuilder {
     private final Map<String, String> params = new LinkedHashMap<>();
 
     /**
-     * Appends a trailing slash to the final URL.
+     * Appends a trailing slash to the final URI.
      *
      * @param trailingSlash specify if a trailing slash is required
      * @return this builder
      * @see <a href="https://en.wikipedia.org/wiki/URI_normalization">https://en.wikipedia.org/wiki/URI_normalization</a>
      */
     @NonNull
-    public URLQueryBuilder trailingSlash(boolean trailingSlash) {
+    public UriQueryBuilder trailingSlash(boolean trailingSlash) {
         this.trailingSlash = trailingSlash;
         return this;
     }
 
     /**
-     * Appends the specified path to the current URL.
+     * Appends the specified path to the current URI.
      *
      * @param path a non-null path
      * @return this builder
      * @throws NullPointerException if path is null
      */
     @NonNull
-    public URLQueryBuilder path(@NonNull String path) {
+    public UriQueryBuilder path(@NonNull String path) {
         paths.add(path);
         return this;
     }
 
     /**
-     * Appends the specified path to the current URL.
+     * Appends the specified path to the current URI.
      *
      * @param path a non-null path
      * @return this builder
      * @throws NullPointerException if path is null
      */
     @NonNull
-    public URLQueryBuilder path(@NonNull List<String> path) {
+    public UriQueryBuilder path(@NonNull List<String> path) {
         paths.addAll(path);
         return this;
     }
 
     /**
-     * Appends the specified parameter to the current URL.
+     * Appends the specified parameter to the current URI.
      *
      * @param key   a non-null key
      * @param value a non-null value
@@ -96,20 +94,20 @@ public final class URLQueryBuilder {
      * @throws NullPointerException if key or value is null
      */
     @NonNull
-    public URLQueryBuilder param(@NonNull String key, @NonNull String value) {
+    public UriQueryBuilder param(@NonNull String key, @NonNull String value) {
         params.put(key, value);
         return this;
     }
 
     /**
-     * Appends the specified parameter to the current URL.
+     * Appends the specified parameter to the current URI.
      *
      * @param key a non-null key
      * @return this builder
      * @throws NullPointerException if key or value is null
      */
     @NonNull
-    public URLQueryBuilder param(@NonNull String key) {
+    public UriQueryBuilder param(@NonNull String key) {
         params.put(key, null);
         return this;
     }
@@ -155,19 +153,13 @@ public final class URLQueryBuilder {
     }
 
     /**
-     * Creates a new URL using the specified path and parameters.
+     * Creates a new URI using the specified path and parameters.
      *
-     * @return a new URL
-     * @throws MalformedURLException if no protocol is specified, or an unknown protocol is found, or spec is null,
-     *                               or the parsed URL fails to comply with the specific syntax of the associated protocol.
+     * @return a new URI
+     * @throws IllegalArgumentException If the given string violates RFC 2396.
      */
     @NonNull
-    public URL build() throws MalformedURLException {
-        return new URL(toString());
-    }
-
-    @NonNull
-    public URI buildURI() throws IllegalArgumentException {
+    public URI build() throws IllegalArgumentException {
         return URI.create(toString());
     }
 

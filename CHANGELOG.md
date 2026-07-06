@@ -9,7 +9,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- Add ByteCountingClient to HTTP module
+- Add ByteCountingDecorator to HTTP module
 - Add support of HTTP status code in HttpResponse
 - Add caching HTTP client decorator
 
@@ -17,6 +17,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Refactor HTTP response exception handling as a decorator
 - Move UrlConnectionHttpClient features to decorators
+- Replace URLQueryBuilder with URIQueryBuilder [#469](https://github.com/nbbrd/java-io-util/issues/469)
 
 ## [0.0.38] - 2026-06-02
 
