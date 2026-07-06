@@ -16,14 +16,10 @@
  */
 package nbbrd.io.http;
 
-import internal.io.http.AuthSchemeHelper;
-import internal.io.http.HttpResponseType;
 import internal.io.http.UrlConnectionHttpResponse;
 import internal.io.http.UrlHelper;
 import lombok.NonNull;
 import nbbrd.design.NonNegative;
-import nbbrd.io.http.ext.ThrowingStatusException;
-import nbbrd.io.http.ext.ThrowingStatusDecorator;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -31,15 +27,18 @@ import javax.net.ssl.SSLSocketFactory;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.*;
-import java.util.*;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
  * HTTP client implementation backed by {@link HttpURLConnection}.
  * <p>
- * Supports automatic redirect following, retry on transient network errors,
- * content encoding (gzip, deflate), proxy selection, SSL configuration,
- * and HTTP authentication (Basic, Bearer).
+ * This is a pure transport layer: it opens connections, sends request bytes,
+ * and returns response objects for any HTTP status code. Protocol-level
+ * concerns such as redirect following, authentication, and retry are handled
+ * by composable decorators ({@link nbbrd.io.http.ext.RedirectDecorator},
+ * {@link nbbrd.io.http.ext.AuthenticatingDecorator},
+ * {@link nbbrd.io.http.ext.RetryDecorator}).
  * </p>
  *
  * @author Philippe Charles
@@ -61,19 +60,6 @@ public final class UrlConnectionHttpClient implements HttpClient {
 
     private static final int NO_TIMEOUT = 0;
 
-    // RFC 7231/7538: 3xx codes that carry a Location header to follow.
-    // Other 3xx (300 without a choice, 304 Not Modified, 305 Use Proxy, 306 unused) are NOT
-    // redirects and are returned as responses so callers (e.g. a caching decorator that needs
-    // 304 for conditional revalidation) can handle them.
-    private static final Set<Integer> FOLLOWED_REDIRECT_CODES =
-            Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-                    HttpURLConnection.HTTP_MOVED_PERM,  // 301
-                    HttpURLConnection.HTTP_MOVED_TEMP,  // 302
-                    HttpURLConnection.HTTP_SEE_OTHER,   // 303
-                    307,                                // Temporary Redirect (no JDK constant)
-                    308                                 // Permanent Redirect (no JDK constant)
-            )));
-
     /**
      * Read timeout in milliseconds. A value of {@code 0} means no timeout.
      */
@@ -87,21 +73,6 @@ public final class UrlConnectionHttpClient implements HttpClient {
     @NonNegative
     @lombok.Builder.Default
     int connectTimeout = NO_TIMEOUT;
-
-    /**
-     * Maximum number of HTTP redirects to follow before throwing an {@link IOException}.
-     */
-    @NonNegative
-    @lombok.Builder.Default
-    int maxRedirects = 20;
-
-    /**
-     * Maximum number of retries on transient network errors (e.g. {@link SocketTimeoutException},
-     * {@link SocketException}). A value of {@code 0} means no retries.
-     */
-    @NonNegative
-    @lombok.Builder.Default
-    int maxRetries = 0;
 
     /**
      * Proxy selector used to determine the proxy for each request.
@@ -132,7 +103,7 @@ public final class UrlConnectionHttpClient implements HttpClient {
     UrlConnectionFactory urlConnectionFactory = UrlConnectionFactory.getDefault();
 
     /**
-     * Listener notified of connection lifecycle events such as open, redirect, and success.
+     * Listener notified of connection lifecycle events such as open and success.
      */
     @lombok.NonNull
     @lombok.Builder.Default
@@ -143,19 +114,6 @@ public final class UrlConnectionHttpClient implements HttpClient {
      */
     @lombok.Singular
     List<UrlConnectionEncoding> decoders;
-
-    /**
-     * Authenticator used to provide credentials for HTTP authentication challenges.
-     */
-    @lombok.NonNull
-    @lombok.Builder.Default
-    HttpAuthenticator authenticator = HttpAuthenticator.noOp();
-
-    /**
-     * Authentication scheme to use for requests.
-     */
-    @lombok.Builder.Default
-    HttpAuthScheme authScheme = HttpAuthScheme.NONE;
 
     /**
      * User-Agent header value sent with each request, or {@code null} to omit it.
@@ -171,99 +129,56 @@ public final class UrlConnectionHttpClient implements HttpClient {
     /**
      * Sends an HTTP request and returns the response.
      * <p>
-     * This method handles redirects (up to {@code maxRedirects}), retries on transient
-     * network errors (up to {@code maxRetries}), and HTTP authentication challenges.
-     * Non-successful responses (4xx/5xx) are returned as regular {@link HttpResponse}
-     * instances; wrap this client with {@link ThrowingStatusDecorator} if
-     * you want error status codes converted into {@link ThrowingStatusException}.
+     * This method opens a connection and returns the response for any HTTP
+     * status code (including 3xx, 4xx, 5xx). Redirect following, authentication,
+     * retry, and error-status handling are left to decorators.
      * </p>
      *
      * @param request the HTTP request to send
-     * @return the HTTP response from the server (including 4xx/5xx responses)
+     * @return the HTTP response from the server
      * @throws IOException if a network or I/O error occurs
      */
     @Override
     public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
-        for (int attempt = 0; ; attempt++) {
-            try {
-                return open(request, 0, AuthSchemeHelper.of(authScheme));
-            } catch (IOException ex) {
-                if (attempt >= maxRetries || !isRetryable(ex)) {
-                    throw ex;
-                }
-            }
-        }
-    }
-
-    private static boolean isRetryable(IOException ex) {
-        // Transient network errors (connection reset/refused, read/connect timeout);
-        // DNS failures are not retried.
-        return ex instanceof SocketTimeoutException || ex instanceof SocketException;
-    }
-
-    private HttpResponse open(HttpRequest request, int redirects, AuthSchemeHelper requestScheme) throws IOException {
-        URI query = request.getQuery();
-        URL queryUrl = toURL(query);
-
-        if (!UrlHelper.isHttpProtocol(queryUrl) && !UrlHelper.isHttpsProtocol(queryUrl)) {
-            throw new IOException("Unsupported protocol '" + query.getScheme() + "'");
+        if (!UrlHelper.isHttpProtocol(request.getQuery()) && !UrlHelper.isHttpsProtocol(request.getQuery())) {
+            throw new IOException("Unsupported protocol '" + request.getQuery().getScheme() + "'");
         }
 
-        if (!requestScheme.isSecureRequest(queryUrl)) {
-            throw new IOException("Insecure protocol for " + requestScheme + " auth on '" + query + "'");
-        }
+        Proxy proxy = selectProxy(request.getQuery());
+        URL url = UrlHelper.toURL(request.getQuery());
 
-        Proxy proxy = getProxy(query);
+        HttpURLConnection conn = (HttpURLConnection) urlConnectionFactory.openConnection(url, proxy);
+        conn.setReadTimeout(readTimeout);
+        conn.setConnectTimeout(connectTimeout);
 
-        HttpURLConnection connection = openConnection(request, queryUrl, requestScheme, proxy);
-
-        int responseCode = connection.getResponseCode();
-        switch (HttpResponseType.ofResponseCode(responseCode)) {
-            case REDIRECTION:
-                // Only genuine redirects are followed; other 3xx (e.g. 304 Not Modified) are returned as-is.
-                return FOLLOWED_REDIRECT_CODES.contains(responseCode)
-                        ? redirect(connection, request, redirects)
-                        : getResponse(connection, request);
-            case CLIENT_ERROR:
-                return recoverClientError(connection, request, redirects, requestScheme);
-            default:
-                // SUCCESSFUL, SERVER_ERROR, INFORMATIONAL, UNKNOWN: return the response as-is.
-                return getResponse(connection, request);
-        }
-    }
-
-    private HttpURLConnection openConnection(HttpRequest request, URL queryUrl, AuthSchemeHelper requestScheme, Proxy proxy) throws IOException {
-        HttpURLConnection result = (HttpURLConnection) urlConnectionFactory.openConnection(queryUrl, proxy);
-        result.setReadTimeout(readTimeout);
-        result.setConnectTimeout(connectTimeout);
-
-        if (result instanceof HttpsURLConnection) {
-            ((HttpsURLConnection) result).setSSLSocketFactory(sslSocketFactory);
-            ((HttpsURLConnection) result).setHostnameVerifier(hostnameVerifier);
+        if (conn instanceof HttpsURLConnection) {
+            ((HttpsURLConnection) conn).setSSLSocketFactory(sslSocketFactory);
+            ((HttpsURLConnection) conn).setHostnameVerifier(hostnameVerifier);
         }
 
         HttpHeaders headers = request.getHeaders()
                 .toBuilder()
                 .put(HttpHeaders.HTTP_ACCEPT_ENCODING_HEADER, getEncodingHeader())
                 .put(HttpHeaders.HTTP_USER_AGENT_HEADER, userAgent)
-                .put(requestScheme.getRequestHeaders(queryUrl, authenticator))
                 .build();
 
-        result.setRequestMethod(request.getMethod().name());
-        result.setInstanceFollowRedirects(false);
-        headers.keyValues().forEach(header -> result.setRequestProperty(header.getKey(), header.getValue()));
+        conn.setRequestMethod(request.getMethod().name());
+        conn.setInstanceFollowRedirects(false);
+        headers.keyValues().forEach(header -> conn.setRequestProperty(header.getKey(), header.getValue()));
 
-        listener.onOpen(request, proxy, requestScheme.getAuthScheme());
+        listener.onOpen(request, proxy);
 
         if (request.getBody() != null) {
-            result.setDoOutput(true);
-            try (OutputStream stream = result.getOutputStream()) {
+            conn.setDoOutput(true);
+            try (OutputStream stream = conn.getOutputStream()) {
                 stream.write(request.getBody());
             }
         }
 
-        result.connect();
+        conn.connect();
 
+        UrlConnectionHttpResponse result = new UrlConnectionHttpResponse(conn, decoders);
+        listener.onSuccess(result::httpContentTypeOrNull);
         return result;
     }
 
@@ -274,59 +189,10 @@ public final class UrlConnectionHttpClient implements HttpClient {
                 .collect(Collectors.joining(", "));
     }
 
-    private Proxy getProxy(URI uri) {
+    private Proxy selectProxy(URI uri) {
         List<Proxy> proxies = proxySelector.select(uri);
         return proxies.isEmpty() ? Proxy.NO_PROXY : proxies.get(0);
     }
-
-    private HttpResponse redirect(HttpURLConnection connection, HttpRequest request, int redirects) throws IOException {
-        final URL oldUrl = toURL(request.getQuery());
-        URL newUrl;
-        try {
-            if (redirects == maxRedirects) {
-                throw new IOException("Max redirection reached");
-            }
-
-            String location = connection.getHeaderField(HttpHeaders.HTTP_LOCATION_HEADER);
-            if (location == null || location.isEmpty()) {
-                throw new IOException("Missing redirection url");
-            }
-
-            // RFC 7231: Location is a URI-reference; do not URL-decode it to avoid
-            // corrupting already-encoded characters (e.g. '%2F').
-            newUrl = new URL(oldUrl, location);
-        } finally {
-            UrlConnectionHttpResponse.doClose(connection);
-        }
-
-        if (UrlHelper.isDowngradingProtocolOnRedirect(oldUrl, newUrl)) {
-            throw new IOException("Downgrading protocol on redirect from '" + oldUrl + "' to '" + newUrl + "'");
-        }
-
-        listener.onRedirection(oldUrl, newUrl);
-        return open(request.toBuilder().query(toURI(newUrl)).build(), redirects + 1, AuthSchemeHelper.of(authScheme));
-    }
-
-    private HttpResponse recoverClientError(HttpURLConnection connection, HttpRequest request, int redirects, AuthSchemeHelper requestScheme) throws IOException {
-        if (connection.getResponseCode() == HttpURLConnection.HTTP_UNAUTHORIZED) {
-            AuthSchemeHelper responseScheme = AuthSchemeHelper.find(connection).orElse(null);
-            if (responseScheme != null && !requestScheme.equals(responseScheme)) {
-                listener.onUnauthorized(connection.getURL(), requestScheme.getAuthScheme(), responseScheme.getAuthScheme());
-                return open(request, redirects + 1, responseScheme);
-            }
-            authenticator.invalidate(connection.getURL());
-        }
-
-        // Unrecoverable 4xx responses are returned as-is; wrap with ThrowingHttpClient to convert them into exceptions.
-        return getResponse(connection, request);
-    }
-
-    private HttpResponse getResponse(HttpURLConnection connection, HttpRequest request) {
-        UrlConnectionHttpResponse result = new UrlConnectionHttpResponse(connection, decoders, listener, request);
-        listener.onSuccess(result::httpContentTypeOrNull);
-        return result;
-    }
-
 
     /**
      * Converts a {@link URL} to a {@link URI}.
@@ -336,11 +202,7 @@ public final class UrlConnectionHttpClient implements HttpClient {
      * @throws IOException if the URL has invalid URI syntax
      */
     public static @NonNull URI toURI(@NonNull URL url) throws IOException {
-        try {
-            return url.toURI();
-        } catch (URISyntaxException ex) {
-            throw new IOException("Invalid URI: '" + url + "'", ex);
-        }
+        return UrlHelper.toURI(url);
     }
 
     /**
@@ -351,11 +213,7 @@ public final class UrlConnectionHttpClient implements HttpClient {
      * @throws IOException if the URI cannot be converted to a valid URL
      */
     public static @NonNull URL toURL(@NonNull URI uri) throws IOException {
-        try {
-            return uri.toURL();
-        } catch (IllegalArgumentException | MalformedURLException ex) {
-            throw new IOException("Invalid URL: '" + uri + "'", ex);
-        }
+        return UrlHelper.toURL(uri);
     }
 
     public static class Builder {

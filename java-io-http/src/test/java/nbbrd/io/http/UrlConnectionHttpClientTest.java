@@ -1,7 +1,7 @@
 package nbbrd.io.http;
 
 import _test.io.http.HttpContext;
-import nbbrd.io.http.ext.ThrowingStatusDecorator;
+import nbbrd.io.http.ext.*;
 import nbbrd.io.net.MediaType;
 import org.junit.jupiter.api.Test;
 
@@ -25,29 +25,31 @@ public abstract class UrlConnectionHttpClientTest extends HttpClientTest {
 
     @Override
     protected HttpClient getClient(HttpContext context) {
-        // Wrap with ThrowingHttpClient so inherited tests keep asserting the "errors are exceptions" contract.
-        // UrlConnectionHttpClient itself no longer throws on 4xx/5xx — it returns responses for all status codes.
         return new ThrowingStatusDecorator(
                 getRawClient(context, this::getURLConnectionFactory),
                 ThrowingStatusDecorator.DEFAULT_SHOULD_THROW
         );
     }
 
-    protected UrlConnectionHttpClient getRawClient(HttpContext context, Supplier<UrlConnectionFactory> urlConnectionFactory) {
+    protected HttpClient getRawClient(HttpContext context, Supplier<UrlConnectionFactory> urlConnectionFactory) {
+        HttpClient client = buildTransport(context, urlConnectionFactory);
+        client = new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), AuthenticatingListener.noOp());
+        client = new RedirectDecorator(client, context.getMaxRedirects(), RedirectListener.noOp());
+        client = new RetryDecorator(client, context.getMaxRetries(), RetryListener.noOp());
+        return client;
+    }
+
+    private UrlConnectionHttpClient buildTransport(HttpContext context, Supplier<UrlConnectionFactory> urlConnectionFactory) {
         return UrlConnectionHttpClient
                 .builder()
                 .readTimeout(context.getReadTimeout())
                 .connectTimeout(context.getConnectTimeout())
-                .maxRedirects(context.getMaxRedirects())
-                .maxRetries(context.getMaxRetries())
                 .proxySelector(context.getProxySelector().get())
                 .sslSocketFactory(context.getSslSocketFactory().get())
                 .hostnameVerifier(context.getHostnameVerifier().get())
                 .urlConnectionFactory(urlConnectionFactory.get())
                 .listener(context.getListener())
                 .decoders(context.getDecoders())
-                .authenticator(context.getAuthenticator())
-                .authScheme(context.getAuthScheme())
                 .userAgent(context.getUserAgent())
                 .build();
     }
@@ -162,8 +164,8 @@ public abstract class UrlConnectionHttpClientTest extends HttpClientTest {
                 .hostnameVerifier(this::wireHostnameVerifier)
                 .build();
 
-        // Raw UrlConnectionHttpClient returns 4xx/5xx as regular responses (no throwing).
-        UrlConnectionHttpClient raw = getRawClient(context, this::getURLConnectionFactory);
+        // Raw client (without ThrowingStatusDecorator) returns 4xx/5xx as regular responses.
+        HttpClient raw = getRawClient(context, this::getURLConnectionFactory);
 
         wire.resetAll();
         wire.stubFor(get(SAMPLE_URL).willReturn(notFound()));
@@ -177,6 +179,6 @@ public abstract class UrlConnectionHttpClientTest extends HttpClientTest {
             assertThat(response.getStatusCode()).isEqualTo(500);
         }
 
-        // The default throwing contract is provided by ThrowingHttpClient (see ThrowingHttpClientTest).
+        // The default throwing contract is provided by ThrowingStatusDecorator (see ThrowingHttpClientTest).
     }
 }

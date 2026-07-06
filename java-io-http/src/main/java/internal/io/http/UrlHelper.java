@@ -16,8 +16,13 @@
  */
 package internal.io.http;
 
+import lombok.NonNull;
 import nbbrd.io.http.UrlConnectionListener;
 
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 /**
@@ -29,16 +34,27 @@ public class UrlHelper {
     public static final UrlConnectionListener NO_OP_EVENT_LISTENER = new UrlConnectionListener() {
     };
 
-    // https://en.wikipedia.org/wiki/Downgrade_attack
-    public static boolean isDowngradingProtocolOnRedirect(URL oldUrl, URL newUrl) {
-        return isHttpsProtocol(oldUrl) && !isHttpsProtocol(newUrl);
+    public static boolean isHttpsProtocol(URI uri) {
+        return "https".equalsIgnoreCase(uri.getScheme());
     }
 
-    public static boolean isHttpsProtocol(URL oldUrl) {
-        return "https".equalsIgnoreCase(oldUrl.getProtocol());
+    public static boolean isHttpProtocol(URI uri) {
+        return "http".equalsIgnoreCase(uri.getScheme());
     }
 
-    public static boolean isHttpProtocol(URL oldUrl) {
-        return "http".equalsIgnoreCase(oldUrl.getProtocol());
+    public static @NonNull URI toURI(@NonNull URL url) throws IOException {
+        try {
+            return url.toURI();
+        } catch (URISyntaxException ex) {
+            throw new IOException("Invalid URI: '" + url + "'", ex);
+        }
+    }
+
+    public static @NonNull URL toURL(@NonNull URI uri) throws IOException {
+        try {
+            return uri.toURL();
+        } catch (IllegalArgumentException | MalformedURLException ex) {
+            throw new IOException("Invalid URL: '" + uri + "'", ex);
+        }
     }
 }

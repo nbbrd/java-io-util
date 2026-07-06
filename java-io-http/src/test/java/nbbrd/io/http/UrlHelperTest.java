@@ -11,21 +11,14 @@ import java.net.URL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIOException;
 
-public class HttpConstantsTest {
-
-    @Test
-    public void testIsDowngradingProtocolOnRedirect() throws MalformedURLException {
-        assertThat(UrlHelper.isDowngradingProtocolOnRedirect(new URL("http://x"), new URL("http://y"))).isFalse();
-        assertThat(UrlHelper.isDowngradingProtocolOnRedirect(new URL("https://x"), new URL("http://y"))).isTrue();
-        assertThat(UrlHelper.isDowngradingProtocolOnRedirect(new URL("http://x"), new URL("https://y"))).isFalse();
-    }
+public class UrlHelperTest {
 
     @Test
     public void testProtocolHelpers() throws MalformedURLException {
-        assertThat(UrlHelper.isHttpProtocol(new URL("HTTP://x"))).isTrue();
-        assertThat(UrlHelper.isHttpsProtocol(new URL("HTTPS://x"))).isTrue();
-        assertThat(UrlHelper.isHttpProtocol(new URL("https://x"))).isFalse();
-        assertThat(UrlHelper.isHttpsProtocol(new URL("http://x"))).isFalse();
+        assertThat(UrlHelper.isHttpProtocol(URI.create("HTTP://x"))).isTrue();
+        assertThat(UrlHelper.isHttpsProtocol(URI.create("HTTPS://x"))).isTrue();
+        assertThat(UrlHelper.isHttpProtocol(URI.create("https://x"))).isFalse();
+        assertThat(UrlHelper.isHttpsProtocol(URI.create("http://x"))).isFalse();
     }
 
     @Test

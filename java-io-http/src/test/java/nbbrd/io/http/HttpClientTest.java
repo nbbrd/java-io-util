@@ -17,6 +17,7 @@
 package nbbrd.io.http;
 
 import _test.io.http.HttpContext;
+import _test.io.http.MockedHttpAuthenticator;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.matching.AbsentPattern;
@@ -43,8 +44,6 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -52,7 +51,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static nbbrd.io.http.HttpAuthScheme.BASIC;
 import static nbbrd.io.http.HttpAuthScheme.NONE;
-import static nbbrd.io.http.HttpAuthenticator.newPassword;
 import static nbbrd.io.http.HttpMethod.POST;
 import static nbbrd.io.http.HttpMethod.PUT;
 import static org.assertj.core.api.Assertions.*;
@@ -469,7 +467,7 @@ public abstract class HttpClientTest {
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(ignore -> newPassword("user", "password"))
+                .authenticator(MockedHttpAuthenticator.onConstant(() -> HttpAuthenticator.newPassword("user", "password")))
                 .authScheme(authScheme)
                 .build();
         HttpClient x = getClient(context);
@@ -518,9 +516,9 @@ public abstract class HttpClientTest {
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(ignore -> {
+                .authenticator(MockedHttpAuthenticator.onConstant(() -> {
                     throw new FileNotFoundException("boom");
-                })
+                }))
                 .authScheme(authScheme)
                 .build();
         HttpClient x = getClient(context);
@@ -546,7 +544,7 @@ public abstract class HttpClientTest {
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(ignore -> newPassword("user", "boom"))
+                .authenticator(MockedHttpAuthenticator.onConstant(() -> HttpAuthenticator.newPassword("user", "boom")))
                 .authScheme(authScheme)
                 .build();
         HttpClient x = getClient(context);
@@ -575,7 +573,7 @@ public abstract class HttpClientTest {
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(ignore -> newPassword("user", "password"))
+                .authenticator(MockedHttpAuthenticator.onConstant(() -> HttpAuthenticator.newPassword("user", "password")))
                 .authScheme(authScheme)
                 .build();
         HttpClient x = getClient(context);
@@ -601,7 +599,7 @@ public abstract class HttpClientTest {
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(ignore -> newPassword("user", "password"))
+                .authenticator(MockedHttpAuthenticator.onConstant(() -> HttpAuthenticator.newPassword("user", "password")))
                 .authScheme(authScheme)
                 .build();
         HttpClient x = getClient(context);
@@ -713,177 +711,6 @@ public abstract class HttpClientTest {
         }
     }
 
-    @Test
-    public void testOnComplete() throws IOException {
-        AtomicReference<HttpRequest> completedRequest = new AtomicReference<>();
-        AtomicLong completedBytesRead = new AtomicLong(-1);
-        AtomicLong completedElapsedMs = new AtomicLong(-1);
-
-        UrlConnectionListener listener = new UrlConnectionListener() {
-            @Override
-            public void onComplete(@lombok.NonNull HttpRequest request, long bytesRead, long elapsedMs) {
-                completedRequest.set(request);
-                completedBytesRead.set(bytesRead);
-                completedElapsedMs.set(elapsedMs);
-            }
-        };
-
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .listener(listener)
-                .build();
-        HttpClient x = getClient(context);
-
-        wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
-
-        HttpRequest request = HttpRequest
-                .builder()
-                .query(wireURL(SAMPLE_URL))
-                .headers(GENERIC_DATA_21_HEADER)
-                .build();
-
-        try (HttpResponse response = x.send(request)) {
-            try (InputStream body = response.getBody()) {
-                byte[] buf = new byte[8192];
-                while (body.read(buf) != -1) {
-                    // consume body
-                }
-            }
-        }
-
-        assertThat(completedRequest.get()).isNotNull();
-        assertThat(completedBytesRead.get()).isEqualTo(SAMPLE_XML.getBytes(UTF_8).length);
-        assertThat(completedElapsedMs.get()).isGreaterThanOrEqualTo(0);
-    }
-
-    @Test
-    public void testOnCompleteWithoutBodyRead() throws IOException {
-        AtomicLong completedBytesRead = new AtomicLong(0);
-
-        UrlConnectionListener listener = new UrlConnectionListener() {
-            @Override
-            public void onComplete(@lombok.NonNull HttpRequest request, long bytesRead, long elapsedMs) {
-                completedBytesRead.set(bytesRead);
-            }
-        };
-
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .listener(listener)
-                .build();
-        HttpClient x = getClient(context);
-
-        wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
-
-        HttpRequest request = HttpRequest
-                .builder()
-                .query(wireURL(SAMPLE_URL))
-                .headers(GENERIC_DATA_21_HEADER)
-                .build();
-
-        try (HttpResponse response = x.send(request)) {
-            // close without reading body
-        }
-
-        assertThat(completedBytesRead.get())
-                .describedAs("bytesRead should be -1 when body was not read")
-                .isEqualTo(-1);
-    }
-
-    @Test
-    public void testOnCompleteAfterRedirect() throws IOException {
-        AtomicReference<HttpRequest> completedRequest = new AtomicReference<>();
-        AtomicLong completedBytesRead = new AtomicLong(-1);
-
-        UrlConnectionListener listener = new UrlConnectionListener() {
-            @Override
-            public void onComplete(@lombok.NonNull HttpRequest request, long bytesRead, long elapsedMs) {
-                completedRequest.set(request);
-                completedBytesRead.set(bytesRead);
-            }
-        };
-
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .listener(listener)
-                .build();
-        HttpClient x = getClient(context);
-
-        wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(aResponse().withStatus(302).withHeader(HttpHeaders.HTTP_LOCATION_HEADER, SECOND_URL)));
-        wire.stubFor(get(SECOND_URL).willReturn(okXml(SAMPLE_XML)));
-
-        HttpRequest request = HttpRequest
-                .builder()
-                .query(wireURL(SAMPLE_URL))
-                .headers(GENERIC_DATA_21_HEADER)
-                .build();
-
-        try (HttpResponse response = x.send(request)) {
-            try (InputStream body = response.getBody()) {
-                drain(body);
-            }
-        }
-
-        assertThat(completedRequest.get())
-                .describedAs("onComplete must fire once for the final response after a redirect")
-                .isNotNull()
-                .extracting(HttpRequest::getQuery)
-                .isEqualTo(wireURL(SECOND_URL));
-        assertThat(completedBytesRead.get()).isEqualTo(SAMPLE_XML.getBytes(UTF_8).length);
-    }
-
-    @Test
-    public void testGetBodyCalledMultipleTimes() throws IOException {
-        AtomicLong completedBytesRead = new AtomicLong(-1);
-
-        UrlConnectionListener listener = new UrlConnectionListener() {
-            @Override
-            public void onComplete(@lombok.NonNull HttpRequest request, long bytesRead, long elapsedMs) {
-                completedBytesRead.set(bytesRead);
-            }
-        };
-
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .listener(listener)
-                .build();
-        HttpClient x = getClient(context);
-
-        wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
-
-        HttpRequest request = HttpRequest
-                .builder()
-                .query(wireURL(SAMPLE_URL))
-                .headers(GENERIC_DATA_21_HEADER)
-                .build();
-
-        try (HttpResponse response = x.send(request)) {
-            InputStream first = response.getBody();
-            InputStream second = response.getBody();
-            // Single-use semantics: repeated getBody() returns the same stream
-            // so the first stream's count cannot be lost.
-            assertThat(second).isSameAs(first);
-            try (InputStream body = second) {
-                drain(body);
-            }
-        }
-
-        assertThat(completedBytesRead.get())
-                .describedAs("count from the first body stream must not be lost on a second getBody()")
-                .isEqualTo(SAMPLE_XML.getBytes(UTF_8).length);
-    }
 
     private static void drain(InputStream stream) throws IOException {
         byte[] buf = new byte[8192];

@@ -5,10 +5,8 @@ import nbbrd.io.http.HttpAuthenticator;
 import nbbrd.io.http.HttpHeaders;
 
 import java.io.IOException;
-import java.io.UncheckedIOException;
-import java.net.HttpURLConnection;
 import java.net.PasswordAuthentication;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Optional;
@@ -26,41 +24,41 @@ public enum AuthSchemeHelper {
 
     NONE(HttpAuthScheme.NONE) {
         @Override
-        public boolean isSecureRequest(URL query) {
+        public boolean isSecureRequest(URI query) {
             return true;
         }
 
         @Override
-        public HttpHeaders getRequestHeaders(URL query, HttpAuthenticator authenticator) {
+        public HttpHeaders getRequestHeaders(URI query, HttpAuthenticator authenticator) {
             return HttpHeaders.EMPTY;
         }
 
         @Override
-        public boolean hasResponseHeader(HttpURLConnection http) {
+        public boolean hasResponseHeader(HttpHeaders headers) {
             return false;
         }
     },
     BASIC(HttpAuthScheme.BASIC) {
         @Override
-        public boolean isSecureRequest(URL url) {
-            return UrlHelper.isHttpsProtocol(url);
+        public boolean isSecureRequest(URI uri) {
+            return UrlHelper.isHttpsProtocol(uri);
         }
 
         @Override
-        public HttpHeaders getRequestHeaders(URL url, HttpAuthenticator authenticator) throws IOException {
-            PasswordAuthentication auth = authenticator.getPasswordAuthentication(url);
+        public boolean hasResponseHeader(HttpHeaders headers) {
+            String value = headers.firstValue(HTTP_AUTHENTICATE_HEADER).orElse(null);
+            return value != null && value.startsWith("Basic");
+        }
+
+        @Override
+        public HttpHeaders getRequestHeaders(URI uri, HttpAuthenticator authenticator) throws IOException {
+            PasswordAuthentication auth = authenticator.getPasswordAuthentication(uri);
             if (auth == null) {
-                throw new IOException("Missing BASIC authentication for " + url);
+                throw new IOException("Missing BASIC authentication for " + uri);
             }
             return HttpHeaders.builder()
                     .put(HTTP_AUTHORIZATION_HEADER, getBasicAuthHeader(auth))
                     .build();
-        }
-
-        @Override
-        public boolean hasResponseHeader(HttpURLConnection http) {
-            String value = http.getHeaderField(HTTP_AUTHENTICATE_HEADER);
-            return value != null && value.startsWith("Basic");
         }
 
         private String getBasicAuthHeader(PasswordAuthentication auth) {
@@ -74,15 +72,15 @@ public enum AuthSchemeHelper {
     },
     BEARER(HttpAuthScheme.BEARER) {
         @Override
-        public boolean isSecureRequest(URL url) {
-            return UrlHelper.isHttpsProtocol(url);
+        public boolean isSecureRequest(URI uri) {
+            return UrlHelper.isHttpsProtocol(uri);
         }
 
         @Override
-        public HttpHeaders getRequestHeaders(URL url, HttpAuthenticator authenticator) throws IOException {
-            PasswordAuthentication auth = authenticator.getPasswordAuthentication(url);
+        public HttpHeaders getRequestHeaders(URI uri, HttpAuthenticator authenticator) throws IOException {
+            PasswordAuthentication auth = authenticator.getPasswordAuthentication(uri);
             if (auth == null) {
-                throw new IOException("Missing BEARER authentication for " + url);
+                throw new IOException("Missing BEARER authentication for " + uri);
             }
             return HttpHeaders.builder()
                     .put(HTTP_AUTHORIZATION_HEADER, getBearerAuthHeader(auth))
@@ -90,7 +88,7 @@ public enum AuthSchemeHelper {
         }
 
         @Override
-        public boolean hasResponseHeader(HttpURLConnection http) {
+        public boolean hasResponseHeader(HttpHeaders headers) {
             return false;
         }
 
@@ -101,21 +99,15 @@ public enum AuthSchemeHelper {
 
     private final HttpAuthScheme authScheme;
 
-    public abstract boolean isSecureRequest(URL query);
+    public abstract boolean isSecureRequest(URI query);
 
-    public abstract HttpHeaders getRequestHeaders(URL query, HttpAuthenticator authenticator) throws IOException;
+    public abstract HttpHeaders getRequestHeaders(URI query, HttpAuthenticator authenticator) throws IOException;
 
-    public abstract boolean hasResponseHeader(HttpURLConnection http) throws IOException;
+    public abstract boolean hasResponseHeader(HttpHeaders headers);
 
-    public static Optional<AuthSchemeHelper> find(HttpURLConnection http) {
+    public static Optional<AuthSchemeHelper> find(HttpHeaders headers) {
         return Stream.of(AuthSchemeHelper.values())
-                .filter(authScheme -> {
-                    try {
-                        return authScheme.hasResponseHeader(http);
-                    } catch (IOException exception) {
-                        throw new UncheckedIOException(exception);
-                    }
-                })
+                .filter(authScheme -> authScheme.hasResponseHeader(headers))
                 .findFirst();
     }
 

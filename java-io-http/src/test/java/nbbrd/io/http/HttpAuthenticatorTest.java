@@ -3,7 +3,7 @@ package nbbrd.io.http;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.net.URL;
+import java.net.URI;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -13,12 +13,12 @@ public class HttpAuthenticatorTest {
     @Test
     public void testNoOpAuthenticator() throws IOException {
         HttpAuthenticator x = HttpAuthenticator.noOp();
-        URL url = new URL("https://localhost");
+        URI uri = URI.create("https://localhost");
 
-        assertThat(x.getPasswordAuthentication(url))
+        assertThat(x.getPasswordAuthentication(uri))
                 .isNull();
 
-        assertThatCode(() -> x.invalidate(url))
+        assertThatCode(() -> x.invalidate(uri))
                 .doesNotThrowAnyException();
     }
 
