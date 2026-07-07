@@ -1,6 +1,6 @@
 package nbbrd.io.http.ext;
 
-import internal.io.http.AuthSchemeHelper;
+import internal.io.http.ext.AuthSchemeHelper;
 import lombok.NonNull;
 import nbbrd.design.DecoratorPattern;
 import nbbrd.io.http.*;
@@ -12,8 +12,8 @@ import java.net.HttpURLConnection;
  * {@link HttpClient} decorator that handles HTTP authentication.
  * <p>
  * On each request, this decorator adds the appropriate {@code Authorization}
- * header based on the configured {@link HttpAuthScheme} and
- * {@link HttpAuthenticator}. If the server responds with
+ * header based on the configured {@link AuthScheme} and
+ * {@link Authenticator}. If the server responds with
  * {@code 401 Unauthorized} and a {@code WWW-Authenticate} header indicating
  * a different scheme, the request is retried with the discovered scheme.
  * </p>
@@ -31,10 +31,10 @@ public final class AuthenticatingDecorator implements HttpClientDecorator {
     private final HttpClient decorated;
 
     @NonNull
-    private final HttpAuthenticator authenticator;
+    private final Authenticator authenticator;
 
     @NonNull
-    private final HttpAuthScheme authScheme;
+    private final AuthScheme authScheme;
 
     @NonNull
     private final AuthenticatingListener listener;

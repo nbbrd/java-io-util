@@ -1,6 +1,6 @@
-package nbbrd.io.http;
+package nbbrd.io.http.ext;
 
-import internal.io.http.NoOpHttpAuthenticator;
+import internal.io.http.ext.NoOpAuthenticator;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 import org.jspecify.annotations.Nullable;
@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.net.PasswordAuthentication;
 import java.net.URI;
 
-public interface HttpAuthenticator {
+public interface Authenticator {
 
     @Nullable
     PasswordAuthentication getPasswordAuthentication(@NonNull URI uri) throws IOException;
@@ -17,8 +17,8 @@ public interface HttpAuthenticator {
     void invalidate(@NonNull URI uri) throws IOException;
 
     @StaticFactoryMethod
-    static @NonNull HttpAuthenticator noOp() {
-        return NoOpHttpAuthenticator.NO_OP;
+    static @NonNull Authenticator noOp() {
+        return NoOpAuthenticator.NO_OP;
     }
 
     @StaticFactoryMethod(PasswordAuthentication.class)

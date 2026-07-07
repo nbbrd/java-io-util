@@ -17,12 +17,14 @@
 package nbbrd.io.http;
 
 import _test.io.http.HttpContext;
-import _test.io.http.MockedHttpAuthenticator;
+import _test.io.http.MockedAuthenticator;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.matching.AbsentPattern;
 import com.github.tomakehurst.wiremock.matching.AnythingPattern;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
+import nbbrd.io.http.ext.AuthScheme;
+import nbbrd.io.http.ext.Authenticator;
 import nbbrd.io.http.ext.ThrowingStatusException;
 import nbbrd.io.net.MediaType;
 import org.assertj.core.api.Assumptions;
@@ -49,8 +51,8 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static nbbrd.io.http.HttpAuthScheme.BASIC;
-import static nbbrd.io.http.HttpAuthScheme.NONE;
+import static nbbrd.io.http.ext.AuthScheme.BASIC;
+import static nbbrd.io.http.ext.AuthScheme.NONE;
 import static nbbrd.io.http.HttpMethod.POST;
 import static nbbrd.io.http.HttpMethod.PUT;
 import static org.assertj.core.api.Assertions.*;
@@ -461,13 +463,13 @@ public abstract class HttpClientTest {
     }
 
     @ParameterizedTest
-    @EnumSource(HttpAuthScheme.class)
-    public void testValidAuth(HttpAuthScheme authScheme) throws IOException {
+    @EnumSource(AuthScheme.class)
+    public void testValidAuth(AuthScheme authScheme) throws IOException {
         HttpContext context = HttpContext
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(MockedHttpAuthenticator.onConstant(() -> HttpAuthenticator.newPassword("user", "password")))
+                .authenticator(MockedAuthenticator.onConstant(() -> Authenticator.newPassword("user", "password")))
                 .authScheme(authScheme)
                 .build();
         HttpClient x = getClient(context);
@@ -485,13 +487,13 @@ public abstract class HttpClientTest {
     }
 
     @ParameterizedTest
-    @EnumSource(HttpAuthScheme.class)
-    public void testNoAuthenticator(HttpAuthScheme authScheme) throws MalformedURLException {
+    @EnumSource(AuthScheme.class)
+    public void testNoAuthenticator(AuthScheme authScheme) throws MalformedURLException {
         HttpContext context = HttpContext
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(HttpAuthenticator.noOp())
+                .authenticator(Authenticator.noOp())
                 .authScheme(authScheme)
                 .build();
         HttpClient x = getClient(context);
@@ -510,13 +512,13 @@ public abstract class HttpClientTest {
     }
 
     @ParameterizedTest
-    @EnumSource(HttpAuthScheme.class)
-    public void testFailingAuthenticator(HttpAuthScheme authScheme) throws MalformedURLException {
+    @EnumSource(AuthScheme.class)
+    public void testFailingAuthenticator(AuthScheme authScheme) throws MalformedURLException {
         HttpContext context = HttpContext
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(MockedHttpAuthenticator.onConstant(() -> {
+                .authenticator(MockedAuthenticator.onConstant(() -> {
                     throw new FileNotFoundException("boom");
                 }))
                 .authScheme(authScheme)
@@ -538,13 +540,13 @@ public abstract class HttpClientTest {
     }
 
     @ParameterizedTest
-    @EnumSource(HttpAuthScheme.class)
-    public void testInvalidAuth(HttpAuthScheme authScheme) {
+    @EnumSource(AuthScheme.class)
+    public void testInvalidAuth(AuthScheme authScheme) {
         HttpContext context = HttpContext
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(MockedHttpAuthenticator.onConstant(() -> HttpAuthenticator.newPassword("user", "boom")))
+                .authenticator(MockedAuthenticator.onConstant(() -> Authenticator.newPassword("user", "boom")))
                 .authScheme(authScheme)
                 .build();
         HttpClient x = getClient(context);
@@ -567,13 +569,13 @@ public abstract class HttpClientTest {
     }
 
     @ParameterizedTest
-    @EnumSource(HttpAuthScheme.class)
-    public void testInsecureAuth(HttpAuthScheme authScheme) throws MalformedURLException {
+    @EnumSource(AuthScheme.class)
+    public void testInsecureAuth(AuthScheme authScheme) throws MalformedURLException {
         HttpContext context = HttpContext
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(MockedHttpAuthenticator.onConstant(() -> HttpAuthenticator.newPassword("user", "password")))
+                .authenticator(MockedAuthenticator.onConstant(() -> Authenticator.newPassword("user", "password")))
                 .authScheme(authScheme)
                 .build();
         HttpClient x = getClient(context);
@@ -593,13 +595,13 @@ public abstract class HttpClientTest {
     }
 
     @ParameterizedTest
-    @EnumSource(HttpAuthScheme.class)
-    public void testMissingAuthenticateHeader(HttpAuthScheme authScheme) throws IOException {
+    @EnumSource(AuthScheme.class)
+    public void testMissingAuthenticateHeader(AuthScheme authScheme) throws IOException {
         HttpContext context = HttpContext
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
                 .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(MockedHttpAuthenticator.onConstant(() -> HttpAuthenticator.newPassword("user", "password")))
+                .authenticator(MockedAuthenticator.onConstant(() -> Authenticator.newPassword("user", "password")))
                 .authScheme(authScheme)
                 .build();
         HttpClient x = getClient(context);

@@ -1,13 +1,13 @@
-package internal.io.http;
+package internal.io.http.ext;
 
 import lombok.NonNull;
-import nbbrd.io.http.HttpAuthenticator;
+import nbbrd.io.http.ext.Authenticator;
 import org.jspecify.annotations.Nullable;
 
 import java.net.PasswordAuthentication;
 import java.net.URI;
 
-public enum NoOpHttpAuthenticator implements HttpAuthenticator {
+public enum NoOpAuthenticator implements Authenticator {
 
     NO_OP;
 

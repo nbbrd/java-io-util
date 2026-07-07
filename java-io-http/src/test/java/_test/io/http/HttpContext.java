@@ -2,6 +2,8 @@ package _test.io.http;
 
 import nbbrd.design.NonNegative;
 import nbbrd.io.http.*;
+import nbbrd.io.http.ext.AuthScheme;
+import nbbrd.io.http.ext.Authenticator;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -57,10 +59,10 @@ public class HttpContext {
 
     @lombok.NonNull
     @lombok.Builder.Default
-    HttpAuthenticator authenticator = HttpAuthenticator.noOp();
+    Authenticator authenticator = Authenticator.noOp();
 
     @lombok.Builder.Default
-    HttpAuthScheme authScheme = HttpAuthScheme.NONE;
+    AuthScheme authScheme = AuthScheme.NONE;
 
     @lombok.Builder.Default
     String userAgent = null;
