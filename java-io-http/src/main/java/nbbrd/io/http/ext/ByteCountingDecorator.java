@@ -103,17 +103,6 @@ public final class ByteCountingDecorator implements HttpClientDecorator {
         }
 
         /**
-         * Returns the response body as a disconnecting input stream with byte counting.
-         *
-         * @return an input stream that tracks bytes read and disconnects on close
-         * @throws IOException if an I/O error occurs
-         */
-        @Override
-        public @NonNull InputStream asDisconnectingInputStream() throws IOException {
-            return new CountingInputStream(delegate.asDisconnectingInputStream(), byteCount);
-        }
-
-        /**
          * Closes the response and reports the total bytes read if any were recorded.
          *
          * @throws IOException if an I/O error occurs while closing
@@ -123,10 +112,7 @@ public final class ByteCountingDecorator implements HttpClientDecorator {
             try {
                 delegate.close();
             } finally {
-                long bytes = byteCount.get();
-                if (bytes > 0) {
-                    listener.accept(bytes);
-                }
+                listener.accept(byteCount.get());
             }
         }
     }
