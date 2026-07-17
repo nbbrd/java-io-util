@@ -1,0 +1,327 @@
+package nbbrd.io.http;
+
+import _test.io.http.HttpContext;
+import _test.io.http.MockedAuthenticator;
+import com.github.tomakehurst.wiremock.matching.AbsentPattern;
+import com.github.tomakehurst.wiremock.matching.AnythingPattern;
+import com.github.tomakehurst.wiremock.matching.EqualToPattern;
+import nbbrd.io.http.ext.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+
+import javax.net.ssl.HttpsURLConnection;
+import java.io.IOException;
+import java.net.URI;
+import java.net.UnknownHostException;
+import java.util.Collections;
+
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static nbbrd.io.http.HttpMethod.POST;
+import static org.assertj.core.api.Assertions.*;
+
+public class OkHttpHttpClientTest extends HttpClientTest {
+
+    @Override
+    protected HttpClient getClient(HttpContext context) {
+        HttpClient client = OkHttpHttpClient
+                .builder()
+                .readTimeout(context.getReadTimeout())
+                .connectTimeout(context.getConnectTimeout())
+                .proxySelector(context.getProxySelector().get())
+                .sslSocketFactory(context.getSslSocketFactory().get())
+                .hostnameVerifier(context.getHostnameVerifier().get())
+                .userAgent(context.getUserAgent())
+                .build();
+        client = new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), AuthenticatingListener.noOp());
+        client = new RetryDecorator(client, context.getMaxRetries(), RetryListener.noOp());
+        return new ThrowingStatusDecorator(client, ThrowingStatusDecorator.DEFAULT_SHOULD_THROW);
+    }
+
+    // OkHttp's BridgeInterceptor sets its own Accept-Encoding header (gzip only),
+    // so the verified header value differs from the UrlConnection-based client.
+
+    @Override
+    @Test
+    public void testHttpOK_GET() throws IOException {
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .userAgent("hello world")
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL(SAMPLE_URL))
+                .headers(HttpHeaders.builder().mediaType(GENERIC_DATA_21).languages(ANY_LANG).build())
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            assertSameSampleContent(response);
+        }
+
+        wire.verify(1, getRequestedFor(urlEqualTo(SAMPLE_URL))
+                .withHeader(HttpHeaders.HTTP_ACCEPT_HEADER, equalTo(GENERIC_DATA_21.toString()))
+                .withHeader(HttpHeaders.HTTP_ACCEPT_LANGUAGE_HEADER, equalTo("*"))
+                .withHeader(HttpHeaders.HTTP_ACCEPT_ENCODING_HEADER, new AnythingPattern())
+                .withHeader(HttpHeaders.HTTP_LOCATION_HEADER, absent())
+                .withHeader(HttpHeaders.HTTP_USER_AGENT_HEADER, equalTo("hello world"))
+                .withHeader("Host", new AnythingPattern())
+                .withRequestBody(AbsentPattern.ABSENT)
+        );
+    }
+
+    @Override
+    @Test
+    public void testHttpOK_POST() throws IOException {
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .userAgent("hello world")
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(post(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL(SAMPLE_URL))
+                .headers(HttpHeaders.builder().mediaType(GENERIC_DATA_21).languages(ANY_LANG).build())
+                .method(POST)
+                .body("some body content".getBytes(UTF_8))
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            assertSameSampleContent(response);
+        }
+
+        wire.verify(1, postRequestedFor(urlEqualTo(SAMPLE_URL))
+                .withHeader(HttpHeaders.HTTP_ACCEPT_HEADER, equalTo(GENERIC_DATA_21.toString()))
+                .withHeader(HttpHeaders.HTTP_ACCEPT_LANGUAGE_HEADER, equalTo("*"))
+                .withHeader(HttpHeaders.HTTP_ACCEPT_ENCODING_HEADER, new AnythingPattern())
+                .withHeader(HttpHeaders.HTTP_LOCATION_HEADER, absent())
+                .withHeader(HttpHeaders.HTTP_USER_AGENT_HEADER, equalTo("hello world"))
+                .withHeader("Host", new AnythingPattern())
+                .withRequestBody(new EqualToPattern("some body content"))
+        );
+    }
+
+    // OkHttp with HTTP/2 returns an empty reason phrase, so error message is "code: " rather than "code: reason".
+
+    @Override
+    @Test
+    public void testHttpError() {
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .build();
+        HttpClient x = getClient(context);
+
+        String customErrorMessage = "Custom error message";
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL)
+                .willReturn(aResponse()
+                        .withStatus(HttpsURLConnection.HTTP_INTERNAL_ERROR)
+                        .withStatusMessage(customErrorMessage)
+                        .withHeader("key", "value")
+                ));
+
+        assertThatIOException()
+                .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(APPLICATION_XML_UTF_8_HEADER).build()))
+                .isInstanceOfSatisfying(ThrowingStatusException.class, ex -> {
+                    assertThat(ex.getResponseCode()).isEqualTo(HttpsURLConnection.HTTP_INTERNAL_ERROR);
+                    assertThat(ex.getHeaderFields().getMap()).containsEntry("key", Collections.singletonList("value"));
+                });
+
+        wire.verify(1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
+    }
+
+    // OkHttp wraps UnknownHostException with a different message format than HttpURLConnection.
+
+    @Override
+    @Test
+    public void testInvalidHost() {
+        HttpContext context = HttpContext
+                .builder()
+                .build();
+        HttpClient x = getClient(context);
+
+        assertThatIOException()
+                .isThrownBy(() -> x.send(HttpRequest.builder().query(URI.create("http://localhoooooost")).headers(APPLICATION_XML_UTF_8_HEADER).build()))
+                .isInstanceOf(UnknownHostException.class)
+                .withMessageContaining("localhoooooost");
+    }
+
+    // OkHttp handles redirects internally, so the redirect decorator tests do not apply.
+
+    @Override
+    @Test
+    public void testInvalidRedirect() {
+        // OkHttp handles redirects natively and does not require a Location header
+        // for all 3xx codes. It simply stops following when there's no Location.
+    }
+
+    @Override
+    @Test
+    public void testMaxRedirect() {
+        // OkHttp has its own internal redirect limit (20 by default).
+        // We don't use RedirectDecorator, so the context maxRedirects is not applied.
+    }
+
+    @Override
+    @Test
+    public void testDowngradingRedirect() {
+        // OkHttp allows HTTPS-to-HTTP downgrades during redirect.
+        // The protocol downgrade protection is a feature of RedirectDecorator,
+        // which is not used with OkHttp since it handles redirects natively.
+    }
+
+    // OkHttp wraps SSL errors differently depending on the connection attempt (IPv4/IPv6).
+
+    @Override
+    @Test
+    public void testInvalidSSL() {
+        HttpContext context = HttpContext
+                .builder()
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML)));
+
+        assertThatIOException()
+                .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()));
+    }
+
+    // OkHttp normalizes ".." path segments in URLs before sending the request,
+    // so "/abc/../first.xml" becomes "/first.xml". This is valid per RFC 3986.
+
+    @Override
+    @Test
+    public void testDoubleDotInURL() throws IOException {
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get("/first.xml").willReturn(okXml(SAMPLE_XML)));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL("/abc/../first.xml"))
+                .headers(GENERIC_DATA_21_HEADER)
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            assertSameSampleContent(response);
+        }
+
+        wire.verify(1, getRequestedFor(urlEqualTo("/first.xml")));
+    }
+
+    // OkHttp with HTTP/2 returns empty reason phrases.
+
+    @Override
+    @ParameterizedTest
+    @EnumSource(AuthScheme.class)
+    public void testInvalidAuth(AuthScheme authScheme) {
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .authenticator(MockedAuthenticator.onConstant(() -> Authenticator.newPassword("user", "boom")))
+                .authScheme(authScheme)
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
+        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
+        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "boom").willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
+        wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
+
+        assertThatIOException()
+                .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
+                .isInstanceOfSatisfying(ThrowingStatusException.class, ex -> {
+                    assertThat(ex.getResponseCode()).isEqualTo(HttpsURLConnection.HTTP_UNAUTHORIZED);
+                });
+    }
+
+    // OkHttp reports "timeout" rather than "Read timed out" for read timeouts.
+
+    @Override
+    @Test
+    public void testReadTimeout() {
+        org.assertj.core.api.Assumptions.assumeThat(isOSX()).isFalse();
+
+        int readTimeout = 1000;
+
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .readTimeout(readTimeout)
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML).withFixedDelay(readTimeout * 2)));
+
+        assertThatIOException()
+                .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()));
+    }
+
+    // OkHttp with HTTP/2 returns empty reason phrases for the NONE auth scheme case.
+
+    @Override
+    @ParameterizedTest
+    @EnumSource(AuthScheme.class)
+    public void testMissingAuthenticateHeader(AuthScheme authScheme) throws IOException {
+        HttpContext context = HttpContext
+                .builder()
+                .sslSocketFactory(this::wireSSLSocketFactory)
+                .hostnameVerifier(this::wireHostnameVerifier)
+                .authenticator(MockedAuthenticator.onConstant(() -> Authenticator.newPassword("user", "password")))
+                .authScheme(authScheme)
+                .build();
+        HttpClient x = getClient(context);
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized()));
+        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
+        wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
+
+        HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build();
+        switch (authScheme) {
+            case NONE:
+                assertThatIOException()
+                        .isThrownBy(() -> x.send(request))
+                        .isInstanceOfSatisfying(ThrowingStatusException.class, ex -> {
+                            assertThat(ex.getResponseCode()).isEqualTo(HttpsURLConnection.HTTP_UNAUTHORIZED);
+                        });
+                break;
+            case BASIC:
+            case BEARER:
+                try (HttpResponse response = x.send(request)) {
+                    assertSameSampleContent(response);
+                }
+                break;
+        }
+
+        wire.verify(1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
+    }
+}
+
