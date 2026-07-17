@@ -25,18 +25,7 @@ public abstract class UrlConnectionHttpClientTest extends HttpClientTest {
 
     @Override
     protected HttpClient getClient(HttpContext context) {
-        return new ThrowingStatusDecorator(
-                getRawClient(context, this::getURLConnectionFactory),
-                ThrowingStatusDecorator.DEFAULT_SHOULD_THROW
-        );
-    }
-
-    protected HttpClient getRawClient(HttpContext context, Supplier<UrlConnectionFactory> urlConnectionFactory) {
-        HttpClient client = buildTransport(context, urlConnectionFactory);
-        client = new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), AuthenticatingListener.noOp());
-        client = new RedirectDecorator(client, context.getMaxRedirects(), RedirectListener.noOp());
-        client = new RetryDecorator(client, context.getMaxRetries(), RetryListener.noOp());
-        return client;
+        return getClient(context, this::getURLConnectionFactory);
     }
 
     private UrlConnectionHttpClient buildTransport(HttpContext context, Supplier<UrlConnectionFactory> urlConnectionFactory) {
@@ -55,10 +44,11 @@ public abstract class UrlConnectionHttpClientTest extends HttpClientTest {
     }
 
     protected HttpClient getClient(HttpContext context, Supplier<UrlConnectionFactory> urlConnectionFactory) {
-        return new ThrowingStatusDecorator(
-                getRawClient(context, urlConnectionFactory),
-                ThrowingStatusDecorator.DEFAULT_SHOULD_THROW
-        );
+        HttpClient client = buildTransport(context, urlConnectionFactory);
+        client = new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), AuthenticatingListener.noOp());
+        client = new RedirectDecorator(client, context.getMaxRedirects(), RedirectListener.noOp());
+        client = new RetryDecorator(client, context.getMaxRetries(), RetryListener.noOp());
+        return client;
     }
 
     @Test
@@ -164,8 +154,7 @@ public abstract class UrlConnectionHttpClientTest extends HttpClientTest {
                 .hostnameVerifier(this::wireHostnameVerifier)
                 .build();
 
-        // Raw client (without ThrowingStatusDecorator) returns 4xx/5xx as regular responses.
-        HttpClient raw = getRawClient(context, this::getURLConnectionFactory);
+        HttpClient raw = getClient(context, this::getURLConnectionFactory);
 
         wire.resetAll();
         wire.stubFor(get(SAMPLE_URL).willReturn(notFound()));

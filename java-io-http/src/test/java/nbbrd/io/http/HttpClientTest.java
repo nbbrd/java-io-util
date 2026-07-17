@@ -25,7 +25,6 @@ import com.github.tomakehurst.wiremock.matching.AnythingPattern;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import nbbrd.io.http.ext.AuthScheme;
 import nbbrd.io.http.ext.Authenticator;
-import nbbrd.io.http.ext.ThrowingStatusException;
 import nbbrd.io.net.MediaType;
 import org.assertj.core.api.Assumptions;
 import org.junit.jupiter.api.Test;
@@ -51,10 +50,10 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static nbbrd.io.http.ext.AuthScheme.BASIC;
-import static nbbrd.io.http.ext.AuthScheme.NONE;
 import static nbbrd.io.http.HttpMethod.POST;
 import static nbbrd.io.http.HttpMethod.PUT;
+import static nbbrd.io.http.ext.AuthScheme.BASIC;
+import static nbbrd.io.http.ext.AuthScheme.NONE;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -245,7 +244,7 @@ public abstract class HttpClientTest {
     }
 
     @Test
-    public void testHttpError() {
+    public void testHttpError() throws IOException {
         HttpContext context = HttpContext
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
@@ -263,14 +262,11 @@ public abstract class HttpClientTest {
                         .withHeader("key", "value")
                 ));
 
-        assertThatIOException()
-                .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(APPLICATION_XML_UTF_8_HEADER).build()))
-                .withMessage("500: " + customErrorMessage)
-                .isInstanceOfSatisfying(ThrowingStatusException.class, ex -> {
-                    assertThat(ex.getResponseCode()).isEqualTo(HttpsURLConnection.HTTP_INTERNAL_ERROR);
-                    assertThat(ex.getResponseMessage()).isEqualTo(customErrorMessage);
-                    assertThat(ex.getHeaderFields().getMap()).containsEntry("key", singletonList("value"));
-                });
+        try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(APPLICATION_XML_UTF_8_HEADER).build())) {
+            assertThat(response.getStatusCode()).isEqualTo(HttpsURLConnection.HTTP_INTERNAL_ERROR);
+            assertThat(response.getReasonPhrase()).isEqualTo(customErrorMessage);
+            assertThat(response.getHeaders().getMap()).containsEntry("key", singletonList("value"));
+        }
 
         wire.verify(1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
     }
@@ -541,7 +537,7 @@ public abstract class HttpClientTest {
 
     @ParameterizedTest
     @EnumSource(AuthScheme.class)
-    public void testInvalidAuth(AuthScheme authScheme) {
+    public void testInvalidAuth(AuthScheme authScheme) throws IOException {
         HttpContext context = HttpContext
                 .builder()
                 .sslSocketFactory(this::wireSSLSocketFactory)
@@ -557,13 +553,10 @@ public abstract class HttpClientTest {
         wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "boom").willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
         wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
 
-        assertThatIOException()
-                .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
-                .withMessage("401: Unauthorized")
-                .isInstanceOfSatisfying(ThrowingStatusException.class, ex -> {
-                    assertThat(ex.getResponseCode()).isEqualTo(HttpsURLConnection.HTTP_UNAUTHORIZED);
-                    assertThat(ex.getResponseMessage()).isEqualTo("Unauthorized");
-                });
+        try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
+            assertThat(response.getStatusCode()).isEqualTo(HttpsURLConnection.HTTP_UNAUTHORIZED);
+            assertThat(response.getReasonPhrase()).isEqualTo("Unauthorized");
+        }
 
         wire.verify(authScheme.equals(BASIC) ? 1 : 2, getRequestedFor(urlEqualTo(SAMPLE_URL)));
     }
@@ -614,13 +607,10 @@ public abstract class HttpClientTest {
         HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build();
         switch (authScheme) {
             case NONE:
-                assertThatIOException()
-                        .isThrownBy(() -> x.send(request))
-                        .withMessage("401: Unauthorized")
-                        .isInstanceOfSatisfying(ThrowingStatusException.class, ex -> {
-                            assertThat(ex.getResponseCode()).isEqualTo(HttpsURLConnection.HTTP_UNAUTHORIZED);
-                            assertThat(ex.getResponseMessage()).isEqualTo("Unauthorized");
-                        });
+                try (HttpResponse response = x.send(request)) {
+                    assertThat(response.getStatusCode()).isEqualTo(HttpsURLConnection.HTTP_UNAUTHORIZED);
+                    assertThat(response.getReasonPhrase()).isEqualTo("Unauthorized");
+                }
                 break;
             case BASIC:
             case BEARER:
