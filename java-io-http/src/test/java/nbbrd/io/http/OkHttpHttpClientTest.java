@@ -5,7 +5,10 @@ import _test.io.http.MockedAuthenticator;
 import com.github.tomakehurst.wiremock.matching.AbsentPattern;
 import com.github.tomakehurst.wiremock.matching.AnythingPattern;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
-import nbbrd.io.http.ext.*;
+import nbbrd.io.http.ext.AuthScheme;
+import nbbrd.io.http.ext.AuthenticatingDecorator;
+import nbbrd.io.http.ext.AuthenticatingListener;
+import nbbrd.io.http.ext.Authenticator;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -35,8 +38,7 @@ public class OkHttpHttpClientTest extends HttpClientTest {
                 .hostnameVerifier(context.getHostnameVerifier().get())
                 .userAgent(context.getUserAgent())
                 .build();
-        client = new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), AuthenticatingListener.noOp());
-        return new RetryDecorator(client, context.getMaxRetries(), RetryListener.noOp());
+        return new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), AuthenticatingListener.noOp());
     }
 
     // OkHttp's BridgeInterceptor sets its own Accept-Encoding header (gzip only),
