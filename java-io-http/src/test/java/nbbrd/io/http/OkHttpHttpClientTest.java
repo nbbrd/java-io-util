@@ -9,7 +9,9 @@ import nbbrd.io.http.ext.AuthScheme;
 import nbbrd.io.http.ext.AuthenticatingDecorator;
 import nbbrd.io.http.ext.AuthenticatingListener;
 import nbbrd.io.http.ext.Authenticator;
+import okhttp3.Cache;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
@@ -17,6 +19,7 @@ import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.nio.file.Path;
 import java.util.Collections;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -319,5 +322,71 @@ public class OkHttpHttpClientTest extends HttpClientTest {
 
         wire.verify(1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
     }
-}
 
+    // Caching is opt-in: no cache is configured by default.
+
+    @Test
+    public void testNoCacheByDefault() {
+        assertThat(OkHttpHttpClient.builder().build().getCache()).isNull();
+    }
+
+    // A shared OkHttp cache serves the second request without hitting the server.
+
+    @Test
+    public void testCacheHit(@TempDir Path cacheDir) throws IOException {
+        Cache cache = new Cache(cacheDir.toFile(), 10L * 1024 * 1024);
+        try {
+            HttpClient x = OkHttpHttpClient
+                    .builder()
+                    .sslSocketFactory(wireSSLSocketFactory())
+                    .hostnameVerifier(wireHostnameVerifier())
+                    .cache(cache)
+                    .build();
+
+            wire.resetAll();
+            wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML).withHeader("Cache-Control", "public, max-age=60")));
+
+            HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build();
+
+            try (HttpResponse response = x.send(request)) {
+                assertSameSampleContent(response);
+            }
+            try (HttpResponse response = x.send(request)) {
+                assertSameSampleContent(response);
+            }
+
+            // The second request is served from cache, so the server is hit only once.
+            wire.verify(1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
+            assertThat(cache.requestCount()).isEqualTo(2);
+            assertThat(cache.hitCount()).isEqualTo(1);
+        } finally {
+            // Release the on-disk journal so the temp dir can be cleaned up (mostly on Windows).
+            cache.close();
+        }
+    }
+
+    // Without a cache, every request hits the server even when the response is cacheable.
+
+    @Test
+    public void testNoCacheMiss() throws IOException {
+        HttpClient x = OkHttpHttpClient
+                .builder()
+                .sslSocketFactory(wireSSLSocketFactory())
+                .hostnameVerifier(wireHostnameVerifier())
+                .build();
+
+        wire.resetAll();
+        wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML).withHeader("Cache-Control", "public, max-age=60")));
+
+        HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build();
+
+        try (HttpResponse response = x.send(request)) {
+            assertSameSampleContent(response);
+        }
+        try (HttpResponse response = x.send(request)) {
+            assertSameSampleContent(response);
+        }
+
+        wire.verify(2, getRequestedFor(urlEqualTo(SAMPLE_URL)));
+    }
+}

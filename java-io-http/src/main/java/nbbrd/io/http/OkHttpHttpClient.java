@@ -2,12 +2,15 @@ package nbbrd.io.http;
 
 import internal.io.http.OkHttpHttpResponse;
 import internal.io.http.UrlHelper;
+import lombok.AccessLevel;
 import lombok.NonNull;
 import nbbrd.design.NonNegative;
+import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
 import okhttp3.Response;
+import org.jspecify.annotations.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -15,7 +18,6 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.ProxySelector;
-import java.net.URI;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -97,6 +99,28 @@ public final class OkHttpHttpClient implements HttpClient {
     @lombok.Builder.Default
     boolean followRedirects = true;
 
+    /**
+     * HTTP response cache shared across all requests, or {@code null} to disable caching.
+     * <p>
+     * The {@link Cache} must be created outside of this client. A single
+     * {@code Cache} instance may be safely shared, but multiple caches must
+     * not point at the same directory.
+     * </p>
+     */
+    @Nullable
+    @lombok.Builder.Default
+    Cache cache = null;
+
+    /**
+     * Lazily-built, reusable OkHttp client shared across all requests.
+     * <p>
+     * Building the client once ensures the {@link #cache} and connection pool
+     * are reused instead of being recreated on every request.
+     * </p>
+     */
+    @lombok.Getter(value = AccessLevel.PRIVATE, lazy = true)
+    private final OkHttpClient client = buildClient();
+
     @Override
     public @NonNull String getDescription() {
         return "OkHttp client";
@@ -121,7 +145,7 @@ public final class OkHttpHttpClient implements HttpClient {
             throw new IOException("Unsupported protocol '" + request.getQuery().getScheme() + "'");
         }
 
-        OkHttpClient client = buildClient(request.getQuery());
+        OkHttpClient client = getClient();
 
         Request.Builder okRequestBuilder = new Request.Builder()
                 .url(UrlHelper.toURL(request.getQuery()));
@@ -148,7 +172,7 @@ public final class OkHttpHttpClient implements HttpClient {
         return method == HttpMethod.POST || method == HttpMethod.PUT || method == HttpMethod.PATCH;
     }
 
-    private OkHttpClient buildClient(URI uri) {
+    private OkHttpClient buildClient() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
                 .readTimeout(readTimeout, TimeUnit.MILLISECONDS)
                 .connectTimeout(connectTimeout, TimeUnit.MILLISECONDS)
@@ -156,6 +180,10 @@ public final class OkHttpHttpClient implements HttpClient {
                 .hostnameVerifier(hostnameVerifier)
                 .followRedirects(followRedirects)
                 .followSslRedirects(followRedirects);
+
+        if (cache != null) {
+            builder.cache(cache);
+        }
 
         X509TrustManager trustManager = getDefaultTrustManager();
         builder.sslSocketFactory(sslSocketFactory, trustManager);
