@@ -4,7 +4,10 @@ import internal.io.http.OkHttpHttpResponse;
 import internal.io.http.UrlHelper;
 import lombok.NonNull;
 import nbbrd.design.NonNegative;
-import okhttp3.*;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -40,19 +43,21 @@ import java.util.concurrent.TimeUnit;
 @lombok.Builder(toBuilder = true)
 public final class OkHttpHttpClient implements HttpClient {
 
+    private static final int DEFAULT_TIMEOUT = 2 * 60 * 1000;
+
     /**
      * Read timeout in milliseconds. A value of {@code 0} means no timeout.
      */
     @NonNegative
     @lombok.Builder.Default
-    int readTimeout = NO_TIMEOUT;
+    int readTimeout = DEFAULT_TIMEOUT;
 
     /**
      * Connection timeout in milliseconds. A value of {@code 0} means no timeout.
      */
     @NonNegative
     @lombok.Builder.Default
-    int connectTimeout = NO_TIMEOUT;
+    int connectTimeout = DEFAULT_TIMEOUT;
 
     /**
      * Proxy selector used to determine the proxy for each request.
@@ -91,8 +96,6 @@ public final class OkHttpHttpClient implements HttpClient {
      */
     @lombok.Builder.Default
     boolean followRedirects = true;
-
-    private static final int NO_TIMEOUT = 0;
 
     @Override
     public @NonNull String getDescription() {

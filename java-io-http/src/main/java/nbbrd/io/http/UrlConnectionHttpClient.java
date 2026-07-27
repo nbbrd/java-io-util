@@ -58,21 +58,21 @@ public final class UrlConnectionHttpClient implements HttpClient {
                 .decoder(UrlConnectionEncoding.deflate());
     }
 
-    private static final int NO_TIMEOUT = 0;
+    private static final int DEFAULT_TIMEOUT = 2 * 60 * 1000;
 
     /**
      * Read timeout in milliseconds. A value of {@code 0} means no timeout.
      */
     @NonNegative
     @lombok.Builder.Default
-    int readTimeout = NO_TIMEOUT;
+    int readTimeout = DEFAULT_TIMEOUT;
 
     /**
      * Connection timeout in milliseconds. A value of {@code 0} means no timeout.
      */
     @NonNegative
     @lombok.Builder.Default
-    int connectTimeout = NO_TIMEOUT;
+    int connectTimeout = DEFAULT_TIMEOUT;
 
     /**
      * Proxy selector used to determine the proxy for each request.

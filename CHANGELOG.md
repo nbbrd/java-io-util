@@ -20,6 +20,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Refactor HTTP response exception handling as a decorator
 - Move UrlConnectionHttpClient features to decorators
 - Replace URLQueryBuilder with URIQueryBuilder [#469](https://github.com/nbbrd/java-io-util/issues/469)
+- Set default HTTP client timeouts to 2 minutes instead of no timeout
 
 ## [0.0.38] - 2026-06-02
 
