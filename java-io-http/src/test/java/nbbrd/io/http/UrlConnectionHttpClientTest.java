@@ -1,6 +1,5 @@
 package nbbrd.io.http;
 
-import _test.io.http.HttpContext;
 import nbbrd.io.http.ext.AuthenticatingDecorator;
 import nbbrd.io.http.ext.AuthenticatingListener;
 import nbbrd.io.http.ext.RedirectDecorator;
@@ -38,8 +37,6 @@ public abstract class UrlConnectionHttpClientTest extends HttpClientTest {
                 .sslSocketFactory(context.getSslSocketFactory().get())
                 .hostnameVerifier(context.getHostnameVerifier().get())
                 .urlConnectionFactory(urlConnectionFactory.get())
-                .listener(context.getListener())
-                .decoders(context.getDecoders())
                 .userAgent(context.getUserAgent())
                 .build();
     }

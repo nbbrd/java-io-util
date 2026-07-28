@@ -312,6 +312,7 @@
             </activation>
             <properties>
                 <lombok.version>1.18.46</lombok.version>
+                <java-service.version>2.1.0</java-service.version>
                 <java-design.version>1.10.2</java-design.version>
             </properties>
             <dependencyManagement>
@@ -320,6 +321,13 @@
                         <groupId>org.projectlombok</groupId>
                         <artifactId>lombok</artifactId>
                         <version>${lombok.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>com.github.nbbrd.java-service-util</groupId>
+                        <artifactId>java-service-bom</artifactId>
+                        <version>${java-service.version}</version>
+                        <type>pom</type>
+                        <scope>import</scope>
                     </dependency>
                     <dependency>
                         <groupId>com.github.nbbrd.java-design-util</groupId>
@@ -339,11 +347,16 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-compiler-plugin</artifactId>
                         <configuration>
-                            <annotationProcessorPaths>
+                            <annotationProcessorPaths combine.children="append">
                                 <path>
                                     <groupId>org.projectlombok</groupId>
                                     <artifactId>lombok</artifactId>
                                     <version>${lombok.version}</version>
+                                </path>
+                                <path>
+                                    <groupId>com.github.nbbrd.java-service-util</groupId>
+                                    <artifactId>java-service-processor</artifactId>
+                                    <version>${java-service.version}</version>
                                 </path>
                                 <path>
                                     <groupId>com.github.nbbrd.java-design-util</groupId>

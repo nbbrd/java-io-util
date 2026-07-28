@@ -1,0 +1,57 @@
+package nbbrd.io.http;
+
+import lombok.NonNull;
+import nbbrd.io.http.ext.AuthenticatingDecorator;
+import nbbrd.io.http.ext.AuthenticatingListener;
+import nbbrd.io.http.ext.RedirectDecorator;
+import nbbrd.io.http.ext.RedirectListener;
+import nbbrd.io.http.ext.RetryDecorator;
+import nbbrd.io.http.ext.RetryListener;
+import nbbrd.service.ServiceProvider;
+
+/**
+ * {@link HttpFactory} backed by {@link UrlConnectionHttpClient}.
+ * <p>
+ * This factory is always available since it relies solely on the JDK
+ * {@link java.net.HttpURLConnection}. Redirect, authentication and retry
+ * concerns are delegated to the corresponding decorators.
+ * </p>
+ */
+@ServiceProvider(HttpFactory.class)
+public final class UrlConnectionHttpFactory implements HttpFactory {
+
+    private static final int PRIORITY = 50;
+
+    @Override
+    public @NonNull String getFactoryId() {
+        return "urlconnection";
+    }
+
+    @Override
+    public boolean isFactoryAvailable() {
+        return true;
+    }
+
+    @Override
+    public int getFactoryPriority() {
+        return PRIORITY;
+    }
+
+    @Override
+    public @NonNull HttpClient getClient(@NonNull HttpContext context) {
+        HttpClient client = UrlConnectionHttpClient
+                .builder()
+                .readTimeout(context.getReadTimeout())
+                .connectTimeout(context.getConnectTimeout())
+                .proxySelector(context.getProxySelector().get())
+                .sslSocketFactory(context.getSslSocketFactory().get())
+                .hostnameVerifier(context.getHostnameVerifier().get())
+                .userAgent(context.getUserAgent())
+                .build();
+        client = new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), AuthenticatingListener.noOp());
+        client = new RedirectDecorator(client, context.getMaxRedirects(), RedirectListener.noOp());
+        client = new RetryDecorator(client, context.getMaxRetries(), RetryListener.noOp());
+        return client;
+    }
+}
+

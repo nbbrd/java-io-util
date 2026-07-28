@@ -15,6 +15,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Add rate limiting decorator
 - Add OkHttp HTTP client
 - Add curl HTTP client
+- Add HTTP factory
 
 ### Changed
 

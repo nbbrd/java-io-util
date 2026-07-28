@@ -16,7 +16,6 @@
  */
 package nbbrd.io.http;
 
-import _test.io.http.HttpContext;
 import _test.io.http.MockedAuthenticator;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;

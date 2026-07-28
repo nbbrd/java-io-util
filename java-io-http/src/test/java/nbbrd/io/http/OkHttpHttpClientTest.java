@@ -1,6 +1,5 @@
 package nbbrd.io.http;
 
-import _test.io.http.HttpContext;
 import _test.io.http.MockedAuthenticator;
 import com.github.tomakehurst.wiremock.matching.AbsentPattern;
 import com.github.tomakehurst.wiremock.matching.AnythingPattern;
