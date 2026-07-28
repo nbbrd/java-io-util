@@ -1,5 +1,6 @@
-package nbbrd.io.http;
+package nbbrd.io.http.urlconnection;
 
+import nbbrd.io.http.HttpRequest;
 import org.junit.jupiter.api.Test;
 
 import java.net.Proxy;

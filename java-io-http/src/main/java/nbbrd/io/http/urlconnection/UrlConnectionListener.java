@@ -1,10 +1,11 @@
-package nbbrd.io.http;
+package nbbrd.io.http.urlconnection;
 
-import internal.io.http.BasicUrlConnectionListener;
-import internal.io.http.UrlHelper;
+import internal.io.http.urlconnection.BasicUrlConnectionListener;
+import internal.io.http.urlconnection.UrlHelper;
 import lombok.NonNull;
 import nbbrd.design.NotThreadSafe;
 import nbbrd.design.StaticFactoryMethod;
+import nbbrd.io.http.HttpRequest;
 
 import java.net.Proxy;
 import java.util.function.Consumer;

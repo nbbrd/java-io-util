@@ -1,7 +1,7 @@
-package internal.io.http;
+package internal.io.http.urlconnection;
 
 import lombok.NonNull;
-import nbbrd.io.http.UrlConnectionEncoding;
+import nbbrd.io.http.urlconnection.UrlConnectionEncoding;
 
 import java.io.IOException;
 import java.io.InputStream;

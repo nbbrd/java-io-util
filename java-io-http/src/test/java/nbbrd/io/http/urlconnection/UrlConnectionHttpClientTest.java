@@ -1,60 +1,35 @@
-package nbbrd.io.http;
+package nbbrd.io.http.urlconnection;
 
+import nbbrd.io.http.*;
 import nbbrd.io.http.ext.AuthenticatingDecorator;
 import nbbrd.io.http.ext.AuthenticatingListener;
 import nbbrd.io.http.ext.RedirectDecorator;
 import nbbrd.io.http.ext.RedirectListener;
-import nbbrd.io.net.MediaType;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
 import java.net.ProxySelector;
-import java.util.function.Supplier;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static java.util.Arrays.asList;
-import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIOException;
 
-public abstract class UrlConnectionHttpClientTest extends HttpClientTest {
-
-    abstract protected UrlConnectionFactory getURLConnectionFactory();
-
-    abstract protected boolean isHttpsURLConnectionSupported();
+public class UrlConnectionHttpClientTest extends HttpClientTest {
 
     @Override
     protected HttpClient getClient(HttpContext context) {
-        return getClient(context, this::getURLConnectionFactory);
-    }
-
-    private UrlConnectionHttpClient buildTransport(HttpContext context, Supplier<UrlConnectionFactory> urlConnectionFactory) {
-        return UrlConnectionHttpClient
+        HttpClient client = UrlConnectionHttpClient
                 .builder()
                 .readTimeout(context.getReadTimeout())
                 .connectTimeout(context.getConnectTimeout())
                 .proxySelector(context.getProxySelector().get())
                 .sslSocketFactory(context.getSslSocketFactory().get())
                 .hostnameVerifier(context.getHostnameVerifier().get())
-                .urlConnectionFactory(urlConnectionFactory.get())
                 .userAgent(context.getUserAgent())
                 .build();
-    }
-
-    protected HttpClient getClient(HttpContext context, Supplier<UrlConnectionFactory> urlConnectionFactory) {
-        HttpClient client = buildTransport(context, urlConnectionFactory);
         client = new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), AuthenticatingListener.noOp());
         client = new RedirectDecorator(client, context.getMaxRedirects(), RedirectListener.noOp());
         return client;
-    }
-
-    @Test
-    public void testToAcceptHeader() {
-        assertThat(HttpHeaders.toAcceptHeader(emptyList()))
-                .isEqualTo("");
-
-        assertThat(HttpHeaders.toAcceptHeader(asList(MediaType.parse("text/html"), MediaType.parse("application/xhtml+xml"))))
-                .isEqualTo("text/html, application/xhtml+xml");
     }
 
     @Test
@@ -99,7 +74,7 @@ public abstract class UrlConnectionHttpClientTest extends HttpClientTest {
                 .hostnameVerifier(this::wireHostnameVerifier)
                 .build();
 
-        HttpClient raw = getClient(context, this::getURLConnectionFactory);
+        HttpClient raw = getClient(context);
 
         wire.resetAll();
         wire.stubFor(get(SAMPLE_URL).willReturn(notFound()));

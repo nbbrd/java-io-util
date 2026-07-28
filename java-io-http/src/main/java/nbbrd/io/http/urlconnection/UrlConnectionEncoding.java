@@ -1,6 +1,6 @@
-package nbbrd.io.http;
+package nbbrd.io.http.urlconnection;
 
-import internal.io.http.UrlConnectionEncodings;
+import internal.io.http.urlconnection.UrlConnectionEncodings;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 

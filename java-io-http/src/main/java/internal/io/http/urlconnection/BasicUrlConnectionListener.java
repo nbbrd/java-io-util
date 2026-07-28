@@ -1,8 +1,8 @@
-package internal.io.http;
+package internal.io.http.urlconnection;
 
 import lombok.NonNull;
 import nbbrd.io.http.HttpRequest;
-import nbbrd.io.http.UrlConnectionListener;
+import nbbrd.io.http.urlconnection.UrlConnectionListener;
 
 import java.net.Proxy;
 import java.util.function.Consumer;

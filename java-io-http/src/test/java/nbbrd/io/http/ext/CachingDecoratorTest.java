@@ -1,12 +1,13 @@
 package nbbrd.io.http.ext;
 
-import _test.io.http.MockedHttpResponse;
 import _test.io.http.MockedHttpClient;
+import _test.io.http.MockedHttpResponse;
 import _test.io.http.MutableClock;
 import _test.io.http.RecordingCacheEventListener;
 import nbbrd.design.Demo;
-import nbbrd.io.curl.CurlHttpURLConnection;
 import nbbrd.io.http.*;
+import nbbrd.io.http.urlconnection.UrlConnectionHttpClient;
+import nbbrd.io.http.urlconnection.UrlConnectionListener;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -36,7 +37,6 @@ public class CachingDecoratorTest {
                 .decorated(UrlConnectionHttpClient
                         .builder()
                         .listener(UrlConnectionListener.basic(x -> System.out.println("    \uD83C\uDF10 " + x)))
-                        .urlConnectionFactory(CurlHttpURLConnection::of)
                         .build())
                 .listener(CacheEventListener.basic(x -> System.out.println("  \uD83D\uDCE6 " + x)))
                 .build();

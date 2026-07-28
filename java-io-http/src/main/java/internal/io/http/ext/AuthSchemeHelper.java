@@ -1,6 +1,6 @@
 package internal.io.http.ext;
 
-import internal.io.http.UrlHelper;
+import internal.io.http.urlconnection.UrlHelper;
 import nbbrd.io.http.ext.AuthScheme;
 import nbbrd.io.http.ext.Authenticator;
 import nbbrd.io.http.HttpHeaders;

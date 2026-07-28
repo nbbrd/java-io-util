@@ -1,9 +1,9 @@
-package internal.io.http;
+package internal.io.http.urlconnection;
 
 import lombok.NonNull;
 import nbbrd.io.http.HttpHeaders;
 import nbbrd.io.http.HttpResponse;
-import nbbrd.io.http.UrlConnectionEncoding;
+import nbbrd.io.http.urlconnection.UrlConnectionEncoding;
 import nbbrd.io.net.MediaType;
 
 import java.io.IOException;

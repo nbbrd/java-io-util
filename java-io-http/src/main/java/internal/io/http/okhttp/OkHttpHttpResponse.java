@@ -1,4 +1,4 @@
-package internal.io.http;
+package internal.io.http.okhttp;
 
 import lombok.NonNull;
 import nbbrd.io.http.HttpHeaders;

@@ -14,12 +14,16 @@
  * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
-package nbbrd.io.http;
+package nbbrd.io.http.urlconnection;
 
-import internal.io.http.UrlConnectionHttpResponse;
-import internal.io.http.UrlHelper;
+import internal.io.http.urlconnection.UrlConnectionHttpResponse;
+import internal.io.http.urlconnection.UrlHelper;
 import lombok.NonNull;
 import nbbrd.design.NonNegative;
+import nbbrd.io.http.HttpClient;
+import nbbrd.io.http.HttpHeaders;
+import nbbrd.io.http.HttpRequest;
+import nbbrd.io.http.HttpResponse;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
@@ -96,13 +100,6 @@ public final class UrlConnectionHttpClient implements HttpClient {
     HostnameVerifier hostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
 
     /**
-     * Factory used to open {@link URLConnection} instances.
-     */
-    @lombok.NonNull
-    @lombok.Builder.Default
-    UrlConnectionFactory urlConnectionFactory = UrlConnectionFactory.getDefault();
-
-    /**
      * Listener notified of connection lifecycle events such as open and success.
      */
     @lombok.NonNull
@@ -147,7 +144,7 @@ public final class UrlConnectionHttpClient implements HttpClient {
         Proxy proxy = selectProxy(request.getQuery());
         URL url = UrlHelper.toURL(request.getQuery());
 
-        HttpURLConnection conn = (HttpURLConnection) urlConnectionFactory.openConnection(url, proxy);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection(proxy);
         conn.setReadTimeout(readTimeout);
         conn.setConnectTimeout(connectTimeout);
 

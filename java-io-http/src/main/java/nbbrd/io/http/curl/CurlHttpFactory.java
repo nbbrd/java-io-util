@@ -1,7 +1,10 @@
-package nbbrd.io.http;
+package nbbrd.io.http.curl;
 
 import lombok.NonNull;
 import nbbrd.design.VisibleForTesting;
+import nbbrd.io.http.HttpClient;
+import nbbrd.io.http.HttpContext;
+import nbbrd.io.http.HttpFactory;
 import nbbrd.io.http.ext.*;
 import nbbrd.service.ServiceProvider;
 

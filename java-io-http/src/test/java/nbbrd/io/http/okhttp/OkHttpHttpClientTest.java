@@ -1,9 +1,10 @@
-package nbbrd.io.http;
+package nbbrd.io.http.okhttp;
 
 import _test.io.http.MockedAuthenticator;
 import com.github.tomakehurst.wiremock.matching.AbsentPattern;
 import com.github.tomakehurst.wiremock.matching.AnythingPattern;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
+import nbbrd.io.http.*;
 import nbbrd.io.http.ext.AuthScheme;
 import nbbrd.io.http.ext.AuthenticatingDecorator;
 import nbbrd.io.http.ext.AuthenticatingListener;

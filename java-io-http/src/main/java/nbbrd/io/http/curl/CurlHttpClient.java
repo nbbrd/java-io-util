@@ -1,11 +1,15 @@
-package nbbrd.io.http;
+package nbbrd.io.http.curl;
 
-import internal.io.http.CurlHttpResponse;
-import internal.io.http.UrlHelper;
+import internal.io.http.curl.CurlHttpResponse;
+import internal.io.http.urlconnection.UrlHelper;
 import lombok.NonNull;
 import nbbrd.design.NonNegative;
 import nbbrd.design.VisibleForTesting;
 import nbbrd.io.curl.Curl;
+import nbbrd.io.http.HttpClient;
+import nbbrd.io.http.HttpHeaders;
+import nbbrd.io.http.HttpRequest;
+import nbbrd.io.http.HttpResponse;
 import nbbrd.io.sys.EndOfProcessException;
 import nbbrd.io.sys.OS;
 import nbbrd.io.sys.ProcessReader;

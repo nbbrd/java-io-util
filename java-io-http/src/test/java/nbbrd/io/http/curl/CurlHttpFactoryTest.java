@@ -1,5 +1,8 @@
-package nbbrd.io.http;
+package nbbrd.io.http.curl;
 
+import nbbrd.io.http.HttpClient;
+import nbbrd.io.http.HttpContext;
+import nbbrd.io.http.HttpFactoryLoader;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

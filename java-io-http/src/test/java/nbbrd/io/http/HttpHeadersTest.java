@@ -1,15 +1,13 @@
 package nbbrd.io.http;
 
-import org.junit.jupiter.api.Test;
 import nbbrd.io.net.MediaType;
+import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
 
-import java.util.AbstractMap;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.*;
 
@@ -157,5 +155,14 @@ public class HttpHeadersTest {
                 .containsEntry("X-Base", singletonList("1"))
                 .containsEntry(HttpHeaders.HTTP_ACCEPT_HEADER, asList("text/plain", "application/json, application/xml"))
                 .containsEntry(HttpHeaders.HTTP_ACCEPT_LANGUAGE_HEADER, singletonList("en"));
+    }
+
+    @Test
+    public void testToAcceptHeader() {
+        Assertions.assertThat(HttpHeaders.toAcceptHeader(emptyList()))
+                .isEqualTo("");
+
+        assertThat(HttpHeaders.toAcceptHeader(asList(MediaType.parse("text/html"), MediaType.parse("application/xhtml+xml"))))
+                .isEqualTo("text/html, application/xhtml+xml");
     }
 }

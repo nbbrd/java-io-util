@@ -1,6 +1,6 @@
-package nbbrd.io.http;
+package internal.io.http.urlconnection;
 
-import internal.io.http.UrlHelper;
+import nbbrd.io.http.urlconnection.UrlConnectionHttpClient;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;

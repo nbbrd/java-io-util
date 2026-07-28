@@ -1,6 +1,6 @@
 package nbbrd.io.http.ext;
 
-import internal.io.http.UrlHelper;
+import internal.io.http.urlconnection.UrlHelper;
 import lombok.NonNull;
 import nbbrd.design.DecoratorPattern;
 import nbbrd.design.NonNegative;

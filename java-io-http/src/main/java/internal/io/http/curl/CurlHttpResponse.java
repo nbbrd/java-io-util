@@ -1,4 +1,4 @@
-package internal.io.http;
+package internal.io.http.curl;
 
 import lombok.NonNull;
 import nbbrd.io.curl.Curl;

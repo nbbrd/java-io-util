@@ -1,4 +1,4 @@
-package nbbrd.io.http;
+package nbbrd.io.http.urlconnection;
 
 import org.junit.jupiter.api.Test;
 

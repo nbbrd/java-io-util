@@ -1,6 +1,9 @@
-package nbbrd.io.http;
+package nbbrd.io.http.okhttp;
 
 import lombok.NonNull;
+import nbbrd.io.http.HttpClient;
+import nbbrd.io.http.HttpContext;
+import nbbrd.io.http.HttpFactory;
 import nbbrd.io.http.ext.AuthenticatingDecorator;
 import nbbrd.io.http.ext.AuthenticatingListener;
 import nbbrd.io.http.ext.RetryDecorator;

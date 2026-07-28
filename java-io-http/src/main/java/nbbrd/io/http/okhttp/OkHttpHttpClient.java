@@ -1,10 +1,11 @@
-package nbbrd.io.http;
+package nbbrd.io.http.okhttp;
 
-import internal.io.http.OkHttpHttpResponse;
-import internal.io.http.UrlHelper;
+import internal.io.http.okhttp.OkHttpHttpResponse;
+import internal.io.http.urlconnection.UrlHelper;
 import lombok.AccessLevel;
 import lombok.NonNull;
 import nbbrd.design.NonNegative;
+import nbbrd.io.http.*;
 import okhttp3.Cache;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;

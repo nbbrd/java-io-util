@@ -14,10 +14,10 @@
  * See the Licence for the specific language governing permissions and
  * limitations under the Licence.
  */
-package internal.io.http;
+package internal.io.http.urlconnection;
 
 import lombok.NonNull;
-import nbbrd.io.http.UrlConnectionListener;
+import nbbrd.io.http.urlconnection.UrlConnectionListener;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
