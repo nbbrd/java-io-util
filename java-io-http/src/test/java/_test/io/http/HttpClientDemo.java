@@ -1,8 +1,12 @@
 package _test.io.http;
 
+import internal.io.http.ext.DiskCacheStore;
 import lombok.NonNull;
 import nbbrd.design.Demo;
-import nbbrd.io.http.*;
+import nbbrd.io.http.HttpClient;
+import nbbrd.io.http.HttpClientDecorator;
+import nbbrd.io.http.HttpRequest;
+import nbbrd.io.http.HttpResponse;
 import nbbrd.io.http.curl.CurlHttpClient;
 import nbbrd.io.http.ext.CacheEventListener;
 import nbbrd.io.http.ext.CachingDecorator;
@@ -15,6 +19,7 @@ import okhttp3.Cache;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -33,6 +38,7 @@ public class HttpClientDemo {
 
         List<Entry> clients = new ArrayList<>();
 
+        Path urlConnectionTemp = Files.createTempDirectory(null);
         MyCacheEventListener urlConnectionCache = new MyCacheEventListener();
         clients.add(new Entry(CachingDecorator
                 .builder()
@@ -42,9 +48,11 @@ public class HttpClientDemo {
                         .sslSocketFactory(ssl.getSslSocketFactory())
                         .build())
                 .listener(urlConnectionCache)
+                .store(new DiskCacheStore(urlConnectionTemp, 10L * 1024 * 1024))
                 .build(), urlConnectionCache.hitCount::get));
 
-        Cache okHttpCache = new Cache(Files.createTempDirectory(null).toFile(), 10L * 1024 * 1024);
+        Path okHttpTemp = Files.createTempDirectory(null);
+        Cache okHttpCache = new Cache(okHttpTemp.toFile(), 10L * 1024 * 1024);
         clients.add(new Entry(OkHttpHttpClient
                 .builder()
                 .hostnameVerifier(ssl.getHostnameVerifier())
@@ -75,6 +83,9 @@ public class HttpClientDemo {
             }
             System.out.println();
         }
+
+        urlConnectionTemp.toFile().deleteOnExit();
+        okHttpTemp.toFile().deleteOnExit();
     }
 
     private static String getRootDescription(HttpClient client) {

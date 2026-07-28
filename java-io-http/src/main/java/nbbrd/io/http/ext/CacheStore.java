@@ -1,10 +1,13 @@
 package nbbrd.io.http.ext;
 
+import internal.io.http.ext.DiskCacheStore;
 import internal.io.http.ext.InMemoryCacheStore;
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
 import nbbrd.design.ThreadSafe;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Optional;
 
 /**
@@ -52,5 +55,27 @@ public interface CacheStore {
     @StaticFactoryMethod
     static @NonNull CacheStore ofInMemory() {
         return new InMemoryCacheStore();
+    }
+
+    /**
+     * Creates a thread-safe file-backed cache store that persists entries on disk and
+     * enforces a maximum total size using a least-recently-used (LRU) eviction policy.
+     *
+     * <p>Each cached response is stored as a single file in the given directory. When
+     * storing a new entry would exceed {@code maxSizeInBytes}, the least-recently-used
+     * entries are evicted until the store fits within the limit. Entries larger than the
+     * limit on their own are not stored.</p>
+     *
+     * <p>Existing cache files found in the directory are reloaded on creation, ordered by
+     * their last-modified time to approximate recency across restarts.</p>
+     *
+     * @param directory      a non-null directory used to store cache files (created if missing)
+     * @param maxSizeInBytes the maximum total size of the cache in bytes (must be positive)
+     * @return a new disk cache store
+     * @throws IOException if the directory cannot be created or scanned
+     */
+    @StaticFactoryMethod
+    static @NonNull CacheStore ofDisk(@NonNull Path directory, long maxSizeInBytes) throws IOException {
+        return new DiskCacheStore(directory, maxSizeInBytes);
     }
 }
