@@ -5,6 +5,7 @@ module nbbrd.io.http {
     requires static nbbrd.design;
 
     requires nbbrd.io.base;
+    requires static nbbrd.io.curl;
     requires static okhttp3;
 
     exports nbbrd.io.http;

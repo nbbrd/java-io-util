@@ -50,6 +50,16 @@ public class HttpClientDemo {
                 .cache(okHttpCache)
                 .build(), okHttpCache::hitCount));
 
+        MyCacheEventListener curlCache = new MyCacheEventListener();
+        clients.add(new Entry(CachingDecorator
+                .builder()
+                .decorated(CurlHttpClient
+                        .builder()
+                        .followRedirects(false)
+                        .build())
+                .listener(curlCache)
+                .build(), curlCache.hitCount::get));
+
         List<URI> uris = new ArrayList<>();
         uris.add(URI.create("https://www.nbb.be"));
         uris.add(URI.create("https://developer.mozilla.org/en-US/docs/Web/HTTP/Reference/Status/403"));

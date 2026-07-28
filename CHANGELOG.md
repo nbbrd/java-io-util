@@ -14,6 +14,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Add caching HTTP client decorator
 - Add rate limiting decorator
 - Add OkHttp HTTP client
+- Add curl HTTP client
 
 ### Changed
 
