@@ -52,9 +52,9 @@ public final class CurlHttpFactory implements HttpFactory {
                 .userAgent(context.getUserAgent())
                 .followRedirects(false)
                 .build();
-        client = new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), AuthenticatingListener.noOp());
-        client = new RedirectDecorator(client, context.getMaxRedirects(), RedirectListener.noOp());
-        client = new RetryDecorator(client, context.getMaxRetries(), RetryListener.noOp());
+        client = new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), context.getListener());
+        client = new RedirectDecorator(client, context.getMaxRedirects(), context.getListener());
+        client = new RetryDecorator(client, context.getMaxRetries(), context.getListener());
         return client;
     }
 

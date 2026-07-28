@@ -5,11 +5,8 @@ import nbbrd.io.http.HttpClient;
 import nbbrd.io.http.HttpContext;
 import nbbrd.io.http.HttpFactory;
 import nbbrd.io.http.ext.AuthenticatingDecorator;
-import nbbrd.io.http.ext.AuthenticatingListener;
 import nbbrd.io.http.ext.RedirectDecorator;
-import nbbrd.io.http.ext.RedirectListener;
 import nbbrd.io.http.ext.RetryDecorator;
-import nbbrd.io.http.ext.RetryListener;
 import nbbrd.service.ServiceProvider;
 
 /**
@@ -51,9 +48,9 @@ public final class UrlConnectionHttpFactory implements HttpFactory {
                 .hostnameVerifier(context.getHostnameVerifier().get())
                 .userAgent(context.getUserAgent())
                 .build();
-        client = new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), AuthenticatingListener.noOp());
-        client = new RedirectDecorator(client, context.getMaxRedirects(), RedirectListener.noOp());
-        client = new RetryDecorator(client, context.getMaxRetries(), RetryListener.noOp());
+        client = new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), context.getListener());
+        client = new RedirectDecorator(client, context.getMaxRedirects(), context.getListener());
+        client = new RetryDecorator(client, context.getMaxRetries(), context.getListener());
         return client;
     }
 }

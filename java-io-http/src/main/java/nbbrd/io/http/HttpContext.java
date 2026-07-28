@@ -3,6 +3,7 @@ package nbbrd.io.http;
 import nbbrd.design.NonNegative;
 import nbbrd.io.http.ext.AuthScheme;
 import nbbrd.io.http.ext.Authenticator;
+import nbbrd.io.http.ext.HttpEventListener;
 import org.jspecify.annotations.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
@@ -54,4 +55,8 @@ public class HttpContext {
     @Nullable
     @lombok.Builder.Default
     String userAgent = null;
+
+    @lombok.NonNull
+    @lombok.Builder.Default
+    HttpEventListener listener = HttpEventListener.noOp();
 }
