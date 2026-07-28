@@ -8,7 +8,9 @@ import okhttp3.Response;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 @lombok.RequiredArgsConstructor
@@ -52,11 +54,6 @@ public final class OkHttpHttpResponse implements HttpResponse {
     @Override
     public int getStatusCode() {
         return response.code();
-    }
-
-    @Override
-    public @NonNull String getReasonPhrase() {
-        return response.message();
     }
 
     @Override

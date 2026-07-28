@@ -69,12 +69,6 @@ public final class UrlConnectionHttpResponse implements HttpResponse {
     }
 
     @Override
-    public @NonNull String getReasonPhrase() throws IOException {
-        String message = conn.getResponseMessage();
-        return message != null ? message : "";
-    }
-
-    @Override
     public @NonNull InputStream getBody() throws IOException {
         String encodingOrNull = conn.getHeaderField(HttpHeaders.HTTP_CONTENT_ENCODING_HEADER);
         return decoders

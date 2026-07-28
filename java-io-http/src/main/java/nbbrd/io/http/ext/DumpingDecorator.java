@@ -89,11 +89,6 @@ public final class DumpingDecorator implements HttpClientDecorator {
         }
 
         @Override
-        public @NonNull String getReasonPhrase() throws IOException {
-            return delegate.getReasonPhrase();
-        }
-
-        @Override
         public @NonNull InputStream getBody() throws IOException {
             InputStream inputStream = delegate.getBody();
             try {

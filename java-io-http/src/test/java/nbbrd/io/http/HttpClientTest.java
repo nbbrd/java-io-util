@@ -251,19 +251,15 @@ public abstract class HttpClientTest {
                 .build();
         HttpClient x = getClient(context);
 
-        String customErrorMessage = "Custom error message";
-
         wire.resetAll();
         wire.stubFor(get(SAMPLE_URL)
                 .willReturn(aResponse()
                         .withStatus(HttpsURLConnection.HTTP_INTERNAL_ERROR)
-                        .withStatusMessage(customErrorMessage)
                         .withHeader("key", "value")
                 ));
 
         try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(APPLICATION_XML_UTF_8_HEADER).build())) {
             assertThat(response.getStatusCode()).isEqualTo(HttpsURLConnection.HTTP_INTERNAL_ERROR);
-            assertThat(response.getReasonPhrase()).isEqualTo(customErrorMessage);
             assertThat(response.getHeaders().getMap()).containsEntry("key", singletonList("value"));
         }
 
@@ -554,7 +550,6 @@ public abstract class HttpClientTest {
 
         try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
             assertThat(response.getStatusCode()).isEqualTo(HttpsURLConnection.HTTP_UNAUTHORIZED);
-            assertThat(response.getReasonPhrase()).isEqualTo("Unauthorized");
         }
 
         wire.verify(authScheme.equals(BASIC) ? 1 : 2, getRequestedFor(urlEqualTo(SAMPLE_URL)));
@@ -608,7 +603,6 @@ public abstract class HttpClientTest {
             case NONE:
                 try (HttpResponse response = x.send(request)) {
                     assertThat(response.getStatusCode()).isEqualTo(HttpsURLConnection.HTTP_UNAUTHORIZED);
-                    assertThat(response.getReasonPhrase()).isEqualTo("Unauthorized");
                 }
                 break;
             case BASIC:

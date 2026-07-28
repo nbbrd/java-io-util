@@ -77,11 +77,6 @@ public final class MetricsDecorator implements HttpClientDecorator {
         }
 
         @Override
-        public @NonNull String getReasonPhrase() throws IOException {
-            return delegate.getReasonPhrase();
-        }
-
-        @Override
         public @NonNull InputStream getBody() throws IOException {
             return new CountingInputStream(delegate.getBody(), byteCount);
         }

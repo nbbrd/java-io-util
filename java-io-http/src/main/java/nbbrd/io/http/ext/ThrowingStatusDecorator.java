@@ -62,7 +62,7 @@ public final class ThrowingStatusDecorator implements HttpClientDecorator {
         try {
             int code = response.getStatusCode();
             if (shouldThrow.test(code)) {
-                ThrowingStatusException error = new ThrowingStatusException(code, response.getReasonPhrase(), response.getHeaders());
+                ThrowingStatusException error = new ThrowingStatusException(code, response.getHeaders());
                 Resource.ensureClosed(error, response);
                 throw error;
             }

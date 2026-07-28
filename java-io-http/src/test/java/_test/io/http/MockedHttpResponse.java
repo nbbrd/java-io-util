@@ -26,9 +26,6 @@ public final class MockedHttpResponse implements HttpResponse {
     private final int statusCode = HttpResponse.NO_STATUS_CODE;
 
     @lombok.Builder.Default
-    private final String reasonPhrase = "";
-
-    @lombok.Builder.Default
     private final HttpHeaders headers = HttpHeaders.EMPTY;
 
     @lombok.Builder.Default
@@ -63,11 +60,6 @@ public final class MockedHttpResponse implements HttpResponse {
     @Override
     public int getStatusCode() {
         return statusCode;
-    }
-
-    @Override
-    public @lombok.NonNull String getReasonPhrase() {
-        return reasonPhrase;
     }
 
     @Override

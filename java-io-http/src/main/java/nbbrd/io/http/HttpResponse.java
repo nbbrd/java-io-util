@@ -34,15 +34,6 @@ public interface HttpResponse extends Closeable {
      */
     int getStatusCode() throws IOException;
 
-    /**
-     * Returns the HTTP reason phrase.
-     *
-     * @return a non-null reason phrase; empty if unknown
-     * @throws IOException if an I/O error occurs
-     */
-    @NonNull
-    String getReasonPhrase() throws IOException;
-
     @NonNull
     InputStream getBody() throws IOException;
 

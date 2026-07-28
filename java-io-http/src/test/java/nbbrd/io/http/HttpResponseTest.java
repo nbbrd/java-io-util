@@ -137,11 +137,6 @@ public class HttpResponseTest {
         }
 
         @Override
-        public @lombok.NonNull String getReasonPhrase() {
-            return "";
-        }
-
-        @Override
         public @NonNull InputStream getBody() {
             return new FilterInputStream(body) {
             };

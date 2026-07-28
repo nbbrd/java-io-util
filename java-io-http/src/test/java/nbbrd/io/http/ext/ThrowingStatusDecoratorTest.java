@@ -31,7 +31,6 @@ class ThrowingStatusDecoratorTest {
                 MockedHttpClient.ofResponse(MockedHttpResponse
                         .builder()
                         .statusCode(404)
-                        .reasonPhrase("Not Found")
                         .contentTypeOf("text/plain")
                         .headers(headers)
                         .build()),
@@ -42,7 +41,6 @@ class ThrowingStatusDecoratorTest {
                 .isThrownBy(() -> x.send(request))
                 .isInstanceOfSatisfying(ThrowingStatusException.class, ex -> {
                     assertThat(ex.getResponseCode()).isEqualTo(404);
-                    assertThat(ex.getResponseMessage()).isEqualTo("Not Found");
                     assertThat(ex.getHeaderFields().getMap()).containsEntry("k", singletonList("v"));
                 });
     }
@@ -53,7 +51,6 @@ class ThrowingStatusDecoratorTest {
                 MockedHttpClient.ofResponse(MockedHttpResponse
                         .builder()
                         .statusCode(200)
-                        .reasonPhrase("OK")
                         .contentTypeOf("text/plain")
                         .build()),
                 ThrowingStatusDecorator.DEFAULT_SHOULD_THROW
@@ -71,7 +68,6 @@ class ThrowingStatusDecoratorTest {
                 MockedHttpClient.ofResponse(MockedHttpResponse
                         .builder()
                         .statusCode(410)
-                        .reasonPhrase("Gone")
                         .contentTypeOf("text/plain")
                         .build()),
                 code -> code >= 400 && code != 410
@@ -92,7 +88,6 @@ class ThrowingStatusDecoratorTest {
                                 .contentTypeOf("text/plain")
                                 .contentLength(0)
                                 .statusCode(500)
-                                .reasonPhrase("Boom")
                                 .onClose(() -> closed.set(true))
                                 .build()
                 ),
@@ -109,7 +104,6 @@ class ThrowingStatusDecoratorTest {
                 MockedHttpClient.ofResponse(MockedHttpResponse
                         .builder()
                         .statusCode(200)
-                        .reasonPhrase("OK")
                         .contentTypeOf("text/plain")
                         .build()),
                 ThrowingStatusDecorator.DEFAULT_SHOULD_THROW

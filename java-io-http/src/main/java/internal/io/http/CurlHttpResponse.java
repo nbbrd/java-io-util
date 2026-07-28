@@ -73,12 +73,6 @@ public final class CurlHttpResponse implements HttpResponse {
     }
 
     @Override
-    public @NonNull String getReasonPhrase() {
-        String message = head.getStatus().getMessage();
-        return message != null ? message : "";
-    }
-
-    @Override
     public @NonNull InputStream getBody() throws IOException {
         if (stream == null) {
             stream = Files.newInputStream(body.toPath());
