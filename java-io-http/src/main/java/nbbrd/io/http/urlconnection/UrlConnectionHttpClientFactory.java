@@ -1,35 +1,35 @@
-package nbbrd.io.http.okhttp;
+package nbbrd.io.http.urlconnection;
 
 import lombok.NonNull;
 import nbbrd.io.http.HttpClient;
+import nbbrd.io.http.HttpClientFactory;
 import nbbrd.io.http.HttpContext;
-import nbbrd.io.http.HttpFactory;
 import nbbrd.io.http.ext.AuthenticatingDecorator;
+import nbbrd.io.http.ext.RedirectDecorator;
 import nbbrd.io.http.ext.RetryDecorator;
 import nbbrd.service.ServiceProvider;
 
 /**
- * {@link HttpFactory} backed by {@link OkHttpHttpClient}.
+ * {@link HttpClientFactory} backed by {@link UrlConnectionHttpClient}.
  * <p>
- * This factory is only available when the optional OkHttp library is present on
- * the classpath. Redirects are handled natively by OkHttp, so no
- * {@link nbbrd.io.http.ext.RedirectDecorator} is applied and the context
- * {@code maxRedirects} value is not used.
+ * This factory is always available since it relies solely on the JDK
+ * {@link java.net.HttpURLConnection}. Redirect, authentication and retry
+ * concerns are delegated to the corresponding decorators.
  * </p>
  */
-@ServiceProvider(HttpFactory.class)
-public final class OkHttpHttpFactory implements HttpFactory {
+@ServiceProvider(HttpClientFactory.class)
+public final class UrlConnectionHttpClientFactory implements HttpClientFactory {
 
-    private static final int PRIORITY = 100;
+    private static final int PRIORITY = 50;
 
     @Override
     public @NonNull String getFactoryId() {
-        return "okhttp";
+        return "urlconnection";
     }
 
     @Override
     public boolean isFactoryAvailable() {
-        return isOkHttpPresent();
+        return true;
     }
 
     @Override
@@ -39,7 +39,7 @@ public final class OkHttpHttpFactory implements HttpFactory {
 
     @Override
     public @NonNull HttpClient getClient(@NonNull HttpContext context) {
-        HttpClient client = OkHttpHttpClient
+        HttpClient client = UrlConnectionHttpClient
                 .builder()
                 .readTimeout(context.getReadTimeout())
                 .connectTimeout(context.getConnectTimeout())
@@ -49,18 +49,9 @@ public final class OkHttpHttpFactory implements HttpFactory {
                 .userAgent(context.getUserAgent())
                 .build();
         client = new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), context.getListener());
+        client = new RedirectDecorator(client, context.getMaxRedirects(), context.getListener());
         client = new RetryDecorator(client, context.getMaxRetries(), context.getListener());
         return client;
     }
-
-    private static boolean isOkHttpPresent() {
-        try {
-            return okhttp3.OkHttpClient.class.getClassLoader() != null;
-        } catch (NoClassDefFoundError ex) {
-            return false;
-        }
-    }
 }
-
-
 

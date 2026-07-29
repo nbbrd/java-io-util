@@ -2,6 +2,7 @@ package nbbrd.io.http.ext;
 
 import lombok.NonNull;
 import nbbrd.design.StaticFactoryMethod;
+import nbbrd.io.http.HttpClientFactory;
 import nbbrd.io.http.HttpRequest;
 
 import java.io.IOException;
@@ -9,7 +10,7 @@ import java.net.URI;
 
 /**
  * Aggregate observer of the HTTP features wired by
- * {@link nbbrd.io.http.HttpFactory}, namely authentication, redirection and
+ * {@link HttpClientFactory}, namely authentication, redirection and
  * retry.
  * <p>
  * Every callback has a default no-op implementation so that callers only need

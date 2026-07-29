@@ -1,6 +1,7 @@
-import nbbrd.io.http.curl.CurlHttpFactory;
-import nbbrd.io.http.okhttp.OkHttpHttpFactory;
-import nbbrd.io.http.urlconnection.UrlConnectionHttpFactory;
+import nbbrd.io.http.HttpClientFactory;
+import nbbrd.io.http.curl.CurlHttpClientFactory;
+import nbbrd.io.http.okhttp.OkHttpHttpClientFactory;
+import nbbrd.io.http.urlconnection.UrlConnectionHttpClientFactory;
 
 module nbbrd.io.http {
 
@@ -19,9 +20,9 @@ module nbbrd.io.http {
     exports nbbrd.io.http.urlconnection;
     exports nbbrd.io.http.curl;
 
-    uses nbbrd.io.http.HttpFactory;
-    provides nbbrd.io.http.HttpFactory with
-            UrlConnectionHttpFactory,
-            OkHttpHttpFactory,
-            CurlHttpFactory;
+    uses HttpClientFactory;
+    provides HttpClientFactory with
+            UrlConnectionHttpClientFactory,
+            OkHttpHttpClientFactory,
+            CurlHttpClientFactory;
 }

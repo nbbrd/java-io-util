@@ -2,7 +2,7 @@ package nbbrd.io.http.urlconnection;
 
 import nbbrd.io.http.HttpClient;
 import nbbrd.io.http.HttpContext;
-import nbbrd.io.http.HttpFactoryLoader;
+import nbbrd.io.http.HttpClientFactoryLoader;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,15 +10,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Philippe Charles
  */
-public class UrlConnectionHttpFactoryTest {
+public class UrlConnectionHttpClientFactoryTest {
 
-    private final UrlConnectionHttpFactory x = new UrlConnectionHttpFactory();
+    private final UrlConnectionHttpClientFactory x = new UrlConnectionHttpClientFactory();
 
     @Test
     public void testFactoryId() {
         assertThat(x.getFactoryId())
                 .isEqualTo("urlconnection")
-                .matches(HttpFactoryLoader.ID_PATTERN.asPredicate());
+                .matches(HttpClientFactoryLoader.ID_PATTERN.asPredicate());
     }
 
     @Test

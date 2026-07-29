@@ -2,7 +2,7 @@ package nbbrd.io.http.okhttp;
 
 import nbbrd.io.http.HttpClient;
 import nbbrd.io.http.HttpContext;
-import nbbrd.io.http.HttpFactoryLoader;
+import nbbrd.io.http.HttpClientFactoryLoader;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,15 +10,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Philippe Charles
  */
-public class OkHttpHttpFactoryTest {
+public class OkHttpHttpClientFactoryTest {
 
-    private final OkHttpHttpFactory x = new OkHttpHttpFactory();
+    private final OkHttpHttpClientFactory x = new OkHttpHttpClientFactory();
 
     @Test
     public void testFactoryId() {
         assertThat(x.getFactoryId())
                 .isEqualTo("okhttp")
-                .matches(HttpFactoryLoader.ID_PATTERN.asPredicate());
+                .matches(HttpClientFactoryLoader.ID_PATTERN.asPredicate());
     }
 
     @Test

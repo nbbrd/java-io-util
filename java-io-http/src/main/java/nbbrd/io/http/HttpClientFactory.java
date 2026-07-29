@@ -6,7 +6,7 @@ import nbbrd.service.*;
 @ServiceDefinition(
         quantifier = Quantifier.MULTIPLE
 )
-public interface HttpFactory {
+public interface HttpClientFactory {
 
     @ServiceId(pattern = ServiceId.SNAKE_CASE)
     @NonNull

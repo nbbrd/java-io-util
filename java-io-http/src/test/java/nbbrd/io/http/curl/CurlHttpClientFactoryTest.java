@@ -1,8 +1,8 @@
 package nbbrd.io.http.curl;
 
 import nbbrd.io.http.HttpClient;
+import nbbrd.io.http.HttpClientFactoryLoader;
 import nbbrd.io.http.HttpContext;
-import nbbrd.io.http.HttpFactoryLoader;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -10,22 +10,22 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Philippe Charles
  */
-public class CurlHttpFactoryTest {
+public class CurlHttpClientFactoryTest {
 
-    private final CurlHttpFactory x = new CurlHttpFactory();
+    private final CurlHttpClientFactory x = new CurlHttpClientFactory();
 
     @Test
     public void testFactoryId() {
         assertThat(x.getFactoryId())
                 .isEqualTo("curl")
-                .matches(HttpFactoryLoader.ID_PATTERN.asPredicate());
+                .matches(HttpClientFactoryLoader.ID_PATTERN.asPredicate());
     }
 
     @Test
     public void testFactoryAvailable() {
         // The java-io-curl module is on the test classpath, so availability
         // depends solely on the presence of the curl binary on the PATH.
-        assertThat(x.isFactoryAvailable()).isEqualTo(CurlHttpFactory.isCurlBinaryPresent());
+        assertThat(x.isFactoryAvailable()).isEqualTo(CurlHttpClientFactory.isCurlBinaryPresent());
     }
 
     @Test

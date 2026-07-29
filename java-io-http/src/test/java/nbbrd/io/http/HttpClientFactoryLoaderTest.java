@@ -1,7 +1,7 @@
 package nbbrd.io.http;
 
-import nbbrd.io.http.okhttp.OkHttpHttpFactory;
-import nbbrd.io.http.urlconnection.UrlConnectionHttpFactory;
+import nbbrd.io.http.okhttp.OkHttpHttpClientFactory;
+import nbbrd.io.http.urlconnection.UrlConnectionHttpClientFactory;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -14,15 +14,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Philippe Charles
  */
-public class HttpFactoryLoaderTest {
+public class HttpClientFactoryLoaderTest {
 
     @Test
     public void testRegistration() {
         // All three factories are registered as service providers,
         // regardless of their runtime availability.
         List<String> registeredIds = StreamSupport
-                .stream(ServiceLoader.load(HttpFactory.class).spliterator(), false)
-                .map(HttpFactory::getFactoryId)
+                .stream(ServiceLoader.load(HttpClientFactory.class).spliterator(), false)
+                .map(HttpClientFactory::getFactoryId)
                 .collect(Collectors.toList());
 
         assertThat(registeredIds)
@@ -31,9 +31,9 @@ public class HttpFactoryLoaderTest {
 
     @Test
     public void testAvailableFactories() {
-        List<String> availableIds = HttpFactoryLoader.load()
+        List<String> availableIds = HttpClientFactoryLoader.load()
                 .stream()
-                .map(HttpFactory::getFactoryId)
+                .map(HttpClientFactory::getFactoryId)
                 .collect(Collectors.toList());
 
         // urlconnection is always available; okhttp is on the test classpath.
@@ -42,28 +42,28 @@ public class HttpFactoryLoaderTest {
 
     @Test
     public void testPriorityOrdering() {
-        List<HttpFactory> factories = HttpFactoryLoader.load();
+        List<HttpClientFactory> factories = HttpClientFactoryLoader.load();
 
         // The loader sorts available providers by descending priority.
         assertThat(factories)
                 .isSortedAccordingTo((l, r) -> Integer.compare(r.getFactoryPriority(), l.getFactoryPriority()));
 
         // okhttp (100) is preferred over urlconnection (50) when both are available.
-        List<String> availableIds = factories.stream().map(HttpFactory::getFactoryId).collect(Collectors.toList());
+        List<String> availableIds = factories.stream().map(HttpClientFactory::getFactoryId).collect(Collectors.toList());
         assertThat(availableIds.indexOf("okhttp")).isLessThan(availableIds.indexOf("urlconnection"));
     }
 
     @Test
     public void testLoadById() {
-        assertThat(HttpFactoryLoader.loadById("urlconnection"))
+        assertThat(HttpClientFactoryLoader.loadById("urlconnection"))
                 .get()
-                .isInstanceOf(UrlConnectionHttpFactory.class);
+                .isInstanceOf(UrlConnectionHttpClientFactory.class);
 
-        assertThat(HttpFactoryLoader.loadById("okhttp"))
+        assertThat(HttpClientFactoryLoader.loadById("okhttp"))
                 .get()
-                .isInstanceOf(OkHttpHttpFactory.class);
+                .isInstanceOf(OkHttpHttpClientFactory.class);
 
-        assertThat(HttpFactoryLoader.loadById("unknown"))
+        assertThat(HttpClientFactoryLoader.loadById("unknown"))
                 .isEmpty();
     }
 }

@@ -3,8 +3,8 @@ package nbbrd.io.http.curl;
 import lombok.NonNull;
 import nbbrd.design.VisibleForTesting;
 import nbbrd.io.http.HttpClient;
+import nbbrd.io.http.HttpClientFactory;
 import nbbrd.io.http.HttpContext;
-import nbbrd.io.http.HttpFactory;
 import nbbrd.io.http.ext.*;
 import nbbrd.service.ServiceProvider;
 
@@ -14,7 +14,7 @@ import java.nio.file.InvalidPathException;
 import java.nio.file.Paths;
 
 /**
- * {@link HttpFactory} backed by {@link CurlHttpClient}.
+ * {@link HttpClientFactory} backed by {@link CurlHttpClient}.
  * <p>
  * This factory is only available when both the optional {@code java-io-curl}
  * module and the {@code curl} command-line tool are present. Redirect,
@@ -22,8 +22,8 @@ import java.nio.file.Paths;
  * decorators.
  * </p>
  */
-@ServiceProvider(HttpFactory.class)
-public final class CurlHttpFactory implements HttpFactory {
+@ServiceProvider(HttpClientFactory.class)
+public final class CurlHttpClientFactory implements HttpClientFactory {
 
     private static final int PRIORITY = 10;
 
