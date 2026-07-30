@@ -128,10 +128,10 @@ public class TextBuffersTest {
     private static final int DEFAULT_BLOCK_BUFFER_SIZE = (int) BlockSizer.DEFAULT_BLOCK_BUFFER_SIZE;
 
     private static Path newInputFile(String content, Charset charset) throws IOException {
-        File result = File.createTempFile("input", ".csv");
-        result.deleteOnExit();
-        Files.write(result.toPath(), content.getBytes(charset));
-        return result.toPath();
+        Path result = Files.createTempFile("input", ".csv");
+        result.toFile().deleteOnExit();
+        Files.write(result, content.getBytes(charset));
+        return result;
     }
 
     private static InputStream newInputStream(String content, Charset charset) {
@@ -139,9 +139,9 @@ public class TextBuffersTest {
     }
 
     private static Path newOutputFile() throws IOException {
-        File temp = File.createTempFile("output", ".csv");
-        temp.deleteOnExit();
-        return temp.toPath();
+        Path result = Files.createTempFile("output", ".csv");
+        result.toFile().deleteOnExit();
+        return result;
     }
 
     private static OutputStream newOutputStream() {

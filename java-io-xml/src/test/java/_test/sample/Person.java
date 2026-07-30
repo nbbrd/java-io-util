@@ -93,7 +93,7 @@ public class Person {
             for (Charset encoding : ENCODINGS) {
                 marshaller.setProperty(Marshaller.JAXB_ENCODING, encoding.name());
 
-                File encodedFile = File.createTempFile("person_" + encoding.name() + "_", ".xml");
+                File encodedFile = Files.createTempFile("person_" + encoding.name() + "_", ".xml").toFile();
                 encodedFile.deleteOnExit();
                 marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, false);
                 marshaller.marshal(JOHN_DOE, encodedFile);
@@ -112,13 +112,13 @@ public class Person {
                 }
             }
 
-            FILE_EMPTY = File.createTempFile("empty_", ".xml");
+            FILE_EMPTY = Files.createTempFile("empty_", ".xml").toFile();
             FILE_EMPTY.deleteOnExit();
             PATH_EMPTY = FILE_EMPTY.toPath();
 
             CHARS_EMPTY = "";
 
-            FILE_MISSING = File.createTempFile("missing_", ".xml");
+            FILE_MISSING = Files.createTempFile("missing_", ".xml").toFile();
             FILE_MISSING.delete();
             PATH_MISSING = FILE_MISSING.toPath();
 

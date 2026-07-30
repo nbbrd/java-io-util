@@ -1,9 +1,9 @@
 package nbbrd.io.sys;
 
+import internal.io.text.InternalParser;
 import lombok.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -108,7 +108,7 @@ public final class SystemProperties {
      * @return
      */
     public @Nullable URL getJavaVendorUrl() {
-        return asURL(get(JAVA_VENDOR_URL));
+        return InternalParser.parseURL(get(JAVA_VENDOR_URL));
     }
 
     /**
@@ -258,13 +258,5 @@ public final class SystemProperties {
             }
         }
         return Collections.emptyList();
-    }
-
-    private URL asURL(String input) {
-        try {
-            return input != null ? new URL(input) : null;
-        } catch (MalformedURLException ex) {
-            return null;
-        }
     }
 }

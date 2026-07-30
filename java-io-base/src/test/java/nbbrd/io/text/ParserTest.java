@@ -22,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.net.MalformedURLException;
 import java.net.URI;
-import java.net.URL;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
@@ -251,7 +250,7 @@ public class ParserTest {
         assertCompliance(onURL(), "file:/C:/temp/x.xml");
 
         assertThat(onURL().parse("file:/C:/temp/x.xml"))
-                .isEqualTo(new URL("file:/C:/temp/x.xml"));
+                .isEqualTo(URI.create("file:/C:/temp/x.xml").toURL());
 
         assertThat(onURL().parse(":/C:/temp/x.xml"))
                 .isNull();
