@@ -16,6 +16,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Add OkHttp HTTP client
 - Add curl HTTP client
 - Add HTTP factory
+- Add HTTP client adapter for HttpURLConnection
 
 ### Changed
 
