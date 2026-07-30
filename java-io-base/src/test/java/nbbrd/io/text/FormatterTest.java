@@ -213,7 +213,7 @@ public class FormatterTest {
     @Test
     public void testURL() throws MalformedURLException {
         Formatter<URL> f = onURL();
-        assertCompliance(f, new URL("file:/C:/temp/x.xml"), "file:/C:/temp/x.xml");
+        assertCompliance(f, URI.create("file:/C:/temp/x.xml").toURL(), "file:/C:/temp/x.xml");
     }
 
     @Test

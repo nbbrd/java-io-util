@@ -362,7 +362,7 @@ public class CurlHttpURLConnectionTest {
 
     @Test
     public void testInvalidHost(@TempDir File temp) throws IOException {
-        HttpURLConnection x = curl(new URL("http://localhoooooost"), temp);
+        HttpURLConnection x = curl(URI.create("http://localhoooooost").toURL(), temp);
 
         assertThatIOException()
                 .isThrownBy(x::connect)
@@ -374,7 +374,7 @@ public class CurlHttpURLConnectionTest {
         if (!path.startsWith("/")) {
             path = "/" + path;
         }
-        return new URL(String.format(Locale.ROOT, "%s%s", wire.baseUrl(), path));
+        return URI.create(String.format(Locale.ROOT, "%s%s", wire.baseUrl(), path)).toURL();
     }
 
     private CurlHttpURLConnection curl(URL url, File temp) {

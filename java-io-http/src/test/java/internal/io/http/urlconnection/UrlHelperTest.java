@@ -23,7 +23,7 @@ public class UrlHelperTest {
 
     @Test
     public void testToURIAndToURLRoundTrip() throws IOException {
-        URL url = new URL("http://localhost/path?q=v");
+        URL url = URI.create("http://localhost/path?q=v").toURL();
 
         URI uri = UrlConnectionHttpClient.toURI(url);
 

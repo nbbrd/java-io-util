@@ -11,7 +11,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
 import java.net.Proxy;
-import java.net.URL;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.List;
@@ -36,7 +36,7 @@ public class CurlTest {
         assertThat(new Curl.CommandBuilder().request("POST").build())
                 .containsExactly("curl", "-X", "POST");
 
-        assertThat(new Curl.CommandBuilder().url(new URL("https://www.nbb.be")).build())
+        assertThat(new Curl.CommandBuilder().url(URI.create("https://www.nbb.be").toURL()).build())
                 .containsExactly("curl", "https://www.nbb.be");
 
         assertThat(new Curl.CommandBuilder().proxy(Proxy.NO_PROXY).build())
