@@ -38,7 +38,7 @@ public class UrlConnectionHttpClientFactoryTest {
         assertThat(client)
                 .isNotNull()
                 .extracting(HttpClient::getDescription)
-                .isEqualTo("Retrying (0) on Redirecting (20) on Authenticating (NONE) on URL connection client");
+                .isEqualTo("URL connection client");
     }
 }
 

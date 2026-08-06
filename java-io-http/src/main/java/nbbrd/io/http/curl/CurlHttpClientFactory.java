@@ -5,7 +5,6 @@ import nbbrd.design.VisibleForTesting;
 import nbbrd.io.http.HttpClient;
 import nbbrd.io.http.HttpClientFactory;
 import nbbrd.io.http.HttpContext;
-import nbbrd.io.http.ext.*;
 import nbbrd.service.ServiceProvider;
 
 import java.io.File;
@@ -17,9 +16,7 @@ import java.nio.file.Paths;
  * {@link HttpClientFactory} backed by {@link CurlHttpClient}.
  * <p>
  * This factory is only available when both the optional {@code java-io-curl}
- * module and the {@code curl} command-line tool are present. Redirect,
- * authentication and retry concerns are delegated to the corresponding
- * decorators.
+ * module and the {@code curl} command-line tool are present.
  * </p>
  */
 @ServiceProvider(HttpClientFactory.class)
@@ -44,7 +41,7 @@ public final class CurlHttpClientFactory implements HttpClientFactory {
 
     @Override
     public @NonNull HttpClient getClient(@NonNull HttpContext context) {
-        HttpClient client = CurlHttpClient
+        return CurlHttpClient
                 .builder()
                 .readTimeout(context.getReadTimeout())
                 .connectTimeout(context.getConnectTimeout())
@@ -52,10 +49,6 @@ public final class CurlHttpClientFactory implements HttpClientFactory {
                 .userAgent(context.getUserAgent())
                 .followRedirects(false)
                 .build();
-        client = new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), context.getListener());
-        client = new RedirectDecorator(client, context.getMaxRedirects(), context.getListener());
-        client = new RetryDecorator(client, context.getMaxRetries(), context.getListener());
-        return client;
     }
 
     private static boolean isCurlModulePresent() {

@@ -16,33 +16,24 @@
  */
 package nbbrd.io.http;
 
-import _test.io.http.MockedAuthenticator;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.github.tomakehurst.wiremock.junit5.WireMockExtension;
 import com.github.tomakehurst.wiremock.matching.AbsentPattern;
 import com.github.tomakehurst.wiremock.matching.AnythingPattern;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
-import nbbrd.io.http.ext.AuthScheme;
-import nbbrd.io.http.ext.Authenticator;
 import nbbrd.io.net.MediaType;
 import org.assertj.core.api.Assumptions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.RegisterExtension;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 
 import javax.net.ssl.*;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.UnknownHostException;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Locale;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
@@ -51,8 +42,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static nbbrd.io.http.HttpMethod.POST;
 import static nbbrd.io.http.HttpMethod.PUT;
-import static nbbrd.io.http.ext.AuthScheme.BASIC;
-import static nbbrd.io.http.ext.AuthScheme.NONE;
 import static org.assertj.core.api.Assertions.*;
 
 /**
@@ -291,129 +280,6 @@ public abstract class HttpClientTest {
                 .withMessage("localhoooooost");
     }
 
-    @Test
-    public void testRedirect() throws IOException {
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .build();
-        HttpClient x = getClient(context);
-
-        String absoluteSecondURL = wireURL(SECOND_URL).toString();
-
-        for (int redirection : getHttpRedirectionCodes()) {
-            for (String location : asList(absoluteSecondURL, SECOND_URL)) {
-                wire.resetAll();
-                wire.stubFor(get(SAMPLE_URL).willReturn(aResponse().withStatus(redirection).withHeader(HttpHeaders.HTTP_LOCATION_HEADER, location)));
-                wire.stubFor(get(SECOND_URL).willReturn(okXml(SAMPLE_XML)));
-
-                assertThatCode(() -> {
-                    try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
-                        assertSameSampleContent(response);
-                    }
-                })
-                        .describedAs("Redirect: code %s from '%s' to '%s'", redirection, wireURL(SAMPLE_URL), location)
-                        .doesNotThrowAnyException();
-            }
-        }
-    }
-
-    @Test
-    public void testMaxRedirect() throws MalformedURLException {
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .maxRedirects(0)
-                .build();
-        HttpClient x = getClient(context);
-
-        String absoluteSecondURL = wireURL(SECOND_URL).toString();
-
-        for (int redirection : getHttpRedirectionCodes()) {
-            for (String location : asList(absoluteSecondURL, SECOND_URL)) {
-                wire.resetAll();
-                wire.stubFor(get(SAMPLE_URL).willReturn(aResponse().withStatus(redirection).withHeader(HttpHeaders.HTTP_LOCATION_HEADER, location)));
-                wire.stubFor(get(SECOND_URL).willReturn(okXml(SAMPLE_XML)));
-
-                assertThatIOException()
-                        .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
-                        .describedAs("Max redirect: code %s from '%s' to '%s'", redirection, wireURL(SAMPLE_URL), location)
-                        .withMessage("Max redirection reached");
-            }
-        }
-    }
-
-    @Test
-    public void testInvalidRedirect() throws MalformedURLException {
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .build();
-        HttpClient x = getClient(context);
-
-        for (int redirection : getHttpRedirectionCodes()) {
-            wire.resetAll();
-            wire.stubFor(get(SAMPLE_URL).willReturn(aResponse().withStatus(redirection)));
-
-            assertThatIOException()
-                    .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
-                    .describedAs("Invalid redirect: code %s from '%s'", redirection, wireURL(SAMPLE_URL))
-                    .withMessage("Missing redirection url");
-        }
-    }
-
-    @Test
-    public void testNonRedirect3xx() throws MalformedURLException {
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .build();
-        HttpClient x = getClient(context);
-
-        // 3xx codes that are NOT redirects (no Location to follow) must be returned as responses,
-        // not turned into a "Missing redirection url" error. 304 is required by conditional revalidation.
-        for (int nonRedirect : asList(300, 304)) {
-            wire.resetAll();
-            wire.stubFor(get(SAMPLE_URL).willReturn(aResponse().withStatus(nonRedirect)));
-
-            assertThatCode(() -> {
-                try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
-                    assertThat(response.getStatusCode())
-                            .describedAs("Non-redirect 3xx must be returned: code %s", nonRedirect)
-                            .isEqualTo(nonRedirect);
-                }
-            })
-                    .describedAs("Non-redirect 3xx must not throw: code %s", nonRedirect)
-                    .doesNotThrowAnyException();
-        }
-    }
-
-    @Test
-    public void testDowngradingRedirect() throws MalformedURLException {
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .build();
-        HttpClient x = getClient(context);
-
-        String location = wireHttpUrl(SECOND_URL);
-
-        for (int redirection : getHttpRedirectionCodes()) {
-            wire.resetAll();
-            wire.stubFor(get(SAMPLE_URL).willReturn(aResponse().withStatus(redirection).withHeader(HttpHeaders.HTTP_LOCATION_HEADER, location)));
-            wire.stubFor(get(SECOND_URL).willReturn(okXml(SAMPLE_XML)));
-
-            assertThatIOException()
-                    .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
-                    .describedAs("Downgrading protocol on redirect: code %s from '%s' to '%s'", redirection, wireURL(SAMPLE_URL), location)
-                    .withMessageContaining("Downgrading protocol on redirect");
-        }
-    }
 
     @Test
     public void testInvalidSSL() {
@@ -449,172 +315,14 @@ public abstract class HttpClientTest {
         wire.stubFor(get(SAMPLE_URL).willReturn(okXml(SAMPLE_XML).withFixedDelay(readTimeout * 2)));
 
         assertThatIOException()
-                .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()))
+                .isThrownBy(() -> {
+                    try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
+                        drain(response.getBody());
+                    }
+                })
                 .withMessageContaining("Read timed out");
     }
 
-    @ParameterizedTest
-    @EnumSource(AuthScheme.class)
-    public void testValidAuth(AuthScheme authScheme) throws IOException {
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(MockedAuthenticator.onConstant(() -> Authenticator.newPassword("user", "password")))
-                .authScheme(authScheme)
-                .build();
-        HttpClient x = getClient(context);
-
-        wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
-        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
-        wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
-
-        try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
-            assertSameSampleContent(response);
-        }
-
-        wire.verify(authScheme.equals(NONE) ? 2 : 1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
-    }
-
-    @ParameterizedTest
-    @EnumSource(AuthScheme.class)
-    public void testNoAuthenticator(AuthScheme authScheme) throws MalformedURLException {
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(Authenticator.noOp())
-                .authScheme(authScheme)
-                .build();
-        HttpClient x = getClient(context);
-
-        wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
-        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
-        wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
-
-        HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build();
-        assertThatIOException()
-                .isThrownBy(() -> x.send(request))
-                .withMessage("Missing " + (authScheme.equals(NONE) ? BASIC : authScheme) + " authentication for " + request.getQuery());
-
-        wire.verify(authScheme.equals(NONE) ? 1 : 0, getRequestedFor(urlEqualTo(SAMPLE_URL)));
-    }
-
-    @ParameterizedTest
-    @EnumSource(AuthScheme.class)
-    public void testFailingAuthenticator(AuthScheme authScheme) throws MalformedURLException {
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(MockedAuthenticator.onConstant(() -> {
-                    throw new FileNotFoundException("boom");
-                }))
-                .authScheme(authScheme)
-                .build();
-        HttpClient x = getClient(context);
-
-        wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
-        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
-        wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
-
-        HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build();
-        assertThatIOException()
-                .isThrownBy(() -> x.send(request))
-                .isInstanceOf(FileNotFoundException.class)
-                .withMessage("boom");
-
-        wire.verify(authScheme.equals(NONE) ? 1 : 0, getRequestedFor(urlEqualTo(SAMPLE_URL)));
-    }
-
-    @ParameterizedTest
-    @EnumSource(AuthScheme.class)
-    public void testInvalidAuth(AuthScheme authScheme) throws IOException {
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(MockedAuthenticator.onConstant(() -> Authenticator.newPassword("user", "boom")))
-                .authScheme(authScheme)
-                .build();
-        HttpClient x = getClient(context);
-
-        wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
-        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
-        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "boom").willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
-        wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
-
-        try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
-            assertThat(response.getStatusCode()).isEqualTo(HttpsURLConnection.HTTP_UNAUTHORIZED);
-        }
-
-        wire.verify(authScheme.equals(BASIC) ? 1 : 2, getRequestedFor(urlEqualTo(SAMPLE_URL)));
-    }
-
-    @ParameterizedTest
-    @EnumSource(AuthScheme.class)
-    public void testInsecureAuth(AuthScheme authScheme) throws MalformedURLException {
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(MockedAuthenticator.onConstant(() -> Authenticator.newPassword("user", "password")))
-                .authScheme(authScheme)
-                .build();
-        HttpClient x = getClient(context);
-
-        wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
-        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
-        wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
-
-        String location = wireHttpUrl(SAMPLE_URL);
-
-        assertThatIOException()
-                .isThrownBy(() -> x.send(HttpRequest.builder().query(URI.create(location)).headers(GENERIC_DATA_21_HEADER).build()))
-                .withMessageContaining("Insecure protocol");
-
-        wire.verify(!authScheme.equals(NONE) ? 0 : 1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
-    }
-
-    @ParameterizedTest
-    @EnumSource(AuthScheme.class)
-    public void testMissingAuthenticateHeader(AuthScheme authScheme) throws IOException {
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(MockedAuthenticator.onConstant(() -> Authenticator.newPassword("user", "password")))
-                .authScheme(authScheme)
-                .build();
-        HttpClient x = getClient(context);
-
-        wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized()));
-        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
-        wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
-
-        HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build();
-        switch (authScheme) {
-            case NONE:
-                try (HttpResponse response = x.send(request)) {
-                    assertThat(response.getStatusCode()).isEqualTo(HttpsURLConnection.HTTP_UNAUTHORIZED);
-                }
-                break;
-            case BASIC:
-            case BEARER:
-                try (HttpResponse response = x.send(request)) {
-                    assertSameSampleContent(response);
-                }
-                break;
-        }
-
-        wire.verify(1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
-    }
 
     @Test
     public void testDoubleDotInURL() throws IOException {
@@ -731,13 +439,6 @@ public abstract class HttpClientTest {
         return URI.create(String.format(Locale.ROOT, "%s%s", wire.baseUrl(), path));
     }
 
-    private String wireHttpUrl(String url) {
-        return wireURL(url)
-                .toString()
-                .replace("https", "http")
-                .replace(Integer.toString(wire.getRuntimeInfo().getHttpsPort()), Integer.toString(wire.getRuntimeInfo().getHttpPort()));
-    }
-
     protected void assertSameSampleContent(HttpResponse response) throws IOException {
         assertThat(response.getContentType()).isEqualTo(APPLICATION_XML_UTF_8.withoutParameters());
         try (InputStream stream = response.getBody()) {
@@ -745,15 +446,9 @@ public abstract class HttpClientTest {
         }
     }
 
-    protected List<Integer> getHttpRedirectionCodes() {
-        return Arrays.asList(301, 302, 303, 307, 308);
-    }
-
     protected static final String ANY_LANG = "*";
     protected static final String SAMPLE_URL = "/first.xml";
-    protected static final String SECOND_URL = "/second.xml";
     protected static final String SAMPLE_XML = "<firstName>John</firstName><lastName>Doe</lastName>";
-    public static final String BASIC_AUTH_RESPONSE = "Basic realm=\"staging\", charset=\"UTF-8\"";
 
     protected static boolean isOSX() {
         String osName = System.getProperty("os.name");

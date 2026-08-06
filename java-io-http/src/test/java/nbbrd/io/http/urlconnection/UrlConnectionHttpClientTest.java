@@ -1,10 +1,6 @@
 package nbbrd.io.http.urlconnection;
 
 import nbbrd.io.http.*;
-import nbbrd.io.http.ext.AuthenticatingDecorator;
-import nbbrd.io.http.ext.AuthenticatingListener;
-import nbbrd.io.http.ext.RedirectDecorator;
-import nbbrd.io.http.ext.RedirectListener;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -18,7 +14,7 @@ public class UrlConnectionHttpClientTest extends HttpClientTest {
 
     @Override
     protected HttpClient getClient(HttpContext context) {
-        HttpClient client = UrlConnectionHttpClient
+        return UrlConnectionHttpClient
                 .builder()
                 .readTimeout(context.getReadTimeout())
                 .connectTimeout(context.getConnectTimeout())
@@ -27,9 +23,6 @@ public class UrlConnectionHttpClientTest extends HttpClientTest {
                 .hostnameVerifier(context.getHostnameVerifier().get())
                 .userAgent(context.getUserAgent())
                 .build();
-        client = new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), AuthenticatingListener.noOp());
-        client = new RedirectDecorator(client, context.getMaxRedirects(), RedirectListener.noOp());
-        return client;
     }
 
     @Test

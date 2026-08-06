@@ -40,7 +40,7 @@ public class CurlHttpClientFactoryTest {
         assertThat(client)
                 .isNotNull()
                 .extracting(HttpClient::getDescription)
-                .isEqualTo("Retrying (0) on Redirecting (20) on Authenticating (NONE) on Curl client");
+                .isEqualTo("Curl client");
     }
 }
 

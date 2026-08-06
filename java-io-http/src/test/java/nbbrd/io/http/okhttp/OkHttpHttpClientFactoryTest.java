@@ -40,7 +40,7 @@ public class OkHttpHttpClientFactoryTest {
         assertThat(client)
                 .isNotNull()
                 .extracting(HttpClient::getDescription)
-                .isEqualTo("Retrying (0) on Authenticating (NONE) on OkHttp client");
+                .isEqualTo("OkHttp client");
     }
 }
 

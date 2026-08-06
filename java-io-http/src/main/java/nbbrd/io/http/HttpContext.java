@@ -1,9 +1,6 @@
 package nbbrd.io.http;
 
 import nbbrd.design.NonNegative;
-import nbbrd.io.http.ext.AuthScheme;
-import nbbrd.io.http.ext.Authenticator;
-import nbbrd.io.http.ext.HttpEventListener;
 import org.jspecify.annotations.Nullable;
 
 import javax.net.ssl.HostnameVerifier;
@@ -24,14 +21,6 @@ public class HttpContext {
     @lombok.Builder.Default
     int connectTimeout = 2 * 60 * 1000;
 
-    @NonNegative
-    @lombok.Builder.Default
-    int maxRedirects = 20;
-
-    @NonNegative
-    @lombok.Builder.Default
-    int maxRetries = 0;
-
     @lombok.NonNull
     @lombok.Builder.Default
     Supplier<ProxySelector> proxySelector = ProxySelector::getDefault;
@@ -44,19 +33,7 @@ public class HttpContext {
     @lombok.Builder.Default
     Supplier<HostnameVerifier> hostnameVerifier = HttpsURLConnection::getDefaultHostnameVerifier;
 
-    @lombok.NonNull
-    @lombok.Builder.Default
-    Authenticator authenticator = Authenticator.noOp();
-
-    @lombok.NonNull
-    @lombok.Builder.Default
-    AuthScheme authScheme = AuthScheme.NONE;
-
     @Nullable
     @lombok.Builder.Default
     String userAgent = null;
-
-    @lombok.NonNull
-    @lombok.Builder.Default
-    HttpEventListener listener = HttpEventListener.noOp();
 }

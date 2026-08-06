@@ -4,16 +4,10 @@ import com.github.tomakehurst.wiremock.matching.AbsentPattern;
 import com.github.tomakehurst.wiremock.matching.AnythingPattern;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import nbbrd.io.http.*;
-import nbbrd.io.http.ext.AuthenticatingDecorator;
-import nbbrd.io.http.ext.AuthenticatingListener;
-import nbbrd.io.http.ext.RedirectDecorator;
-import nbbrd.io.http.ext.RedirectListener;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -29,7 +23,7 @@ public class CurlHttpClientTest extends HttpClientTest {
     protected HttpClient getClient(HttpContext context) {
         // curl uses its own TLS stack, so WireMock's self-signed certificate
         // requires the insecure flag; redirects are delegated to the decorator.
-        HttpClient client = CurlHttpClient
+        return CurlHttpClient
                 .builder()
                 .readTimeout(context.getReadTimeout())
                 .connectTimeout(context.getConnectTimeout())
@@ -38,9 +32,6 @@ public class CurlHttpClientTest extends HttpClientTest {
                 .followRedirects(false)
                 .insecure(true)
                 .build();
-        client = new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), AuthenticatingListener.noOp());
-        client = new RedirectDecorator(client, context.getMaxRedirects(), RedirectListener.noOp());
-        return client;
     }
 
     @Test
@@ -128,15 +119,5 @@ public class CurlHttpClientTest extends HttpClientTest {
     @Override
     public void testInvalidSSL() {
         super.testInvalidSSL();
-    }
-
-    @Override
-    protected List<Integer> getHttpRedirectionCodes() {
-        List<Integer> result = super.getHttpRedirectionCodes();
-        // ignore redirection 308 on macOS because curl 7.79.0 returns CURL_UNSUPPORTED_PROTOCOL error
-        if (isOSX()) {
-            return result.stream().filter(code -> code != 308).collect(Collectors.toList());
-        }
-        return result;
     }
 }

@@ -1,19 +1,12 @@
 package nbbrd.io.http.okhttp;
 
-import _test.io.http.MockedAuthenticator;
 import com.github.tomakehurst.wiremock.matching.AbsentPattern;
 import com.github.tomakehurst.wiremock.matching.AnythingPattern;
 import com.github.tomakehurst.wiremock.matching.EqualToPattern;
 import nbbrd.io.http.*;
-import nbbrd.io.http.ext.AuthScheme;
-import nbbrd.io.http.ext.AuthenticatingDecorator;
-import nbbrd.io.http.ext.AuthenticatingListener;
-import nbbrd.io.http.ext.Authenticator;
 import okhttp3.Cache;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.IOException;
@@ -32,7 +25,7 @@ public class OkHttpHttpClientTest extends HttpClientTest {
 
     @Override
     protected HttpClient getClient(HttpContext context) {
-        HttpClient client = OkHttpHttpClient
+        return OkHttpHttpClient
                 .builder()
                 .readTimeout(context.getReadTimeout())
                 .connectTimeout(context.getConnectTimeout())
@@ -41,7 +34,6 @@ public class OkHttpHttpClientTest extends HttpClientTest {
                 .hostnameVerifier(context.getHostnameVerifier().get())
                 .userAgent(context.getUserAgent())
                 .build();
-        return new AuthenticatingDecorator(client, context.getAuthenticator(), context.getAuthScheme(), AuthenticatingListener.noOp());
     }
 
     // OkHttp's BridgeInterceptor sets its own Accept-Encoding header (gzip only),
@@ -165,29 +157,6 @@ public class OkHttpHttpClientTest extends HttpClientTest {
                 .withMessageContaining("localhoooooost");
     }
 
-    // OkHttp handles redirects internally, so the redirect decorator tests do not apply.
-
-    @Override
-    @Test
-    public void testInvalidRedirect() {
-        // OkHttp handles redirects natively and does not require a Location header
-        // for all 3xx codes. It simply stops following when there's no Location.
-    }
-
-    @Override
-    @Test
-    public void testMaxRedirect() {
-        // OkHttp has its own internal redirect limit (20 by default).
-        // We don't use RedirectDecorator, so the context maxRedirects is not applied.
-    }
-
-    @Override
-    @Test
-    public void testDowngradingRedirect() {
-        // OkHttp allows HTTPS-to-HTTP downgrades during redirect.
-        // The protocol downgrade protection is a feature of RedirectDecorator,
-        // which is not used with OkHttp since it handles redirects natively.
-    }
 
     // OkHttp wraps SSL errors differently depending on the connection attempt (IPv4/IPv6).
 
@@ -235,32 +204,6 @@ public class OkHttpHttpClientTest extends HttpClientTest {
         wire.verify(1, getRequestedFor(urlEqualTo("/first.xml")));
     }
 
-    // OkHttp with HTTP/2 returns empty reason phrases.
-
-    @Override
-    @ParameterizedTest
-    @EnumSource(AuthScheme.class)
-    public void testInvalidAuth(AuthScheme authScheme) throws IOException {
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(MockedAuthenticator.onConstant(() -> Authenticator.newPassword("user", "boom")))
-                .authScheme(authScheme)
-                .build();
-        HttpClient x = getClient(context);
-
-        wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
-        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
-        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "boom").willReturn(unauthorized().withHeader(HttpHeaders.HTTP_AUTHENTICATE_HEADER, BASIC_AUTH_RESPONSE)));
-        wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
-
-        try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
-            assertThat(response.getStatusCode()).isEqualTo(HttpsURLConnection.HTTP_UNAUTHORIZED);
-        }
-    }
-
     // OkHttp reports "timeout" rather than "Read timed out" for read timeouts.
 
     @Override
@@ -285,43 +228,6 @@ public class OkHttpHttpClientTest extends HttpClientTest {
                 .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()));
     }
 
-    // OkHttp with HTTP/2 returns empty reason phrases for the NONE auth scheme case.
-
-    @Override
-    @ParameterizedTest
-    @EnumSource(AuthScheme.class)
-    public void testMissingAuthenticateHeader(AuthScheme authScheme) throws IOException {
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .authenticator(MockedAuthenticator.onConstant(() -> Authenticator.newPassword("user", "password")))
-                .authScheme(authScheme)
-                .build();
-        HttpClient x = getClient(context);
-
-        wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(unauthorized()));
-        wire.stubFor(get(SAMPLE_URL).withBasicAuth("user", "password").willReturn(okXml(SAMPLE_XML)));
-        wire.stubFor(get(SAMPLE_URL).withHeader(HttpHeaders.HTTP_AUTHORIZATION_HEADER, new EqualToPattern("Bearer password")).willReturn(okXml(SAMPLE_XML)));
-
-        HttpRequest request = HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build();
-        switch (authScheme) {
-            case NONE:
-                try (HttpResponse response = x.send(request)) {
-                    assertThat(response.getStatusCode()).isEqualTo(HttpsURLConnection.HTTP_UNAUTHORIZED);
-                }
-                break;
-            case BASIC:
-            case BEARER:
-                try (HttpResponse response = x.send(request)) {
-                    assertSameSampleContent(response);
-                }
-                break;
-        }
-
-        wire.verify(1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
-    }
 
     // Caching is opt-in: no cache is configured by default.
 
