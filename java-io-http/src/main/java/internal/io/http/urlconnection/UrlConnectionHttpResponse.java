@@ -5,6 +5,7 @@ import nbbrd.io.http.HttpHeaders;
 import nbbrd.io.http.HttpResponse;
 import nbbrd.io.http.urlconnection.UrlConnectionEncoding;
 import nbbrd.io.net.MediaType;
+import org.jspecify.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -24,17 +25,9 @@ public final class UrlConnectionHttpResponse implements HttpResponse {
     @lombok.NonNull
     private final List<UrlConnectionEncoding> decoders;
 
-    public String httpContentTypeOrNull() {
-        return conn.getHeaderField(HttpHeaders.HTTP_CONTENT_TYPE_HEADER);
-    }
-
-    String httpContentLengthOrNull() {
-        return conn.getHeaderField(HttpHeaders.HTTP_CONTENT_LENGTH_HEADER);
-    }
-
     @Override
     public @NonNull MediaType getContentType() throws IOException {
-        String contentTypeOrNull = httpContentTypeOrNull();
+        String contentTypeOrNull = conn.getContentType();
         if (contentTypeOrNull == null) {
             throw new IOException("Missing content-type in HTTP response header");
         }
@@ -47,15 +40,7 @@ public final class UrlConnectionHttpResponse implements HttpResponse {
 
     @Override
     public long getContentLength() {
-        String value = httpContentLengthOrNull();
-        if (value == null) {
-            return -1;
-        }
-        try {
-            return Long.parseLong(value);
-        } catch (NumberFormatException ex) {
-            return -1;
-        }
+        return conn.getContentLengthLong();
     }
 
     @Override
@@ -70,13 +55,16 @@ public final class UrlConnectionHttpResponse implements HttpResponse {
 
     @Override
     public @NonNull InputStream getBody() throws IOException {
-        String encodingOrNull = conn.getHeaderField(HttpHeaders.HTTP_CONTENT_ENCODING_HEADER);
+        String encodingOrNull = conn.getContentEncoding();
+        return findDecoderByName(encodingOrNull).decode(conn.getInputStream());
+    }
+
+    private @NonNull UrlConnectionEncoding findDecoderByName(@Nullable String encodingOrNull) {
         return decoders
                 .stream()
                 .filter(decoder -> decoder.getName().equals(encodingOrNull))
                 .findFirst()
-                .orElse(UrlConnectionEncoding.noOp())
-                .decode(conn.getInputStream());
+                .orElse(UrlConnectionEncoding.noOp());
     }
 
     @Override
