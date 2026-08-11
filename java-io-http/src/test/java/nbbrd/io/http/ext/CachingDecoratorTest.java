@@ -7,7 +7,6 @@ import _test.io.http.RecordingCacheEventListener;
 import nbbrd.design.Demo;
 import nbbrd.io.http.*;
 import nbbrd.io.http.urlconnection.UrlConnectionHttpClient;
-import nbbrd.io.http.urlconnection.UrlConnectionListener;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
@@ -34,10 +33,7 @@ public class CachingDecoratorTest {
 
         HttpClient client = CachingDecorator
                 .builder()
-                .decorated(UrlConnectionHttpClient
-                        .builder()
-                        .listener(UrlConnectionListener.basic(x -> System.out.println("    \uD83C\uDF10 " + x)))
-                        .build())
+                .decorated(UrlConnectionHttpClient.builder().build())
                 .listener(CacheEventListener.basic(x -> System.out.println("  \uD83D\uDCE6 " + x)))
                 .build();
 

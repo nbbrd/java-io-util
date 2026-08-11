@@ -17,7 +17,6 @@
 package internal.io.http.urlconnection;
 
 import lombok.NonNull;
-import nbbrd.io.http.urlconnection.UrlConnectionListener;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -30,9 +29,6 @@ import java.net.URL;
  */
 @lombok.experimental.UtilityClass
 public class UrlHelper {
-
-    public static final UrlConnectionListener NO_OP_EVENT_LISTENER = new UrlConnectionListener() {
-    };
 
     public static boolean isHttpsProtocol(URI uri) {
         return "https".equalsIgnoreCase(uri.getScheme());

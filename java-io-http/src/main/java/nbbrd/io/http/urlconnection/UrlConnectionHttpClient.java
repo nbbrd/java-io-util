@@ -100,13 +100,6 @@ public final class UrlConnectionHttpClient implements HttpClient {
     HostnameVerifier hostnameVerifier = HttpsURLConnection.getDefaultHostnameVerifier();
 
     /**
-     * Listener notified of connection lifecycle events such as open and success.
-     */
-    @lombok.NonNull
-    @lombok.Builder.Default
-    UrlConnectionListener listener = UrlConnectionListener.noOp();
-
-    /**
      * Content encoding decoders applied to response bodies (e.g. gzip, deflate).
      */
     @lombok.Singular
@@ -163,8 +156,6 @@ public final class UrlConnectionHttpClient implements HttpClient {
         conn.setInstanceFollowRedirects(false);
         headers.keyValues().forEach(header -> conn.setRequestProperty(header.getKey(), header.getValue()));
 
-        listener.onOpen(request, proxy);
-
         if (request.getBody() != null) {
             conn.setDoOutput(true);
             try (OutputStream stream = conn.getOutputStream()) {
@@ -174,9 +165,7 @@ public final class UrlConnectionHttpClient implements HttpClient {
 
         conn.connect();
 
-        UrlConnectionHttpResponse result = new UrlConnectionHttpResponse(conn, decoders);
-        listener.onSuccess(result::httpContentTypeOrNull);
-        return result;
+        return new UrlConnectionHttpResponse(conn, decoders);
     }
 
     private String getEncodingHeader() {
