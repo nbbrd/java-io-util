@@ -130,12 +130,14 @@ public final class UrlConnectionHttpClient implements HttpClient {
      */
     @Override
     public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
-        if (!UrlHelper.isHttpProtocol(request.getQuery()) && !UrlHelper.isHttpsProtocol(request.getQuery())) {
-            throw new IOException("Unsupported protocol '" + request.getQuery().getScheme() + "'");
+        URI query = request.getQuery().normalize();
+
+        if (!UrlHelper.isHttpProtocol(query) && !UrlHelper.isHttpsProtocol(query)) {
+            throw new IOException("Unsupported protocol '" + query.getScheme() + "'");
         }
 
-        Proxy proxy = selectProxy(request.getQuery());
-        URL url = UrlHelper.toURL(request.getQuery());
+        Proxy proxy = selectProxy(query);
+        URL url = UrlHelper.toURL(query);
 
         HttpURLConnection conn = (HttpURLConnection) url.openConnection(proxy);
         conn.setReadTimeout(readTimeout);

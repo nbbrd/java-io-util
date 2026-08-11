@@ -19,6 +19,7 @@ import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 import java.io.IOException;
 import java.net.ProxySelector;
+import java.net.URI;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
@@ -142,14 +143,16 @@ public final class OkHttpHttpClient implements HttpClient {
      */
     @Override
     public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
-        if (!UrlHelper.isHttpProtocol(request.getQuery()) && !UrlHelper.isHttpsProtocol(request.getQuery())) {
-            throw new IOException("Unsupported protocol '" + request.getQuery().getScheme() + "'");
+        URI query = request.getQuery().normalize();
+
+        if (!UrlHelper.isHttpProtocol(query) && !UrlHelper.isHttpsProtocol(query)) {
+            throw new IOException("Unsupported protocol '" + query.getScheme() + "'");
         }
 
         OkHttpClient client = getClient();
 
         Request.Builder okRequestBuilder = new Request.Builder()
-                .url(UrlHelper.toURL(request.getQuery()));
+                .url(UrlHelper.toURL(query));
 
         RequestBody body = request.getBody() != null
                 ? RequestBody.create(request.getBody())

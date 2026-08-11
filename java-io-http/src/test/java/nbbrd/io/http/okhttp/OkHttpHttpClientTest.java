@@ -175,34 +175,6 @@ public class OkHttpHttpClientTest extends HttpClientTest {
                 .isThrownBy(() -> x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build()));
     }
 
-    // OkHttp normalizes ".." path segments in URLs before sending the request,
-    // so "/abc/../first.xml" becomes "/first.xml". This is valid per RFC 3986.
-
-    @Override
-    @Test
-    public void testDoubleDotInURL() throws IOException {
-        HttpContext context = HttpContext
-                .builder()
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .build();
-        HttpClient x = getClient(context);
-
-        wire.resetAll();
-        wire.stubFor(get("/first.xml").willReturn(okXml(SAMPLE_XML)));
-
-        HttpRequest request = HttpRequest
-                .builder()
-                .query(wireURL("/abc/../first.xml"))
-                .headers(GENERIC_DATA_21_HEADER)
-                .build();
-
-        try (HttpResponse response = x.send(request)) {
-            assertSameSampleContent(response);
-        }
-
-        wire.verify(1, getRequestedFor(urlEqualTo("/first.xml")));
-    }
 
     // OkHttp reports "timeout" rather than "Read timed out" for read timeouts.
 

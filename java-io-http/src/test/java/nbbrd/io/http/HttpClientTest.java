@@ -334,7 +334,7 @@ public abstract class HttpClientTest {
         HttpClient x = getClient(context);
 
         wire.resetAll();
-        wire.stubFor(get("/abc/../first.xml").willReturn(okXml(SAMPLE_XML)));
+        wire.stubFor(get("/first.xml").willReturn(okXml(SAMPLE_XML)));
 
         HttpRequest request = HttpRequest
                 .builder()
@@ -346,7 +346,7 @@ public abstract class HttpClientTest {
             assertSameSampleContent(response);
         }
 
-        wire.verify(1, getRequestedFor(urlEqualTo("/abc/../first.xml")));
+        wire.verify(1, getRequestedFor(urlEqualTo("/first.xml")));
     }
 
     @Test

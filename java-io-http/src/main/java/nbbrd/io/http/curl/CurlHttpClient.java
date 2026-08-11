@@ -131,12 +131,14 @@ public final class CurlHttpClient implements HttpClient {
      */
     @Override
     public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
-        if (!UrlHelper.isHttpProtocol(request.getQuery()) && !UrlHelper.isHttpsProtocol(request.getQuery())) {
-            throw new IOException("Unsupported protocol '" + request.getQuery().getScheme() + "'");
+        URI query = request.getQuery().normalize();
+
+        if (!UrlHelper.isHttpProtocol(query) && !UrlHelper.isHttpsProtocol(query)) {
+            throw new IOException("Unsupported protocol '" + query.getScheme() + "'");
         }
 
-        Proxy proxy = selectProxy(request.getQuery());
-        URL url = UrlHelper.toURL(request.getQuery());
+        Proxy proxy = selectProxy(query);
+        URL url = UrlHelper.toURL(query);
 
         UUID id = UUID.randomUUID();
         File bodyFile = tempDir.toPath().resolve("curl_" + id + "_body.tmp").toFile();
@@ -169,7 +171,6 @@ public final class CurlHttpClient implements HttpClient {
     String[] createCurlCommand(HttpRequest request, URL url, Proxy proxy, HttpHeaders headers, File bodyFile, @org.jspecify.annotations.Nullable File dataFile) {
         return new Curl.CommandBuilder()
                 .request(request.getMethod().name())
-                .pathAsIs()
                 .url(url)
                 .http1_1()
                 .silent(true)
