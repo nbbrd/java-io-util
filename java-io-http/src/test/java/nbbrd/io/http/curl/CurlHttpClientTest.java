@@ -31,6 +31,7 @@ public class CurlHttpClientTest extends HttpClientTest {
                 .userAgent(context.getUserAgent())
                 .followRedirects(false)
                 .insecure(true)
+                .normalizeUri(context.isNormalizeUri())
                 .build();
     }
 
@@ -38,6 +39,31 @@ public class CurlHttpClientTest extends HttpClientTest {
     public void testDescription() {
         assertThat(CurlHttpClient.builder().build().getDescription())
                 .isEqualTo("Curl client");
+    }
+
+    @Test
+    public void normalizesDoubleDotInURLWhenEnabled() throws IOException {
+        HttpClient x = CurlHttpClient
+                .builder()
+                .followRedirects(false)
+                .insecure(true)
+                .normalizeUri(true)
+                .build();
+
+        wire.resetAll();
+        wire.stubFor(get("/first.xml").willReturn(okXml(SAMPLE_XML)));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL("/abc/../first.xml"))
+                .headers(GENERIC_DATA_21_HEADER)
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            assertSameSampleContent(response);
+        }
+
+        wire.verify(1, getRequestedFor(urlEqualTo("/first.xml")));
     }
 
     // curl does not send an Accept-Encoding header by default,

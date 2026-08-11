@@ -48,6 +48,7 @@ public final class CurlHttpClientFactory implements HttpClientFactory {
                 .proxySelector(context.getProxySelector().get())
                 .userAgent(context.getUserAgent())
                 .followRedirects(false)
+                .normalizeUri(context.isNormalizeUri())
                 .build();
     }
 

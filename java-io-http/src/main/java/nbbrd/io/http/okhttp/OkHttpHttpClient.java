@@ -91,6 +91,18 @@ public final class OkHttpHttpClient implements HttpClient {
     String userAgent = null;
 
     /**
+     * Whether to normalize the request URI (collapsing {@code .} and {@code ..}
+     * path segments) before sending. Defaults to {@code false}.
+     * <p>
+     * Note that OkHttp always normalizes {@code .} and {@code ..} path segments
+     * internally (per RFC 3986), so disabling this flag does not preserve such
+     * segments in the sent request.
+     * </p>
+     */
+    @lombok.Builder.Default
+    boolean normalizeUri = false;
+
+    /**
      * Whether to follow HTTP redirects. Defaults to {@code true}.
      * <p>
      * When disabled, 3xx responses are returned as-is, allowing external
@@ -143,7 +155,7 @@ public final class OkHttpHttpClient implements HttpClient {
      */
     @Override
     public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
-        URI query = request.getQuery().normalize();
+        URI query = normalizeUri ? request.getQuery().normalize() : request.getQuery();
 
         if (!UrlHelper.isHttpProtocol(query) && !UrlHelper.isHttpsProtocol(query)) {
             throw new IOException("Unsupported protocol '" + query.getScheme() + "'");

@@ -112,6 +112,14 @@ public final class CurlHttpClient implements HttpClient {
     @lombok.Builder.Default
     File tempDir = DEFAULT_TEMP_DIR;
 
+    /**
+     * Whether to normalize the request URI (collapsing {@code .} and {@code ..}
+     * path segments) before sending. Defaults to {@code false}, which sends the
+     * URI path as-is (curl is invoked with {@code --path-as-is}).
+     */
+    @lombok.Builder.Default
+    boolean normalizeUri = false;
+
     @Override
     public @NonNull String getDescription() {
         return "Curl client";
@@ -131,7 +139,7 @@ public final class CurlHttpClient implements HttpClient {
      */
     @Override
     public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
-        URI query = request.getQuery().normalize();
+        URI query = normalizeUri ? request.getQuery().normalize() : request.getQuery();
 
         if (!UrlHelper.isHttpProtocol(query) && !UrlHelper.isHttpsProtocol(query)) {
             throw new IOException("Unsupported protocol '" + query.getScheme() + "'");
@@ -173,6 +181,7 @@ public final class CurlHttpClient implements HttpClient {
                 .request(request.getMethod().name())
                 .url(url)
                 .http1_1()
+                .pathAsIs()
                 .silent(true)
                 .sslRevokeBestEffort(WINDOWS_SCHANNEL)
                 .insecure(insecure)

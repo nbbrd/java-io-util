@@ -19,6 +19,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Add HTTP factory
 - Add HTTP client adapter for HttpURLConnection
 - Add StylishWriter
+- Add option to normalize URI query before sending request
 
 ### Changed
 
@@ -27,7 +28,6 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Move UrlConnectionHttpClient features to decorators
 - Replace URLQueryBuilder with URIQueryBuilder [#469](https://github.com/nbbrd/java-io-util/issues/469)
 - Set default HTTP client timeouts to 2 minutes instead of no timeout
-- Normalize URI query before sending request
 
 ## [0.0.38] - 2026-06-02
 

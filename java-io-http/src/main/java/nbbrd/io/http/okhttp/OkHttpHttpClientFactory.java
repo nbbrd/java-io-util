@@ -44,6 +44,7 @@ public final class OkHttpHttpClientFactory implements HttpClientFactory {
                 .hostnameVerifier(context.getHostnameVerifier().get())
                 .userAgent(context.getUserAgent())
                 .followRedirects(false)
+                .normalizeUri(context.isNormalizeUri())
                 .build();
     }
 

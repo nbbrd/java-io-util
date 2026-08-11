@@ -22,6 +22,7 @@ public class UrlConnectionHttpClientTest extends HttpClientTest {
                 .sslSocketFactory(context.getSslSocketFactory().get())
                 .hostnameVerifier(context.getHostnameVerifier().get())
                 .userAgent(context.getUserAgent())
+                .normalizeUri(context.isNormalizeUri())
                 .build();
     }
 
@@ -82,5 +83,30 @@ public class UrlConnectionHttpClientTest extends HttpClientTest {
         }
 
         // The default throwing contract is provided by ThrowingStatusDecorator (see ThrowingHttpClientTest).
+    }
+
+    @Test
+    public void normalizesDoubleDotInURLWhenEnabled() throws IOException {
+        HttpClient x = UrlConnectionHttpClient
+                .builder()
+                .sslSocketFactory(wireSSLSocketFactory())
+                .hostnameVerifier(wireHostnameVerifier())
+                .normalizeUri(true)
+                .build();
+
+        wire.resetAll();
+        wire.stubFor(get("/first.xml").willReturn(okXml(SAMPLE_XML)));
+
+        HttpRequest request = HttpRequest
+                .builder()
+                .query(wireURL("/abc/../first.xml"))
+                .headers(GENERIC_DATA_21_HEADER)
+                .build();
+
+        try (HttpResponse response = x.send(request)) {
+            assertSameSampleContent(response);
+        }
+
+        wire.verify(1, getRequestedFor(urlEqualTo("/first.xml")));
     }
 }

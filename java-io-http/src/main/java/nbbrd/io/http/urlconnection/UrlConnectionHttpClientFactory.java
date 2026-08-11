@@ -43,6 +43,7 @@ public final class UrlConnectionHttpClientFactory implements HttpClientFactory {
                 .sslSocketFactory(context.getSslSocketFactory().get())
                 .hostnameVerifier(context.getHostnameVerifier().get())
                 .userAgent(context.getUserAgent())
+                .normalizeUri(context.isNormalizeUri())
                 .build();
     }
 }

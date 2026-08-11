@@ -36,4 +36,7 @@ public class HttpContext {
     @Nullable
     @lombok.Builder.Default
     String userAgent = null;
+
+    @lombok.Builder.Default
+    boolean normalizeUri = false;
 }
