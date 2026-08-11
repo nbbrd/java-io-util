@@ -9,10 +9,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ### Added
 
-- Add metrics decorator to HTTP module
 - Add support of HTTP status code in HttpResponse
-- Add caching HTTP client decorator
-- Add rate limiting decorator
+- Add metrics HTTP decorator
+- Add caching HTTP decorator
+- Add rate limiting HTTP decorator
+- Add cookie HTTP decorator
 - Add OkHttp HTTP client
 - Add curl HTTP client
 - Add HTTP factory
