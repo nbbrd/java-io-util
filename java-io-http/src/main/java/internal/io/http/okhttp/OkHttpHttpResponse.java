@@ -22,9 +22,7 @@ public final class OkHttpHttpResponse implements HttpResponse {
     @Override
     public @NonNull MediaType getContentType() throws IOException {
         String contentTypeOrNull = response.header(HttpHeaders.HTTP_CONTENT_TYPE_HEADER);
-        if (contentTypeOrNull == null) {
-            throw new IOException("Missing content-type in HTTP response header");
-        }
+        if (contentTypeOrNull == null) return NO_CONTENT_TYPE;
         try {
             return MediaType.parse(contentTypeOrNull);
         } catch (IllegalArgumentException ex) {
@@ -66,10 +64,3 @@ public final class OkHttpHttpResponse implements HttpResponse {
         response.close();
     }
 }
-
-
-
-
-
-
-

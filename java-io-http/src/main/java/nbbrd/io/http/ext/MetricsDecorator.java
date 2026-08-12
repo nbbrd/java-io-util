@@ -3,6 +3,7 @@ package nbbrd.io.http.ext;
 import lombok.NonNull;
 import nbbrd.design.DecoratorPattern;
 import nbbrd.io.http.*;
+import nbbrd.io.net.MediaType;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -57,7 +58,7 @@ public final class MetricsDecorator implements HttpClientDecorator {
         private final AtomicLong byteCount = new AtomicLong();
 
         @Override
-        public @NonNull nbbrd.io.net.MediaType getContentType() throws IOException {
+        public @NonNull MediaType getContentType() throws IOException {
             return delegate.getContentType();
         }
 
@@ -142,4 +143,3 @@ public final class MetricsDecorator implements HttpClientDecorator {
         }
     }
 }
-

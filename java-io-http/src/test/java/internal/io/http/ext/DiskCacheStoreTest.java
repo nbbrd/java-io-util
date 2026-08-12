@@ -33,7 +33,6 @@ public class DiskCacheStoreTest {
         return CachedResponse
                 .builder()
                 .statusCode(200)
-                .reasonPhrase("OK")
                 .headers(headers("Content-Type", "text/plain", "Cache-Control", "max-age=60"))
                 .body(body.getBytes(StandardCharsets.UTF_8))
                 .requestTime(T0)
@@ -74,7 +73,6 @@ public class DiskCacheStoreTest {
         assertThat(result).isPresent();
         CachedResponse cached = result.get();
         assertThat(cached.getStatusCode()).isEqualTo(200);
-        assertThat(cached.getReasonPhrase()).isEqualTo("OK");
         assertThat(new String(cached.getBody(), StandardCharsets.UTF_8)).isEqualTo("hello");
         assertThat(cached.getHeaders().firstValue("Content-Type")).contains("text/plain");
         assertThat(cached.getRequestTime()).isEqualTo(T0);

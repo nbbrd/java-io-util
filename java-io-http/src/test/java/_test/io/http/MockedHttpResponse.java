@@ -44,7 +44,7 @@ public final class MockedHttpResponse implements HttpResponse {
         if (contentType != null) return contentType;
         return headers.firstValue(HttpHeaders.HTTP_CONTENT_TYPE_HEADER)
                 .map(MediaType::parse)
-                .orElseThrow(() -> new IOException("Missing content-type"));
+                .orElse(NO_CONTENT_TYPE);
     }
 
     @Override

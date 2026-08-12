@@ -28,6 +28,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Move UrlConnectionHttpClient features to decorators
 - Replace URLQueryBuilder with URIQueryBuilder [#469](https://github.com/nbbrd/java-io-util/issues/469)
 - Set default HTTP client timeouts to 2 minutes instead of no timeout
+- Return NO_CONTENT_TYPE instead of throwing IOException when content-type is missing in HTTP response header
 
 ## [0.0.38] - 2026-06-02
 

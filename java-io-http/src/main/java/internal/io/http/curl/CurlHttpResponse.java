@@ -39,9 +39,7 @@ public final class CurlHttpResponse implements HttpResponse {
     @Override
     public @NonNull MediaType getContentType() throws IOException {
         String contentTypeOrNull = headers.firstValue(HttpHeaders.HTTP_CONTENT_TYPE_HEADER).orElse(null);
-        if (contentTypeOrNull == null) {
-            throw new IOException("Missing content-type in HTTP response header");
-        }
+        if (contentTypeOrNull == null) return NO_CONTENT_TYPE;
         try {
             return MediaType.parse(contentTypeOrNull);
         } catch (IllegalArgumentException ex) {
@@ -52,9 +50,7 @@ public final class CurlHttpResponse implements HttpResponse {
     @Override
     public long getContentLength() {
         String value = headers.firstValue(HttpHeaders.HTTP_CONTENT_LENGTH_HEADER).orElse(null);
-        if (value == null) {
-            return NO_CONTENT_LENGTH;
-        }
+        if (value == null) return NO_CONTENT_LENGTH;
         try {
             return Long.parseLong(value);
         } catch (NumberFormatException ex) {

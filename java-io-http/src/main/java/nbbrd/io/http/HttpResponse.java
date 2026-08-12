@@ -51,6 +51,8 @@ public interface HttpResponse extends Closeable {
         return DisconnectingInputStream.of(this);
     }
 
+    MediaType NO_CONTENT_TYPE = MediaType.parse("application/octet-stream");
+
     int NO_CONTENT_LENGTH = -1;
 
     int NO_STATUS_CODE = -1;

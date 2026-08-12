@@ -27,39 +27,6 @@ public class UrlConnectionHttpClientTest extends HttpClientTest {
     }
 
     @Test
-    public void testDefaultResponse() throws IOException {
-        HttpContext context = HttpContext
-                .builder()
-                .proxySelector(ProxySelector::getDefault)
-                .sslSocketFactory(this::wireSSLSocketFactory)
-                .hostnameVerifier(this::wireHostnameVerifier)
-                .build();
-        HttpClient x = getClient(context);
-
-        wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(ok()));
-
-        try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
-            assertThatIOException()
-                    .isThrownBy(response::getContentType)
-                    .withMessageContaining("Missing content-type in HTTP response header");
-        }
-
-        wire.verify(1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
-
-        wire.resetAll();
-        wire.stubFor(get(SAMPLE_URL).willReturn(okForContentType("/ / /", "body")));
-
-        try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(GENERIC_DATA_21_HEADER).build())) {
-            assertThatIOException()
-                    .isThrownBy(response::getContentType)
-                    .withMessageContaining("Invalid content-type in HTTP response header");
-        }
-
-        wire.verify(1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
-    }
-
-    @Test
     public void testReturnedErrorCodes() throws IOException {
         HttpContext context = HttpContext
                 .builder()

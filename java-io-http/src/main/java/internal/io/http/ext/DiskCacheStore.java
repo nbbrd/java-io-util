@@ -246,7 +246,6 @@ public final class DiskCacheStore implements CacheStore {
         out.writeInt(MAGIC);
         out.writeInt(VERSION);
         out.writeInt(response.getStatusCode());
-        writeNullableString(out, response.getReasonPhrase());
         writeHeaders(out, response.getHeaders());
         writeInstant(out, response.getRequestTime());
         writeInstant(out, response.getResponseTime());
@@ -263,7 +262,6 @@ public final class DiskCacheStore implements CacheStore {
             throw new IOException("Unsupported cache file version");
         }
         int statusCode = in.readInt();
-        String reasonPhrase = readNullableString(in);
         HttpHeaders headers = readHeaders(in);
         Instant requestTime = readInstant(in);
         Instant responseTime = readInstant(in);
@@ -273,7 +271,6 @@ public final class DiskCacheStore implements CacheStore {
         return CachedResponse
                 .builder()
                 .statusCode(statusCode)
-                .reasonPhrase(reasonPhrase)
                 .headers(headers)
                 .body(body)
                 .requestTime(requestTime)

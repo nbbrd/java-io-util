@@ -28,9 +28,7 @@ public final class UrlConnectionHttpResponse implements HttpResponse {
     @Override
     public @NonNull MediaType getContentType() throws IOException {
         String contentTypeOrNull = conn.getContentType();
-        if (contentTypeOrNull == null) {
-            throw new IOException("Missing content-type in HTTP response header");
-        }
+        if (contentTypeOrNull == null) return NO_CONTENT_TYPE;
         try {
             return MediaType.parse(contentTypeOrNull);
         } catch (IllegalArgumentException ex) {

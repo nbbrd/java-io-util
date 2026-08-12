@@ -23,11 +23,6 @@ public class CachedResponse {
     int statusCode;
 
     /**
-     * HTTP reason phrase.
-     */
-    String reasonPhrase;
-
-    /**
      * Response headers.
      */
     @NonNull
