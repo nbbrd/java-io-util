@@ -2,6 +2,7 @@ package _test.io.text;
 
 import _test.io.*;
 import lombok.NonNull;
+import nbbrd.io.Resource;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.text.TextParser;
 
@@ -205,7 +206,7 @@ public final class TextParserAssertions {
 
     private static <T> void testParseStreamFromSupplier(TextParser<T> p, T value, Function<Charset, ResourceId> expected) throws IOException {
         {
-            CountingIOSupplier<InputStream> nonNullSource = new CountingIOSupplier<>(Util::emptyInputStream);
+            CountingIOSupplier<InputStream> nonNullSource = new CountingIOSupplier<>(() -> Resource.nullInputStream());
 
             assertThatNullPointerException()
                     .isThrownBy(() -> p.parseStream((IOSupplier<? extends InputStream>) null, UTF_8))
@@ -264,7 +265,7 @@ public final class TextParserAssertions {
 
     private static <T> void testParseStream(TextParser<T> p, T value, Function<Charset, ResourceId> expected) throws IOException {
         {
-            CountingInputStream nonNullSource = new CountingInputStream(emptyInputStream());
+            CountingInputStream nonNullSource = new CountingInputStream(Resource.nullInputStream());
 
             assertThatNullPointerException()
                     .isThrownBy(() -> p.parseStream((InputStream) null, UTF_8))

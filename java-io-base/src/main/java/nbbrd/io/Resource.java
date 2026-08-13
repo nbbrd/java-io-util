@@ -186,6 +186,11 @@ public final class Resource {
     }
 
     @StaticFactoryMethod(InputStream.class)
+    public static @NonNull InputStream nullInputStream() {
+        return new ByteArrayInputStream(new byte[0]);
+    }
+
+    @StaticFactoryMethod(InputStream.class)
     public static @NonNull InputStream uncloseableInputStream(@NonNull InputStream delegate) {
         return new UncloseableInputStream(delegate);
     }

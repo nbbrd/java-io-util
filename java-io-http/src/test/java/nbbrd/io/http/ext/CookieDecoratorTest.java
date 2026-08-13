@@ -1,6 +1,7 @@
 package nbbrd.io.http.ext;
 
 import lombok.NonNull;
+import nbbrd.io.Resource;
 import nbbrd.io.http.HttpClient;
 import nbbrd.io.http.HttpHeaders;
 import nbbrd.io.http.HttpRequest;
@@ -8,7 +9,6 @@ import nbbrd.io.http.HttpResponse;
 import nbbrd.io.net.MediaType;
 import org.junit.jupiter.api.Test;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.CookieManager;
@@ -176,7 +176,7 @@ public class CookieDecoratorTest {
 
             @Override
             public @NonNull InputStream getBody() {
-                return new ByteArrayInputStream(new byte[0]);
+                return Resource.nullInputStream();
             }
 
             @Override

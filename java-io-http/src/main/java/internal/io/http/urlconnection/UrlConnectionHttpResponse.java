@@ -1,13 +1,13 @@
 package internal.io.http.urlconnection;
 
 import lombok.NonNull;
+import nbbrd.io.Resource;
 import nbbrd.io.http.HttpHeaders;
 import nbbrd.io.http.HttpResponse;
 import nbbrd.io.http.urlconnection.UrlConnectionEncoding;
 import nbbrd.io.net.MediaType;
 import org.jspecify.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -25,8 +25,6 @@ public final class UrlConnectionHttpResponse implements HttpResponse {
 
     @lombok.NonNull
     private final List<UrlConnectionEncoding> decoders;
-
-    private static final InputStream EMPTY_STREAM = new ByteArrayInputStream(new byte[0]);
 
     @Override
     public @NonNull MediaType getContentType() throws IOException {
@@ -66,7 +64,7 @@ public final class UrlConnectionHttpResponse implements HttpResponse {
     private @NonNull InputStream getResponseStream() throws IOException {
         if (conn.getResponseCode() >= HttpURLConnection.HTTP_BAD_REQUEST) {
             InputStream errorStream = conn.getErrorStream();
-            return errorStream != null ? errorStream : EMPTY_STREAM;
+            return errorStream != null ? errorStream : Resource.nullInputStream();
         }
         return conn.getInputStream();
     }

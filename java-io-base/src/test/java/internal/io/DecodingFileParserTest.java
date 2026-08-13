@@ -3,6 +3,7 @@ package internal.io;
 import _test.io.ForwardingInputStream;
 import _test.io.Util;
 import nbbrd.io.FileParser;
+import nbbrd.io.Resource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -30,10 +31,10 @@ public class DecodingFileParserTest {
         x.parsePath(Util.newEmptyFile(temp));
         assertThat(closeCount).hasValue(2);
 
-        x.parseStream(new ByteArrayInputStream(new byte[0]));
+        x.parseStream(Resource.nullInputStream());
         assertThat(closeCount).hasValue(3);
 
-        x.parseStream(() -> new ByteArrayInputStream(new byte[0]));
+        x.parseStream(Resource::nullInputStream);
         assertThat(closeCount).hasValue(4);
 
         x.parseResource(DecodingFileParser.class, "/nbbrd/io/text/hello.txt");

@@ -1,6 +1,7 @@
 package _test.io.http;
 
 import lombok.NonNull;
+import nbbrd.io.Resource;
 import nbbrd.io.function.IORunnable;
 import nbbrd.io.function.IOSupplier;
 import nbbrd.io.http.HttpHeaders;
@@ -32,7 +33,7 @@ public final class MockedHttpResponse implements HttpResponse {
     private final int contentLength = HttpResponse.NO_CONTENT_LENGTH;
 
     @lombok.Builder.Default
-    private final IOSupplier<InputStream> body = () -> new ByteArrayInputStream(new byte[0]);
+    private final IOSupplier<InputStream> body = Resource::nullInputStream;
 
     @lombok.Builder.Default
     private final IORunnable onClose = IORunnable.noOp();

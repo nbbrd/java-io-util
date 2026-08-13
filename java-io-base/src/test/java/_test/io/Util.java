@@ -56,14 +56,6 @@ public final class Util {
         return Files.createTempDirectory(temp, "dir");
     }
 
-    public static InputStream emptyInputStream() {
-        return new ByteArrayInputStream(new byte[0]);
-    }
-
-    public static InputStream nullInputStream() {
-        return new ByteArrayInputStream(new byte[0]);
-    }
-
     public static OutputStream nullOutputStream() {
         return new ByteArrayOutputStream();
     }

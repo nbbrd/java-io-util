@@ -21,6 +21,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Add StylishWriter
 - Add option to normalize URI query before sending request
 - Mask sensitive headers in HttpHeaders
+- Add Resource#nullInputStream
 
 ### Changed
 

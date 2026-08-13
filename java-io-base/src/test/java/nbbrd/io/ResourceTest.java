@@ -38,7 +38,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-import static _test.io.Util.nullInputStream;
 import static _test.io.Util.nullOutputStream;
 import static nbbrd.io.Resource.*;
 import static org.assertj.core.api.Assertions.*;
@@ -195,7 +194,7 @@ public class ResourceTest {
                 .isThrownBy(() -> uncloseableInputStream(null));
 
         AtomicInteger closeCount = new AtomicInteger(0);
-        try (InputStream delegate = new ForwardingInputStream(nullInputStream()).onClose(closeCount::incrementAndGet)) {
+        try (InputStream delegate = new ForwardingInputStream(Resource.nullInputStream()).onClose(closeCount::incrementAndGet)) {
             try (InputStream x = uncloseableInputStream(delegate)) {
             }
             assertThat(closeCount).hasValue(0);
