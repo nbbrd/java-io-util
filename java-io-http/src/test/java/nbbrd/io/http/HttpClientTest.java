@@ -246,11 +246,16 @@ public abstract class HttpClientTest {
                 .willReturn(aResponse()
                         .withStatus(HttpsURLConnection.HTTP_INTERNAL_ERROR)
                         .withHeader("key", "value")
+                        .withBody(SAMPLE_ERROR_BODY)
                 ));
 
         try (HttpResponse response = x.send(HttpRequest.builder().query(wireURL(SAMPLE_URL)).headers(APPLICATION_XML_UTF_8_HEADER).build())) {
             assertThat(response.getStatusCode()).isEqualTo(HttpsURLConnection.HTTP_INTERNAL_ERROR);
             assertThat(response.getHeaders().getMap()).containsEntry("key", singletonList("value"));
+            // the error body must be readable, consistently across implementations
+            try (InputStream body = response.getBody()) {
+                assertThat(body).hasContent(SAMPLE_ERROR_BODY);
+            }
         }
 
         wire.verify(1, getRequestedFor(urlEqualTo(SAMPLE_URL)));
@@ -481,6 +486,7 @@ public abstract class HttpClientTest {
     protected static final String ANY_LANG = "*";
     protected static final String SAMPLE_URL = "/first.xml";
     protected static final String SAMPLE_XML = "<firstName>John</firstName><lastName>Doe</lastName>";
+    protected static final String SAMPLE_ERROR_BODY = "<error>Something went wrong</error>";
 
     protected static boolean isOSX() {
         String osName = System.getProperty("os.name");

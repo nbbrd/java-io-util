@@ -7,6 +7,7 @@ import nbbrd.io.http.urlconnection.UrlConnectionEncoding;
 import nbbrd.io.net.MediaType;
 import org.jspecify.annotations.Nullable;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -24,6 +25,8 @@ public final class UrlConnectionHttpResponse implements HttpResponse {
 
     @lombok.NonNull
     private final List<UrlConnectionEncoding> decoders;
+
+    private static final InputStream EMPTY_STREAM = new ByteArrayInputStream(new byte[0]);
 
     @Override
     public @NonNull MediaType getContentType() throws IOException {
@@ -54,7 +57,18 @@ public final class UrlConnectionHttpResponse implements HttpResponse {
     @Override
     public @NonNull InputStream getBody() throws IOException {
         String encodingOrNull = conn.getContentEncoding();
-        return findDecoderByName(encodingOrNull).decode(conn.getInputStream());
+        return findDecoderByName(encodingOrNull).decode(getResponseStream());
+    }
+
+    // Mirror the behavior of the okhttp and curl implementations: the body must be
+    // available for any status code. HttpURLConnection#getInputStream throws on error
+    // codes (>= 400), so the error body must be read from #getErrorStream instead.
+    private @NonNull InputStream getResponseStream() throws IOException {
+        if (conn.getResponseCode() >= HttpURLConnection.HTTP_BAD_REQUEST) {
+            InputStream errorStream = conn.getErrorStream();
+            return errorStream != null ? errorStream : EMPTY_STREAM;
+        }
+        return conn.getInputStream();
     }
 
     private @NonNull UrlConnectionEncoding findDecoderByName(@Nullable String encodingOrNull) {
