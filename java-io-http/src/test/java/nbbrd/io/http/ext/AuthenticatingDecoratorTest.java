@@ -7,18 +7,22 @@ import nbbrd.io.http.HttpClient;
 import nbbrd.io.http.HttpHeaders;
 import nbbrd.io.http.HttpRequest;
 import nbbrd.io.http.HttpResponse;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Base64;
+import java.util.List;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static nbbrd.io.http.ext.AuthScheme.BASIC;
+import static nbbrd.io.http.ext.AuthScheme.BEARER;
 import static nbbrd.io.http.ext.AuthScheme.NONE;
 import static org.assertj.core.api.Assertions.*;
 
@@ -118,6 +122,38 @@ class AuthenticatingDecoratorTest {
         }
 
         assertThat(server.getCallCount()).isEqualTo(1);
+    }
+
+    @Test
+    void listenerReceivesOriginalRequestOnSchemeSwitch() throws IOException {
+        // Server that only accepts BASIC credentials and always advertises a BASIC challenge,
+        // forcing a scheme switch when starting from BEARER.
+        MockedHttpClient server = new MockedHttpClient(request -> {
+            String authorization = request.getHeaders().firstValue(HttpHeaders.HTTP_AUTHORIZATION_HEADER).orElse(null);
+            return BASIC_CREDENTIALS.equals(authorization) ? okXml() : unauthorized(true);
+        });
+
+        List<URI> capturedUris = new ArrayList<>();
+        List<AuthScheme> capturedOldSchemes = new ArrayList<>();
+        List<AuthScheme> capturedNewSchemes = new ArrayList<>();
+        AuthenticatingListener listener = (uri, oldScheme, newScheme) -> {
+            capturedUris.add(uri);
+            capturedOldSchemes.add(oldScheme);
+            capturedNewSchemes.add(newScheme);
+        };
+
+        HttpClient x = new AuthenticatingDecorator(server, validAuthenticator(), BEARER, listener);
+
+        HttpRequest request = requestOf(SECURE);
+        try (HttpResponse response = x.send(request)) {
+            assertThat(response.getStatusCode()).isEqualTo(200);
+            assertThat(response.getBodyAsString()).isEqualTo(SAMPLE_XML);
+        }
+
+        // The listener must receive the original request query, not the one modified with auth headers.
+        assertThat(capturedUris).containsExactly(request.getQuery());
+        assertThat(capturedOldSchemes).containsExactly(BEARER);
+        assertThat(capturedNewSchemes).containsExactly(BASIC);
     }
 
     private static HttpClient decorator(HttpClient decorated, Authenticator authenticator, AuthScheme authScheme) {

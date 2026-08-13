@@ -20,6 +20,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Add HTTP client adapter for HttpURLConnection
 - Add StylishWriter
 - Add option to normalize URI query before sending request
+- Mask sensitive headers in HttpHeaders
 
 ### Changed
 

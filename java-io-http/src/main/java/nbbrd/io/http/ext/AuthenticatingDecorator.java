@@ -70,15 +70,14 @@ public final class AuthenticatingDecorator implements HttpClientDecorator {
         return response;
     }
 
-    private HttpResponse recoverUnauthorized(HttpResponse response, HttpRequest request, AuthSchemeHelper requestScheme) throws IOException {
-        HttpHeaders responseHeaders = response.getHeaders();
-        AuthSchemeHelper responseScheme = AuthSchemeHelper.find(responseHeaders).orElse(null);
+    private HttpResponse recoverUnauthorized(HttpResponse response, HttpRequest originalRequest, AuthSchemeHelper requestScheme) throws IOException {
+        AuthSchemeHelper responseScheme = AuthSchemeHelper.find(response.getHeaders()).orElse(null);
         if (responseScheme != null && !requestScheme.equals(responseScheme)) {
             response.close();
-            listener.onUnauthorized(request.getQuery(), requestScheme.getAuthScheme(), responseScheme.getAuthScheme());
-            return send(request, responseScheme);
+            listener.onUnauthorized(originalRequest.getQuery(), requestScheme.getAuthScheme(), responseScheme.getAuthScheme());
+            return send(originalRequest, responseScheme);
         }
-        authenticator.invalidate(request.getQuery());
+        authenticator.invalidate(originalRequest.getQuery());
         return response;
     }
 }

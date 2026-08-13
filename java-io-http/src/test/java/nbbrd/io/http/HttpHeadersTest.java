@@ -158,6 +158,34 @@ public class HttpHeadersTest {
     }
 
     @Test
+    public void testToStringMasksSensitiveHeaders() {
+        HttpHeaders headers = HttpHeaders.builder()
+                .put(HttpHeaders.HTTP_AUTHORIZATION_HEADER, "Basic dXNlcjpwYXNzd29yZA==")
+                .put(HttpHeaders.HTTP_AUTHENTICATE_HEADER, "Bearer realm=example")
+                .put("Cookie", "session=secret")
+                .put("Proxy-Authorization", "Basic secret")
+                .put("Content-Type", "text/plain")
+                .build();
+
+        assertThat(headers.toString())
+                .doesNotContain("dXNlcjpwYXNzd29yZA==")
+                .doesNotContain("realm=example")
+                .doesNotContain("session=secret")
+                .contains("text/plain")
+                .isEqualTo("HttpHeaders(map={Authorization=[***], Content-Type=[text/plain], Cookie=[***], Proxy-Authorization=[***], WWW-Authenticate=[***]})");
+    }
+
+    @Test
+    public void testToStringMasksSensitiveHeadersCaseInsensitively() {
+        HttpHeaders headers = HttpHeaders.builder()
+                .put("authorization", "Basic dXNlcjpwYXNzd29yZA==")
+                .build();
+
+        assertThat(headers.toString())
+                .doesNotContain("dXNlcjpwYXNzd29yZA==");
+    }
+
+    @Test
     public void testToAcceptHeader() {
         Assertions.assertThat(HttpHeaders.toAcceptHeader(emptyList()))
                 .isEqualTo("");
