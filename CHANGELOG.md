@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+This release refactor the HTTP module to improve robustness, flexibility and to allow more features.
+
 ### Added
 
 - Add support of HTTP status code in HttpResponse
