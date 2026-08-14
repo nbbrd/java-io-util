@@ -35,6 +35,26 @@ public class HttpHeaders {
     @NonNull
     Map<String, List<String>> map;
 
+    @Override
+    public String toString() {
+        StringBuilder result = new StringBuilder("HttpHeaders(map={");
+        boolean first = true;
+        for (Map.Entry<String, List<String>> entry : map.entrySet()) {
+            if (!first) {
+                result.append(", ");
+            }
+            first = false;
+            String key = entry.getKey();
+            result.append(key).append('=');
+            if (SENSITIVE_HEADERS.contains(key)) {
+                result.append('[').append(MASK).append(']');
+            } else {
+                result.append(entry.getValue());
+            }
+        }
+        return result.append("})").toString();
+    }
+
     @StaticFactoryMethod
     public static @NonNull HttpHeaders of(@NonNull Map<String, List<String>> headerMap) {
         return builder().put(headerMap).build();
@@ -51,13 +71,11 @@ public class HttpHeaders {
     }
 
     public @NonNull Optional<String> firstValue(@NonNull String name) {
-        Objects.requireNonNull(name);
         List<String> values = allValues(name);
         return values.isEmpty() ? Optional.empty() : Optional.of(values.get(0));
     }
 
     public @NonNull List<String> allValues(@NonNull String name) {
-        Objects.requireNonNull(name);
         List<String> values = map.get(name);
         return values != null ? values : Collections.emptyList();
     }
@@ -158,5 +176,15 @@ public class HttpHeaders {
                     .flatMap(entry -> entry.getValue().stream().map(value -> headerOf(entry.getKey(), value)));
         }
     }
-}
 
+    /**
+     * Header names whose values are considered sensitive and must be masked in
+     * {@link #toString()} to avoid leaking secrets (e.g. in logs).
+     */
+    private static final Set<String> SENSITIVE_HEADERS = Collections.unmodifiableSet(
+            Stream.of(HTTP_AUTHORIZATION_HEADER, HTTP_AUTHENTICATE_HEADER, "Cookie", "Set-Cookie", "Proxy-Authorization")
+                    .collect(Collectors.toCollection(() -> new TreeSet<>(String.CASE_INSENSITIVE_ORDER)))
+    );
+
+    private static final String MASK = "***";
+}

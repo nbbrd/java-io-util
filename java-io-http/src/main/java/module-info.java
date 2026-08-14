@@ -1,29 +1,28 @@
-/*
- * Copyright 2023 National Bank of Belgium
- *
- * Licensed under the EUPL, Version 1.1 or - as soon they will be approved
- * by the European Commission - subsequent versions of the EUPL (the "Licence");
- * You may not use this work except in compliance with the Licence.
- * You may obtain a copy of the Licence at:
- *
- * http://ec.europa.eu/idabc/eupl
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the Licence is distributed on an "AS IS" basis,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the Licence for the specific language governing permissions and
- * limitations under the Licence.
- */
+import nbbrd.io.http.HttpClientFactory;
+import nbbrd.io.http.curl.CurlHttpClientFactory;
+import nbbrd.io.http.okhttp.OkHttpHttpClientFactory;
+import nbbrd.io.http.urlconnection.UrlConnectionHttpClientFactory;
 
 module nbbrd.io.http {
 
     requires static org.jspecify;
     requires static lombok;
     requires static nbbrd.design;
+    requires static nbbrd.service;
 
     requires nbbrd.io.base;
+    requires static nbbrd.io.curl;
+    requires static okhttp3;
 
     exports nbbrd.io.http;
     exports nbbrd.io.http.ext;
-    exports internal.io.http;
+    exports nbbrd.io.http.okhttp;
+    exports nbbrd.io.http.urlconnection;
+    exports nbbrd.io.http.curl;
+
+    uses HttpClientFactory;
+    provides HttpClientFactory with
+            UrlConnectionHttpClientFactory,
+            OkHttpHttpClientFactory,
+            CurlHttpClientFactory;
 }

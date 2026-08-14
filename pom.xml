@@ -5,7 +5,7 @@
 
     <groupId>com.github.nbbrd.java-io-util</groupId>
     <artifactId>java-io-parent</artifactId>
-    <version>0.0.38</version>
+    <version>0.0.39</version>
     <packaging>pom</packaging>
 
     <name>java-io</name>
@@ -38,7 +38,7 @@
     <properties>
         <!-- Java 8+ config -->
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.build.outputTimestamp>2026-06-02T13:45:24Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2026-08-14T08:09:07Z</project.build.outputTimestamp>
         <maven.compiler.target>1.8</maven.compiler.target>
         <maven.compiler.source>1.8</maven.compiler.source>
         <requiredMavenVersion>3.9.11</requiredMavenVersion>
@@ -46,6 +46,8 @@
         <!-- GitHub hosting -->
         <x.github.user>nbbrd</x.github.user>
         <x.github.repo>java-io-util</x.github.repo>
+
+        <heylogs.version>0.19.1</heylogs.version>
     </properties>
 
     <modules>
@@ -65,14 +67,14 @@
             <dependency>
                 <groupId>org.jspecify</groupId>
                 <artifactId>jspecify</artifactId>
-                <version>1.0.0</version>
+                <version>1.0.1</version>
             </dependency>
 
             <!-- test libraries -->
             <dependency>
                 <groupId>org.junit</groupId>
                 <artifactId>junit-bom</artifactId>
-                <version>6.1.0</version>
+                <version>6.1.2</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
@@ -82,9 +84,9 @@
                 <version>3.27.7</version>
             </dependency>
             <dependency>
-                <groupId>com.github.tomakehurst</groupId>
-                <artifactId>wiremock-jre8-standalone</artifactId>
-                <version>3.0.1</version>
+                <groupId>org.wiremock</groupId>
+                <artifactId>wiremock-standalone</artifactId>
+                <version>3.13.2</version>
             </dependency>
             <dependency>
                 <!-- slf4j required by wiremock-jre8-standalone -->
@@ -140,7 +142,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.5.0</version>
+                    <version>3.5.1</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -171,7 +173,7 @@
                 <plugin>
                     <groupId>org.gaul</groupId>
                     <artifactId>modernizer-maven-plugin</artifactId>
-                    <version>3.4.0</version>
+                    <version>3.5.0</version>
                 </plugin>
                 <plugin>
                     <groupId>de.thetaphi</groupId>
@@ -181,7 +183,7 @@
                 <plugin>
                     <groupId>com.github.nbbrd.heylogs</groupId>
                     <artifactId>heylogs-maven-plugin</artifactId>
-                    <version>0.18.1</version>
+                    <version>${heylogs.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>com.amashchenko.maven.plugin</groupId>
@@ -206,34 +208,21 @@
                 <plugin>
                     <groupId>org.sonatype.central</groupId>
                     <artifactId>central-publishing-maven-plugin</artifactId>
-                    <version>0.10.0</version>
+                    <version>0.11.0</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jacoco</groupId>
                     <artifactId>jacoco-maven-plugin</artifactId>
-                    <version>0.8.14</version>
+                    <version>0.8.15</version>
                 </plugin>
                 <plugin>
                     <groupId>org.jreleaser</groupId>
                     <artifactId>jreleaser-maven-plugin</artifactId>
-                    <version>1.24.0</version>
+                    <version>1.25.0</version>
                 </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
-            <plugin>
-                <groupId>com.github.nbbrd.heylogs</groupId>
-                <artifactId>heylogs-maven-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>check-changelog</id>
-                        <goals>
-                            <goal>check</goal>
-                        </goals>
-                        <inherited>false</inherited>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -323,6 +312,7 @@
             </activation>
             <properties>
                 <lombok.version>1.18.46</lombok.version>
+                <java-service.version>2.1.0</java-service.version>
                 <java-design.version>1.10.2</java-design.version>
             </properties>
             <dependencyManagement>
@@ -331,6 +321,13 @@
                         <groupId>org.projectlombok</groupId>
                         <artifactId>lombok</artifactId>
                         <version>${lombok.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>com.github.nbbrd.java-service-util</groupId>
+                        <artifactId>java-service-bom</artifactId>
+                        <version>${java-service.version}</version>
+                        <type>pom</type>
+                        <scope>import</scope>
                     </dependency>
                     <dependency>
                         <groupId>com.github.nbbrd.java-design-util</groupId>
@@ -350,11 +347,16 @@
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-compiler-plugin</artifactId>
                         <configuration>
-                            <annotationProcessorPaths>
+                            <annotationProcessorPaths combine.children="append">
                                 <path>
                                     <groupId>org.projectlombok</groupId>
                                     <artifactId>lombok</artifactId>
                                     <version>${lombok.version}</version>
+                                </path>
+                                <path>
+                                    <groupId>com.github.nbbrd.java-service-util</groupId>
+                                    <artifactId>java-service-processor</artifactId>
+                                    <version>${java-service.version}</version>
                                 </path>
                                 <path>
                                     <groupId>com.github.nbbrd.java-design-util</groupId>
@@ -462,6 +464,11 @@
                                 <artifactId>extra-enforcer-rules</artifactId>
                                 <version>1.12.0</version>
                             </dependency>
+                            <dependency>
+                                <groupId>com.github.nbbrd.heylogs</groupId>
+                                <artifactId>heylogs-enforcer-rules</artifactId>
+                                <version>${heylogs.version}</version>
+                            </dependency>
                         </dependencies>
                         <executions>
                             <execution>
@@ -494,13 +501,18 @@
                                         </checkMavenCentral>
                                         <!-- extra-enforcer-rules -->
                                         <banCircularDependencies/>
-                                        <banDuplicateClasses/>
+                                        <banDuplicateClasses>
+                                            <ignoredScopes>test</ignoredScopes>
+                                        </banDuplicateClasses>
                                         <enforceBytecodeVersion>
                                             <maxJdkVersion>8</maxJdkVersion>
                                             <ignoredScopes>
                                                 <ignoreScope>test</ignoreScope>
                                             </ignoredScopes>
                                         </enforceBytecodeVersion>
+                                        <!-- heylogs-enforcer-rules -->
+                                        <checkChangelog/>
+                                        <formatChangelog/>
                                     </rules>
                                 </configuration>
                             </execution>
@@ -627,6 +639,7 @@
                         <configuration>
                             <source>8</source>
                             <excludePackageNames>internal:internal.*:shaded:shaded.*</excludePackageNames>
+                            <failOnError>false</failOnError>
                         </configuration>
                     </plugin>
                     <plugin>

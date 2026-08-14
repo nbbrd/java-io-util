@@ -17,7 +17,6 @@ import java.util.Properties;
 import java.util.zip.GZIPInputStream;
 
 import static _test.io.FileParserAssertions.assertFileParserCompliance;
-import static _test.io.Util.emptyInputStream;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.Locale.ROOT;
 import static nbbrd.io.FileParser.*;
@@ -34,7 +33,7 @@ public class FileParserTest {
                 .withMessageContaining("function");
 
         assertThatNullPointerException()
-                .isThrownBy(() -> onParsingStream(o -> null).parseStream(emptyInputStream()))
+                .isThrownBy(() -> onParsingStream(o -> null).parseStream(Resource.nullInputStream()))
                 .withMessageContaining("result");
 
         IOFunction<InputStream, String> function = deserializeAndClose;

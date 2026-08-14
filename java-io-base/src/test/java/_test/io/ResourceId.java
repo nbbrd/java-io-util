@@ -1,8 +1,8 @@
 package _test.io;
 
-import internal.io.InternalResource;
 import internal.io.text.InternalTextResource;
 import lombok.NonNull;
+import nbbrd.io.Resource;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,7 +39,7 @@ public class ResourceId {
 
     public byte[] toBytes() throws IOException {
         try (InputStream input = open()) {
-            return InternalResource.readAllBytes(input);
+            return Resource.readAllBytes(input);
         }
     }
 

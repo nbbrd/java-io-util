@@ -29,7 +29,7 @@ public class BlockSizerTest {
         assertThatNullPointerException()
                 .isThrownBy(() -> x.getBlockSize((InputStream) null));
 
-        assertThat(x.getBlockSize(new ByteArrayInputStream(new byte[0])))
+        assertThat(x.getBlockSize(Resource.nullInputStream()))
                 .isEqualTo(0);
 
         assertThat(x.getBlockSize(new ByteArrayInputStream(new byte[100])))

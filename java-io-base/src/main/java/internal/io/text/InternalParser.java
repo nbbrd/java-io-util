@@ -303,8 +303,8 @@ public class InternalParser {
     public URL parseURL(CharSequence input) {
         if (input != null) {
             try {
-                return new URL(input.toString());
-            } catch (MalformedURLException ex) {
+                return new URI(input.toString()).toURL();
+            } catch (MalformedURLException | URISyntaxException ex) {
                 doNothing(ex);
             }
         }

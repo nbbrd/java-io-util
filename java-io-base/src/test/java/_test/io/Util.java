@@ -1,6 +1,5 @@
 package _test.io;
 
-import internal.io.InternalResource;
 import nbbrd.io.Resource;
 import nbbrd.io.WrappedIOException;
 import nbbrd.io.function.IORunnable;
@@ -57,14 +56,6 @@ public final class Util {
         return Files.createTempDirectory(temp, "dir");
     }
 
-    public static InputStream emptyInputStream() {
-        return new ByteArrayInputStream(new byte[0]);
-    }
-
-    public static InputStream nullInputStream() {
-        return new ByteArrayInputStream(new byte[0]);
-    }
-
     public static OutputStream nullOutputStream() {
         return new ByteArrayOutputStream();
     }
@@ -98,7 +89,7 @@ public final class Util {
 
     public static byte[] decode(byte[] bytes, IOUnaryOperator<InputStream> encoder) throws IOException {
         try (InputStream input = encoder.applyWithIO(new ByteArrayInputStream(bytes))) {
-            return InternalResource.readAllBytes(input);
+            return Resource.readAllBytes(input);
         }
     }
 

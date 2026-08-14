@@ -2,12 +2,14 @@ package nbbrd.io.http;
 
 import internal.io.http.DisconnectingInputStream;
 import lombok.NonNull;
+import nbbrd.design.NotThreadSafe;
 import nbbrd.io.net.MediaType;
 import nbbrd.io.text.TextResource;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 
+@NotThreadSafe
 public interface HttpResponse extends Closeable {
 
     @NonNull
@@ -23,6 +25,14 @@ public interface HttpResponse extends Closeable {
      */
     @NonNull
     HttpHeaders getHeaders() throws IOException;
+
+    /**
+     * Returns the HTTP status code.
+     *
+     * @return the status code, or {@link #NO_STATUS_CODE} if unknown
+     * @throws IOException if an I/O error occurs
+     */
+    int getStatusCode() throws IOException;
 
     @NonNull
     InputStream getBody() throws IOException;
@@ -41,5 +51,9 @@ public interface HttpResponse extends Closeable {
         return DisconnectingInputStream.of(this);
     }
 
+    MediaType NO_CONTENT_TYPE = MediaType.parse("application/octet-stream");
+
     int NO_CONTENT_LENGTH = -1;
+
+    int NO_STATUS_CODE = -1;
 }

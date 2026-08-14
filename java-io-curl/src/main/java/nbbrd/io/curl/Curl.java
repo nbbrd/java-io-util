@@ -2,7 +2,6 @@ package nbbrd.io.curl;
 
 import lombok.NonNull;
 import nbbrd.design.BuilderPattern;
-import nbbrd.design.VisibleForTesting;
 import org.jspecify.annotations.Nullable;
 
 import java.io.BufferedReader;
@@ -15,25 +14,23 @@ import java.net.URL;
 import java.util.*;
 
 @lombok.experimental.UtilityClass
-class Curl {
+public class Curl {
 
     public static final int CURL_UNSUPPORTED_PROTOCOL = 1;
     public static final int CURL_COULD_NOT_RESOLVE_HOST = 6;
     public static final int CURL_OPERATION_TIMEOUT = 28;
     public static final int CURL_FAILURE_RECEIVING = 56;
 
-    @VisibleForTesting
     @lombok.Value
-    static class Status {
+    public static class Status {
 
         int code;
 
         String message;
     }
 
-    @VisibleForTesting
     @lombok.Value
-    static class Head {
+    public static class Head {
 
         @NonNull
         Status status;
@@ -93,7 +90,7 @@ class Curl {
 
     @lombok.Value
     @lombok.Builder
-    static class Version {
+    public static class Version {
 
         @lombok.Singular
         List<String> lines;
@@ -115,7 +112,7 @@ class Curl {
 
     // https://curl.se/docs/manpage.html
     @BuilderPattern(String[].class)
-    static final class CommandBuilder {
+    public static final class CommandBuilder {
 
         public static final String STDOUT_FILENAME = "-";
 
@@ -380,8 +377,7 @@ class Curl {
         String value();
     }
 
-    @VisibleForTesting
-    static boolean hasProxy(@NonNull Proxy proxy) {
+    public static boolean hasProxy(@NonNull Proxy proxy) {
         return !proxy.equals(Proxy.NO_PROXY);
     }
 }

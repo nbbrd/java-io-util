@@ -6,7 +6,7 @@
     <parent>
         <groupId>com.github.nbbrd.java-io-util</groupId>
         <artifactId>java-io-parent</artifactId>
-        <version>0.0.38</version>
+        <version>0.0.39</version>
     </parent>
 
     <artifactId>java-io-xml-bind</artifactId>
@@ -80,8 +80,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.tomakehurst</groupId>
-            <artifactId>wiremock-jre8-standalone</artifactId>
+            <groupId>org.wiremock</groupId>
+            <artifactId>wiremock-standalone</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

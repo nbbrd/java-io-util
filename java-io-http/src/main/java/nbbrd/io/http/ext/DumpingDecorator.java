@@ -1,0 +1,119 @@
+package nbbrd.io.http.ext;
+
+import internal.io.http.ext.TeeInputStream;
+import lombok.NonNull;
+import nbbrd.design.DecoratorPattern;
+import nbbrd.io.Resource;
+import nbbrd.io.http.*;
+import nbbrd.io.net.MediaType;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.function.Consumer;
+
+@DecoratorPattern(HttpClient.class)
+@lombok.AllArgsConstructor
+public final class DumpingDecorator implements HttpClientDecorator {
+
+    @lombok.Getter
+    @lombok.NonNull
+    private final HttpClient decorated;
+
+    @lombok.NonNull
+    private final Path folder;
+
+    @lombok.NonNull
+    private final Consumer<? super Path> onDump;
+
+    @Override
+    public @NonNull String getDescription() {
+        return "Dumping " + decorated.getDescription();
+    }
+
+    @Override
+    public @NonNull HttpResponse send(@NonNull HttpRequest request) throws IOException {
+        String prefix = "http_" + getUniqueTimeStamp();
+        try {
+            return new DumpingResponse(folder, decorated.send(request), onDump, prefix);
+        } finally {
+            dumpRequestBody(request, prefix);
+        }
+    }
+
+    private void dumpRequestBody(HttpRequest request, String prefix) throws IOException {
+        if (request.getBody() != null) {
+            Files.createDirectories(folder);
+            Path requestDump = folder.resolve(prefix + "_request.tmp");
+            onDump.accept(requestDump);
+            Files.write(requestDump, request.getBody());
+        }
+    }
+
+    @DecoratorPattern
+    @lombok.AllArgsConstructor
+    private static final class DumpingResponse implements HttpResponse {
+
+        @lombok.NonNull
+        private final Path folder;
+
+        @lombok.NonNull
+        private final HttpResponse delegate;
+
+        @lombok.NonNull
+        private final Consumer<? super Path> onDump;
+
+        @lombok.NonNull
+        private final String prefix;
+
+        @Override
+        public @NonNull MediaType getContentType() throws IOException {
+            return delegate.getContentType();
+        }
+
+        @Override
+        public long getContentLength() throws IOException {
+            return delegate.getContentLength();
+        }
+
+        @Override
+        public @NonNull HttpHeaders getHeaders() throws IOException {
+            return delegate.getHeaders();
+        }
+
+        @Override
+        public int getStatusCode() throws IOException {
+            return delegate.getStatusCode();
+        }
+
+        @Override
+        public @NonNull InputStream getBody() throws IOException {
+            InputStream inputStream = delegate.getBody();
+            try {
+                OutputStream outputStream = getDumpStream();
+                return new TeeInputStream(inputStream, outputStream);
+            } catch (IOException ex) {
+                Resource.ensureClosed(ex, inputStream);
+                throw ex;
+            }
+        }
+
+        private OutputStream getDumpStream() throws IOException {
+            Files.createDirectories(folder);
+            Path responseDump = folder.resolve(prefix + "_response.tmp");
+            onDump.accept(responseDump);
+            return Files.newOutputStream(responseDump);
+        }
+
+        @Override
+        public void close() throws IOException {
+            delegate.close();
+        }
+    }
+
+    private static synchronized String getUniqueTimeStamp() {
+        return String.valueOf(System.nanoTime());
+    }
+}

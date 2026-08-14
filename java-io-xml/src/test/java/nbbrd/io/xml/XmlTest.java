@@ -17,10 +17,9 @@
 package nbbrd.io.xml;
 
 import _test.sample.Person;
-import internal.io.InternalResource;
 import internal.io.xml.BufferedInputStreamWithId;
 import lombok.NonNull;
-import nbbrd.io.text.TextResource;
+import nbbrd.io.Resource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -112,7 +111,7 @@ public class XmlTest {
 
         @Override
         public @NonNull T parseStream(@NonNull InputStream resource) throws IOException {
-            byte[] data = InternalResource.readAllBytes(resource);
+            byte[] data = Resource.readAllBytes(resource);
             if (data.length == 0) {
                 throw new EOFException(getFile(resource));
             }

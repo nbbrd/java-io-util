@@ -7,12 +7,41 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.0.39] - 2026-08-14
+
+This release refactor the HTTP module to improve robustness, flexibility and to allow more features.
+
+### Added
+
+- Add support of HTTP status code in HttpResponse
+- Add metrics HTTP decorator
+- Add caching HTTP decorator
+- Add rate limiting HTTP decorator
+- Add cookie HTTP decorator
+- Add OkHttp HTTP client
+- Add curl HTTP client
+- Add HTTP factory
+- Add HTTP client adapter for HttpURLConnection
+- Add StylishWriter
+- Add option to normalize URI query before sending request
+- Mask sensitive headers in HttpHeaders
+- Add Resource#nullInputStream
+
+### Changed
+
+- Refactor HTTP response exception handling as a decorator
+- Refactor HTTP connection listener as a decorator
+- Move UrlConnectionHttpClient features to decorators
+- Replace URLQueryBuilder with URIQueryBuilder [#469](https://github.com/nbbrd/java-io-util/issues/469)
+- Set default HTTP client timeouts to 2 minutes instead of no timeout
+- Return NO_CONTENT_TYPE instead of throwing IOException when content-type is missing in HTTP response header
+
 ## [0.0.38] - 2026-06-02
 
 ### Changed
 
 - Enhance HttpClient to support content length tracking
-- Refactor http module to improve robustness and to allow more features
+- Refactor HTTP module to improve robustness and to allow more features
 - Add retry mechanism for transient network errors
 
 ## [0.0.36] - 2026-03-18
@@ -29,14 +58,14 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Add support for Bearer authentication scheme in HttpClient
 
-### Fixed
-
-- Fix authentication errors in HttpClient
-
 ### Changed
 
 - Migrate OSSRH to Central Portal
 - Remove preemptiveAuth option in HttpContext
+
+### Fixed
+
+- Fix authentication errors in HttpClient
 
 ## [0.0.34] - 2025-05-08
 
@@ -81,13 +110,13 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [0.0.29] - 2024-06-21
 
-### Fixed
-
-- Fix MalformedInputException in ProcessReader [#329](https://github.com/nbbrd/java-io-util/issues/329)
-
 ### Added
 
 - Add PowerShellWrapper
+
+### Fixed
+
+- Fix MalformedInputException in ProcessReader [#329](https://github.com/nbbrd/java-io-util/issues/329)
 
 ## [0.0.28] - 2024-03-21
 
@@ -334,7 +363,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Initial release
 
-[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.38...HEAD
+[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.39...HEAD
+[0.0.39]: https://github.com/nbbrd/java-io-util/compare/v0.0.38...v0.0.39
 [0.0.38]: https://github.com/nbbrd/java-io-util/compare/v0.0.36...v0.0.38
 [0.0.36]: https://github.com/nbbrd/java-io-util/compare/v0.0.35...v0.0.36
 [0.0.35]: https://github.com/nbbrd/java-io-util/compare/v0.0.34...v0.0.35

@@ -7,7 +7,7 @@
     <parent>
         <groupId>com.github.nbbrd.java-io-util</groupId>
         <artifactId>java-io-parent</artifactId>
-        <version>0.0.38</version>
+        <version>0.0.39</version>
     </parent>
 
     <artifactId>java-io-http</artifactId>
@@ -34,12 +34,29 @@
             <artifactId>java-design-processor</artifactId>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+            <groupId>com.github.nbbrd.java-service-util</groupId>
+            <artifactId>java-service-processor</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
         <!-- compile & runtime -->
         <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>java-io-base</artifactId>
             <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.nbbrd.java-io-util</groupId>
+            <artifactId>java-io-curl</artifactId>
+            <version>${project.version}</version>
+            <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp-jvm</artifactId>
+            <version>5.4.0</version>
+            <optional>true</optional>
         </dependency>
 
         <!-- test libraries -->
@@ -54,14 +71,14 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.tomakehurst</groupId>
-            <artifactId>wiremock-jre8-standalone</artifactId>
+            <groupId>org.wiremock</groupId>
+            <artifactId>wiremock-standalone</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>com.github.nbbrd.java-io-util</groupId>
-            <artifactId>java-io-curl</artifactId>
-            <version>${project.version}</version>
+            <groupId>io.github.hakky54</groupId>
+            <artifactId>ayza</artifactId>
+            <version>10.0.6</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
