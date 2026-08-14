@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.0.39] - 2026-08-14
+
 This release refactor the HTTP module to improve robustness, flexibility and to allow more features.
 
 ### Added
@@ -361,7 +363,8 @@ This release refactor the HTTP module to improve robustness, flexibility and to 
 
 - Initial release
 
-[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.38...HEAD
+[Unreleased]: https://github.com/nbbrd/java-io-util/compare/v0.0.39...HEAD
+[0.0.39]: https://github.com/nbbrd/java-io-util/compare/v0.0.38...v0.0.39
 [0.0.38]: https://github.com/nbbrd/java-io-util/compare/v0.0.36...v0.0.38
 [0.0.36]: https://github.com/nbbrd/java-io-util/compare/v0.0.35...v0.0.36
 [0.0.35]: https://github.com/nbbrd/java-io-util/compare/v0.0.34...v0.0.35
