@@ -173,7 +173,7 @@ public class Curl {
         }
 
         /**
-         * Write output to <file> instead of stdout.
+         * Write output to {@code <file>} instead of stdout.
          *
          * @param file a non-null file
          * @return this builder

@@ -20,8 +20,8 @@ public interface CacheKeyGenerator {
     String generateKey(@NonNull HttpRequest request);
 
     /**
-     * Creates a key generator based on the HTTP method ({@link HttpRequest#getMethod()})
-     * and the full request URI ({@link HttpRequest#getQuery()}).
+     * Creates a key generator based on the HTTP method ({@code HttpRequest#getMethod()})
+     * and the full request URI ({@code HttpRequest#getQuery()}).
      *
      * @return a new key generator
      */

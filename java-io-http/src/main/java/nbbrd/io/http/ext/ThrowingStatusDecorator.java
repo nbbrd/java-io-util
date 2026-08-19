@@ -18,8 +18,8 @@ import java.util.function.IntPredicate;
  * <p>
  * The underlying {@link HttpClient} may return responses for any status code
  * (including 4xx/5xx). This decorator inspects each response's status code and,
- * when {@link #shouldThrow)} returns {@code true} for it, closes the response
- * and throws an {@link ThrowingStatusException} carrying the status code, reason
+ * when {@code shouldThrow} returns {@code true} for it, closes the response
+ * and throws a {@link ThrowingStatusException} carrying the status code, reason
  * phrase and headers.
  * </p>
  * <p>
@@ -27,13 +27,13 @@ import java.util.function.IntPredicate;
  * conventional "errors are exceptions" contract. To keep specific error codes as
  * regular responses (e.g. so a {@link CachingDecorator} can store them per
  * RFC 9111 negative-response caching), configure a predicate that excludes them:
+ * </p>
  * <pre>{@code
  * HttpClient throwing = new ThrowingStatusDecorator(
  *          delegate,
  *          code -> code >= 400 && !CachingHttpClient.NEGATIVE_CACHEABLE_STATUS_CODES.contains(code)
  *        );
  * }</pre>
- * </p>
  */
 @DecoratorPattern(HttpClient.class)
 @AllArgsConstructor
