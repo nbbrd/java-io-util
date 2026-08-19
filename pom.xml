@@ -690,6 +690,28 @@
                         </configuration>
                     </plugin>
                     <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <executions>
+                            <!-- Ensure a javadoc jar is attached for every non-pom artifact (required by Maven Central) -->
+                            <execution>
+                                <id>enforce-javadoc-jar</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <evaluateBeanshell>
+                                            <condition>"pom".equals("${project.packaging}") || new java.io.File(new java.net.URI("${project.baseUri}target/${project.build.finalName}-javadoc.jar")).exists()</condition>
+                                            <message>Missing javadoc jar for ${project.artifactId} (expected ${project.build.finalName}-javadoc.jar); Maven Central requires a -javadoc.jar for non-pom artifacts.</message>
+                                        </evaluateBeanshell>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
                         <groupId>org.simplify4u.plugins</groupId>
                         <artifactId>sign-maven-plugin</artifactId>
                         <executions>
