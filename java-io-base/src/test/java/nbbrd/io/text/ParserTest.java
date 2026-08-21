@@ -257,6 +257,9 @@ public class ParserTest {
 
         assertThat(onURL().parse(null))
                 .isNull();
+
+        assertThat(onURL().parse("urlNotAbsolute"))
+                .isNull();
     }
 
     @Test

@@ -7,6 +7,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix IllegalArgumentException when parsing non-absolute URL in Parser
+
 ## [0.0.39] - 2026-08-14
 
 This release refactor the HTTP module to improve robustness, flexibility and to allow more features.

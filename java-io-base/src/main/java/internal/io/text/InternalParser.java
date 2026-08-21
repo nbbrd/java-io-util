@@ -304,7 +304,7 @@ public class InternalParser {
         if (input != null) {
             try {
                 return new URI(input.toString()).toURL();
-            } catch (MalformedURLException | URISyntaxException ex) {
+            } catch (MalformedURLException | URISyntaxException | IllegalArgumentException ex) {
                 doNothing(ex);
             }
         }
