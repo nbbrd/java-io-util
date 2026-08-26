@@ -803,6 +803,7 @@
                 <jacoco.skip>true</jacoco.skip>
                 <heylogs.skip>true</heylogs.skip>
                 <tidy.skip>true</tidy.skip>
+                <spotless.skip>true</spotless.skip>
             </properties>
         </profile>
     </profiles>
