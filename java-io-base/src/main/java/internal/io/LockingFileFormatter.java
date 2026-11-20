@@ -1,10 +1,6 @@
 package internal.io;
 
-import lombok.NonNull;
-import nbbrd.design.DecoratorPattern;
-import nbbrd.io.FileFormatter;
-import nbbrd.io.WrappedIOException;
-import nbbrd.io.function.IOSupplier;
+import static internal.io.text.FileSystemExceptions.checkTarget;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,8 +12,11 @@ import java.nio.channels.OverlappingFileLockException;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-
-import static internal.io.text.FileSystemExceptions.checkTarget;
+import lombok.NonNull;
+import nbbrd.design.DecoratorPattern;
+import nbbrd.io.FileFormatter;
+import nbbrd.io.WrappedIOException;
+import nbbrd.io.function.IOSupplier;
 
 @DecoratorPattern
 @lombok.RequiredArgsConstructor
@@ -36,8 +35,11 @@ public final class LockingFileFormatter<T> implements FileFormatter<T> {
 
     @Override
     public void formatPath(@NonNull T value, @NonNull Path target) throws IOException {
-        try (FileChannel channel = FileChannel.open(checkTarget(target), StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
+        try (FileChannel channel =
+                FileChannel.open(checkTarget(target), StandardOpenOption.WRITE, StandardOpenOption.CREATE)) {
             try (FileLock ignore = channel.lock()) {
+                // truncate only after acquiring the lock to avoid altering content read by others
+                channel.truncate(0);
                 delegate.formatStream(value, Channels.newOutputStream(channel));
             } catch (OverlappingFileLockException ex) {
                 throw WrappedIOException.wrap(ex);

@@ -10,6 +10,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Fixed
 
 - Fix IllegalArgumentException when parsing non-absolute URL in Parser
+- Fix missing truncation of existing target in locking file formatter
 
 ## [0.0.39] - 2026-08-14
 
